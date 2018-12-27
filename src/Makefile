@@ -1,8 +1,8 @@
 # g++ main.cpp `pkg-config --cflags glib-2.0` -lzepher
 CC = g++
 
-CPPFLAGS= -std=c++14 -fomit-frame-pointer -fPIC -DQHASM `pkg-config --cflags glib-2.0` `pkg-config --libs glib-2.0`
-LDFLAGS= -shared -L/usr/local/lib -lcrypto -lssl
+CPPFLAGS= -std=c++14 -fomit-frame-pointer -fPIC -DQHASM 
+LDFLAGS= -shared -L/usr/local/lib -lcrypto -lssl  -lopendht -lgnutls
 
 SOURCES = $(shell echo *.cpp)
 HEADERS = $(shell echo *.hpp)

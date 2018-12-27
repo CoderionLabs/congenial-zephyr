@@ -1,9 +1,9 @@
 
-#include <zepher/mixer.hpp>
+#include <zepher/Peerconnection.hpp>
 
 using namespace std;
 
 int main(){
-    Mixer m;
+    PeerConnection m;
     return 0;
 }
