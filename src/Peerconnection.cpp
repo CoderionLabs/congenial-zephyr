@@ -20,23 +20,35 @@ PeerConnection::PeerConnection()
     unsigned char ibuf[] = "congenial";
     unsigned char obuf[20];
 
-    SHA1(ibuf, 9, obuf);
+    /*SHA1(ibuf, 9, obuf);
     auto tmpbuf = reinterpret_cast<char*>(obuf);
-    memcpy(this->id, obuf, sizeof(obuf));
+    memcpy(this->id, obuf, sizeof(obuf));*/
+    auto tmpid = this->node.getNodeId().to_c_str();
+    
+    memcpy(this->id, tmpid, sizeof(tmpid));    
 
-    GetPrimaryIp(this->myip, 20);
-    cout << this->myip << endl;
+    auto x = this->node.getPublicAddressStr();
+    for(std::string w : x){
+        this->myip.push_back(w);
+    }
     
     // listen on port 4222.
     this->node.run(4222, dht::crypto::generateIdentity(), true);
 
-    //this->node.bootstrap("bootstrap.ring.cx", "4222");
+    // The first node in the network will not use a bootstrap
+    // node to join the network. I will use hardcoded adresses
+    // so that a node can join the network. Bitcoin Style
+    this->node.bootstrap("10.0.3.12", "4222");
 
     // put some data on the dht
-    this->node.putSigned(string(this->id), string(this->myip));
+    this->node.putSigned("ROUTING_TABLE", this->myip, [](bool ok){
+        if(not ok){
+            cout << "Failed to add adress" << endl;
+        }
+    });
 
-    // get data from the dht
-    this->node.get("other_unique_key", [](const std::vector<std::shared_ptr<dht::Value>>& values) {
+    // Get some known nodes from other nodes
+    this->node.get("ROUTING_TABLE", [](const std::vector<std::shared_ptr<dht::Value>>& values) {
         // Callback called when values are found
         for (const auto& value : values)
             std::cout << "Found value: " << *value << std::endl;
@@ -44,6 +56,23 @@ PeerConnection::PeerConnection()
     });
 
     this->node.join();
+}
+
+PeerConnection::~PeerConnection(){
+    // Before leaving add the list of known nodes to a
+    // file and also put them in the DHT
+    ofstream out("nodes.dems");
+    for(auto x : this->knownNodeAdresses){
+        out << x << endl;
+    }
+    out.close();
+
+    this->node.putSigned("ROUTING_TABLE:" + string(this->id), this->knownNodeAdresses, [](bool ok){
+        if(not ok){
+            cout << "Failed to publish known nodes" << endl;
+        }
+    });
+    //this->node.shutdown();
 }
 
 // Gets the global ip address of the server
@@ -75,6 +104,3 @@ void GetPrimaryIp(char* buffer, size_t buflen)
     close(sock);
 }
 
-PeerConnection::~PeerConnection(){
-    //this->node.shutdown();
-}

@@ -11,6 +11,7 @@
 #include <openssl/sha.h>
 #include <opendht.h>
 #include <vector>
+#include <fstream>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -23,7 +24,8 @@ class PeerConnection
 {
 private:
     dht::DhtRunner node;
-    char myip[20];
+    std::vector<std::string> myip;
+    std::vector<std::string> knownNodeAdresses;
     char id[20];
 public:
     PeerConnection();
