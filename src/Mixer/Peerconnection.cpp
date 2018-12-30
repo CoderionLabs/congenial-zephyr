@@ -37,18 +37,18 @@ PeerConnection::PeerConnection()
 
     // The first node in the network will not use a bootstrap
     // node to join the network. I will use hardcoded adresses
-    // so that a node can join the network. Bitcoin Style
+    // so that a node can join the network.
     this->node.bootstrap("10.0.3.12", "4222");
 
     // put some data on the dht
-    this->node.putSigned("ROUTING_TABLE", this->myip, [](bool ok){
+    this->node.putSigned("IP_LIST", this->myip, [](bool ok){
         if(not ok){
             cout << "Failed to add adress" << endl;
         }
     });
 
     // Get some known nodes from other nodes
-    this->node.get("ROUTING_TABLE", [](const std::vector<std::shared_ptr<dht::Value>>& values) {
+    this->node.get("IP_LIST", [](const std::vector<std::shared_ptr<dht::Value>>& values) {
         // Callback called when values are found
         for (const auto& value : values)
             std::cout << "Found value: " << *value << std::endl;
@@ -56,6 +56,10 @@ PeerConnection::PeerConnection()
     });
 
     this->node.join();
+
+    // Start another thread that listens for incoming messages
+    std::thread t1(ListenForMessages);
+    t1.join();
 }
 
 PeerConnection::~PeerConnection(){
@@ -73,6 +77,63 @@ PeerConnection::~PeerConnection(){
         }
     });
     //this->node.shutdown();
+}
+
+void PeerConnection::ListenForMessages(){
+    int sockfd; //to create socket
+    int newsockfd; //to accept connection
+    
+    struct sockaddr_in serverAddress; //server receive on this address
+    struct sockaddr_in clientAddress; //server sends to client on this address
+
+    int n;
+    char msg[MAXSZ];
+    int clientAddressLength;
+    int pid;
+
+    //create socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    //initialize the socket addresses
+    memset( & serverAddress, 0, sizeof(serverAddress));
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddress.sin_port = htons(PORT);
+
+    //bind the socket with the server address and port
+    bind(sockfd, (struct sockaddr * ) & serverAddress, sizeof(serverAddress));
+
+    //listen for connection from client
+    // allow 5 pending connetions
+    listen(sockfd, 5);
+
+    while (1) { 
+        //parent process waiting to accept a new connection
+        printf("\n*****Waitng to accept a connection:*****\n");
+        clientAddressLength = sizeof(clientAddress);
+        newsockfd = accept(sockfd, (struct sockaddr * ) &clientAddress, (socklen_t*) &clientAddressLength);
+        printf("connected to client: %s\n", inet_ntoa(clientAddress.sin_addr));
+        
+        //child process is created for serving each new clients
+        pid = fork();
+        if (pid == 0) //child process rec and send
+        {
+            //rceive from client
+            while (1) {
+                n = recv(newsockfd, msg, MAXSZ, 0);
+                if (n == 0) {
+                    close(newsockfd);
+                    break;
+                }
+                this->messages.push_back(msg);
+
+                char* ack = "Got your message";
+                send(newsockfd, ack, sizeof(ack), 0);
+            } 
+            exit(0);
+         } else {
+            close(newsockfd); //sock is closed BY PARENT
+        }
+    } 
 }
 
 // Gets the global ip address of the server
