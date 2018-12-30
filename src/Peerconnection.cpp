@@ -17,10 +17,10 @@ using namespace std;
 PeerConnection::PeerConnection()
 {
 
-    unsigned char ibuf[] = "congenial";
+    /*unsigned char ibuf[] = "congenial";
     unsigned char obuf[20];
 
-    /*SHA1(ibuf, 9, obuf);
+    SHA1(ibuf, 9, obuf);
     auto tmpbuf = reinterpret_cast<char*>(obuf);
     memcpy(this->id, obuf, sizeof(obuf));*/
     auto tmpid = this->node.getNodeId().to_c_str();
