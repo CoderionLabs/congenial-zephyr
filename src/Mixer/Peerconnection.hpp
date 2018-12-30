@@ -39,9 +39,11 @@ private:
     std::vector<std::string> messages;
     std::vector<std::string> knownNodeAdresses;
     char id[20];
+    int deadline;
 public:
     PeerConnection();
     void ListenForMessages();
+    void StartRound();
     ~PeerConnection();
 };
 

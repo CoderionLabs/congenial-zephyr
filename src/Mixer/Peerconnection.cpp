@@ -14,6 +14,8 @@ using namespace std;
         adding layers of encryption and noise to the message
     7. Once this is finished  */
 // Setup the dht
+
+//TODO: Implement Bully leader election
 PeerConnection::PeerConnection()
 {
 
@@ -36,9 +38,9 @@ PeerConnection::PeerConnection()
     this->node.run(4222, dht::crypto::generateIdentity(), true);
 
     // The first node in the network will not use a bootstrap
-    // node to join the network. I will use hardcoded adresses
+    // node to join the network. I will use hardcoded addresses
     // so that a node can join the network.
-    this->node.bootstrap("10.0.3.12", "4222");
+    this->node.bootstrap("142.93.188.57", "4222");
 
     // put some data on the dht
     this->node.putSigned("IP_LIST", this->myip, [](bool ok){
@@ -56,8 +58,6 @@ PeerConnection::PeerConnection()
     });
 
     this->node.join();
-
-    // Start another thread that listens for incoming messages
     std::thread t1(ListenForMessages);
     t1.join();
 }
@@ -77,6 +77,17 @@ PeerConnection::~PeerConnection(){
         }
     });
     //this->node.shutdown();
+}
+
+void PeerConnection::StartRound(){
+     // Start another thread that listens for incoming messages
+
+    //Sets the deadline to 20 seconds
+    // TODO: in the future set this acording to the amount
+    // of connected clients.
+    //this->deadline = 20;
+    
+    // TODO: Download messages from each server and shuffle them
 }
 
 void PeerConnection::ListenForMessages(){
