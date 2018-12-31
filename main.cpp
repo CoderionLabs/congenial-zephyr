@@ -1,10 +1,10 @@
 
-#include <zepher/Peerconnection.hpp>
+#include <zepher/Mixer.hpp>
 
 using namespace std;
 
 int main(){
-    PeerConnection m;
+    Mixer m;
     char *arr = (char*)malloc(42);
     GetPrimaryIp(arr, sizeof(arr));
     cout << arr << endl;

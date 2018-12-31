@@ -1,7 +1,6 @@
-#include "Peerconnection.hpp"
+#include "Mixer.hpp"
 
 using namespace std;
-
 /* TODO:  this is the precedure
     1. I need to computer a unique id for each node 
         using a hash function with almost no colloions 
@@ -15,8 +14,12 @@ using namespace std;
     7. Once this is finished  */
 // Setup the dht
 
+//Globals
+
+std::vector<std::string> msgs;
+
 //TODO: Implement Bully leader election
-PeerConnection::PeerConnection()
+Mixer::Mixer()
 {
 
     /*unsigned char ibuf[] = "congenial";
@@ -25,6 +28,28 @@ PeerConnection::PeerConnection()
     SHA1(ibuf, 9, obuf);
     auto tmpbuf = reinterpret_cast<char*>(obuf);
     memcpy(this->id, obuf, sizeof(obuf));*/
+
+
+    crypto_box_keypair(recipient_pk, recipient_sk);
+
+
+    char hostbuffer[256]; 
+    char *IPbuffer; 
+    struct hostent *host_entry; 
+  
+    // To retrieve host information 
+    host_entry = gethostbyname(hostbuffer); 
+    checkHostEntry(host_entry); 
+  
+    // To convert an Internet network 
+    // address into ASCII string 
+    IPbuffer = inet_ntoa(*((struct in_addr*) 
+                           host_entry->h_addr_list[0])); 
+  
+    // Get the public_ip of the current server
+    this->public_ip = IPbuffer;
+
+    bool is_the_first = false;
     auto tmpid = this->node.getNodeId().to_c_str();
     
     memcpy(this->id, tmpid, sizeof(tmpid));    
@@ -49,6 +74,16 @@ PeerConnection::PeerConnection()
         }
     });
 
+    this->node.get("FIRST", [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
+        // Callback called when values are found
+        for (const auto& value : values){
+            std::cout << "Found value: " << *value << std::endl;
+            is_the_first = true;
+            return true;
+        }
+        return false; // return false to stop the search
+    });
+
     // Get some known nodes from other nodes
     this->node.get("IP_LIST", [](const std::vector<std::shared_ptr<dht::Value>>& values) {
         // Callback called when values are found
@@ -60,9 +95,15 @@ PeerConnection::PeerConnection()
     this->node.join();
     std::thread t1(ListenForMessages);
     t1.join();
+
+    if(is_the_first){
+        this->StartRoundAsCoordinator();
+    }else{
+        this->StartRoundAsMixer();
+    }
 }
 
-PeerConnection::~PeerConnection(){
+Mixer::~Mixer(){
     // Before leaving add the list of known nodes to a
     // file and also put them in the DHT
     ofstream out("nodes.dems");
@@ -79,7 +120,19 @@ PeerConnection::~PeerConnection(){
     //this->node.shutdown();
 }
 
-void PeerConnection::StartRound(){
+void GetMessageFromClients(std::string message){
+    msgs.push_back(message);
+}
+
+void Mixer::StartRoundAsMixer(){
+    rpc::client client(this->public_ip, rpc::constants::DEFAULT_PORT);
+    for(auto x : msgs){
+        client.send("GetMessageFromClients", x);
+    }
+    //std::cout << "The result is: " << result << std::endl;
+}
+
+void Mixer::StartRoundAsCoordinator(){
      // Start another thread that listens for incoming messages
 
     //Sets the deadline to 20 seconds
@@ -88,9 +141,36 @@ void PeerConnection::StartRound(){
     //this->deadline = 20;
     
     // TODO: Download messages from each server and shuffle them
+    // Send an rpc to all servers and tell them to send their messages
+    // to me 
+    
+    // Right now assume the messages have already been encrypted with the
+    // receipents public keys
+
+    // Create a server that listens on port 8080
+    rpc::server srv(this->public_ip, rpc::constants::DEFAULT_PORT);
+    srv.bind("GetMessageFromClients", &GetMessageFromClients);
+    srv.run();
+
+    std::vector<unsigned char*> ciphers;
+
+    // Encrypt each message with public key
+    for(string x : msgs){
+        unsigned char ciphertext[CIPHERTEXT_LEN];
+        crypto_box_seal(ciphertext, x.c_str(), x.length(), this->private_key);
+        cipher.push_back(ciphertext);
+    }
+
+    // Shuffle the messages
+    Shuffle shu;
+    shu.Shuffle(ciphers, 5);
+
+    // Send them to the next node the next node.
+    // The next node will do the same thing 
+
 }
 
-void PeerConnection::ListenForMessages(){
+void Mixer::ListenForMessages(){
     int sockfd; //to create socket
     int newsockfd; //to accept connection
     
@@ -135,7 +215,7 @@ void PeerConnection::ListenForMessages(){
                     close(newsockfd);
                     break;
                 }
-                this->messages.push_back(msg);
+                msgs.push_back(msg);
 
                 char* ack = "Got your message";
                 send(newsockfd, ack, sizeof(ack), 0);
