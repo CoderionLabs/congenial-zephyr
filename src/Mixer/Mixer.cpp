@@ -1,6 +1,7 @@
 #include "Mixer.hpp"
 
 using namespace std;
+using namespace jsonrpc;
 /* TODO:  this is the precedure
     1. I need to computer a unique id for each node 
         using a hash function with almost no colloions 
@@ -19,21 +20,12 @@ using namespace std;
 std::vector<std::string> msgs;
 
 //TODO: Implement Bully leader election
-Mixer::Mixer()
+Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
 
-    /*unsigned char ibuf[] = "congenial";
-    unsigned char obuf[20];
+    crypto_box_keypair(this->public_key, this->private_key);
 
-    SHA1(ibuf, 9, obuf);
-    auto tmpbuf = reinterpret_cast<char*>(obuf);
-    memcpy(this->id, obuf, sizeof(obuf));*/
-
-
-    crypto_box_keypair(recipient_pk, recipient_sk);
-
-
-    char hostbuffer[256]; 
+    /*char hostbuffer[256]; 
     char *IPbuffer; 
     struct hostent *host_entry; 
   
@@ -47,7 +39,7 @@ Mixer::Mixer()
                            host_entry->h_addr_list[0])); 
   
     // Get the public_ip of the current server
-    this->public_ip = IPbuffer;
+    //this->public_ip = IPbuffer;*/
 
     bool is_the_first = false;
     auto tmpid = this->node.getNodeId().to_c_str();
@@ -74,6 +66,7 @@ Mixer::Mixer()
         }
     });
 
+    // TODO: Fix this later
     this->node.get("FIRST", [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
         // Callback called when values are found
         for (const auto& value : values){
@@ -107,12 +100,12 @@ Mixer::~Mixer(){
     // Before leaving add the list of known nodes to a
     // file and also put them in the DHT
     ofstream out("nodes.dems");
-    for(auto x : this->knownNodeAdresses){
+    for(auto x : this->mixers){
         out << x << endl;
     }
     out.close();
 
-    this->node.putSigned("ROUTING_TABLE:" + string(this->id), this->knownNodeAdresses, [](bool ok){
+    this->node.putSigned("ROUTING_TABLE:" + string(this->id), this->mixers, [](bool ok){
         if(not ok){
             cout << "Failed to publish known nodes" << endl;
         }
@@ -124,6 +117,8 @@ void GetMessageFromClients(std::string message){
     msgs.push_back(message);
 }
 
+// TODO: has to wait for other server
+// figure out how to take turns
 void Mixer::StartRoundAsMixer(){
     rpc::client client(this->public_ip, rpc::constants::DEFAULT_PORT);
     for(auto x : msgs){
@@ -147,27 +142,59 @@ void Mixer::StartRoundAsCoordinator(){
     // Right now assume the messages have already been encrypted with the
     // receipents public keys
 
-    // Create a server that listens on port 8080
-    rpc::server srv(this->public_ip, rpc::constants::DEFAULT_PORT);
-    srv.bind("GetMessageFromClients", &GetMessageFromClients);
-    srv.run();
+
+    // Connect to a server
+    int vote;
+    for(std::string ip : this->mixers){
+        HttpClient httpclient("http://" + ip + ":8000");
+        MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+
+        try {
+            std::string x = c.request("mailman");
+            if(x == "mailmangranted"){
+                vote++;
+            }
+        } catch (JsonRpcException &e) {
+            cerr << e.what() << endl;
+        }
+    }
+    if(vote != mixers.size()){
+        // Mixer lost the election
+        this->StartRoundAsMixer();
+    }
+
+    HttpServer httpserver(8000);
+    MixerServer s(httpserver,
+                 JSONRPC_SERVER_V1V2);
+    s.StartListening();
+
+    //Ask for messages
+    for(std::string ip : this->mixers){
+        HttpClient httpclient("http://" + ip + ":8000");
+        MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+
+        try {
+           c.request("messages");
+        } catch (JsonRpcException &e) {
+            cerr << e.what() << endl;
+        }
+    }
 
     std::vector<unsigned char*> ciphers;
 
     // Encrypt each message with public key
     for(string x : msgs){
         unsigned char ciphertext[CIPHERTEXT_LEN];
-        crypto_box_seal(ciphertext, x.c_str(), x.length(), this->private_key);
-        cipher.push_back(ciphertext);
+        crypto_box_seal(ciphertext, reinterpret_cast<const unsigned char*>(x.c_str()),
+         x.length(), this->private_key);
+        ciphers.push_back(ciphertext);
     }
 
     // Shuffle the messages
-    Shuffle shu;
-    shu.Shuffle(ciphers, 5);
-
-    // Send them to the next node the next node.
+    Shuffle shu(ciphers, 5);
+    // Send them to the next node.
     // The next node will do the same thing 
-
+    s.StopListening();
 }
 
 void Mixer::ListenForMessages(){

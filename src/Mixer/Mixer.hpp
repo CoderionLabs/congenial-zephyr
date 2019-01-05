@@ -29,13 +29,13 @@
 #include <stdlib.h>//sizeof
 #include <netinet/in.h>//INADDR_ANY
 
-#include <rpc/client.h>
-#include <rpc/server.h>
+#include "mixerclient.h"
+#include "mixerserver.hpp"
+#include <jsonrpccpp/client/connectors/httpclient.h>
+#include <jsonrpccpp/server/connectors/httpserver.h>
 
 
 #define KEY_LENGTH  2048
-
-using namespace rpc;
 
 #define PORT 8080
 #define MAXSZ 4096
@@ -45,15 +45,16 @@ class Mixer
 private:
     dht::DhtRunner node;
     std::vector<std::string> myip;
-    std::vector<std::string> knownNodeAdresses;
-    std::string public_ip;
+    std::vector<std::string> mixers;
+    std::vector<std::string> mailboxes;
+    std::string mixer_ip;
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
     char id[20];
     int deadline;
     
 public:
-    Mixer();
+    Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes);
     void ListenForMessages();
     void StartRoundAsCoordinator();
     void StartRoundAsMixer();
