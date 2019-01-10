@@ -12,6 +12,7 @@ class MixerServer : public AbstractMixerServer
 private:
     std::vector<string> msgs;
     bool ismailman = false;
+    bool nextnode = true;
 public:
     MixerServer(AbstractServerConnector &conn, serverVersion_t type);
 
@@ -38,8 +39,20 @@ std::string MixerServer::request(const std::string& param1){
         }
     }
     if(param1 == "messages"){
+        this->msgs.erase(this->msgs.begin());
         if(!ismailman){
-            
+            if(this->msgs.empty()){
+                return "0";
+            }
+            return this->msgs[0];
+        }
+    }
+    if(param1 == "nextnode"){
+        if(nextnode){
+            nextnode = false;
+            return "yes";
+        }else{
+            return "no";
         }
     }
 }

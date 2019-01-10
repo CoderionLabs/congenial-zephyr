@@ -19,10 +19,13 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <stdlib.h>
+#include <cstdlib>
 #include "shuffle.hpp"
 #include <unistd.h>
 
 #include <stdio.h>
+#include <map>
 #include <sys/types.h>//socket
 #include <sys/socket.h>//socket
 #include <string.h>//memset
@@ -47,11 +50,15 @@ private:
     std::vector<std::string> myip;
     std::vector<std::string> mixers;
     std::vector<std::string> mailboxes;
+    std::vector<std::string> messages;
+    std::map<std::string, std::string> whos;
     std::string mixer_ip;
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
     char id[20];
     int deadline;
+    int readymixers = 0;
+    bool is_the_first = false;
     
 public:
     Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes);

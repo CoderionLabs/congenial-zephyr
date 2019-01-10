@@ -2,46 +2,14 @@
 
 using namespace std;
 using namespace jsonrpc;
-/* TODO:  this is the precedure
-    1. I need to computer a unique id for each node 
-        using a hash function with almost no colloions 
-    2. I have to computer public-private key pairs for each node
-    3. I need to upload the public keys into the DHT but
-        use a public key certificate
-    4. create an algorithm that pulls messages from a server
-    5. The server will randomize the ids and compute a route
-    6. The mixnet will then take in messages and encrypt each one
-        adding layers of encryption and noise to the message
-    7. Once this is finished  */
-// Setup the dht
 
-//Globals
-
-std::vector<std::string> msgs;
+map<string,string> ipspub;
 
 //TODO: Implement Bully leader election
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
 
     crypto_box_keypair(this->public_key, this->private_key);
-
-    /*char hostbuffer[256]; 
-    char *IPbuffer; 
-    struct hostent *host_entry; 
-  
-    // To retrieve host information 
-    host_entry = gethostbyname(hostbuffer); 
-    checkHostEntry(host_entry); 
-  
-    // To convert an Internet network 
-    // address into ASCII string 
-    IPbuffer = inet_ntoa(*((struct in_addr*) 
-                           host_entry->h_addr_list[0])); 
-  
-    // Get the public_ip of the current server
-    //this->public_ip = IPbuffer;*/
-
-    bool is_the_first = false;
     auto tmpid = this->node.getNodeId().to_c_str();
     
     memcpy(this->id, tmpid, sizeof(tmpid));    
@@ -54,46 +22,105 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     // listen on port 4222.
     this->node.run(4222, dht::crypto::generateIdentity(), true);
 
+    string plugin; const char* r = "ready";
+    plugin = string(reinterpret_cast<char*>(this->public_key)) + ":" + mixer_ip;
+
+    this->node.put(
+        dht::InfoHash::get("publickeys"),
+        dht::Value((const uint8_t*)plugin.c_str(), sizeof(plugin))
+    );
+
+    this->node.put(
+        dht::InfoHash::get("ready"),
+        dht::Value((const uint8_t*) r)
+    );
+
+    // Wait for all the other nodes to be ready
+    while(true){
+        this->node.get(
+            dht::InfoHash::get("ready"),
+            [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                for (const auto& v : values)
+                    this->readymixers++;
+                return true; // keep looking for values
+            },
+            [](bool success) {
+                std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
+            }
+        );
+
+        if(this->readymixers == mixers.size()){
+            break;
+        }else{
+            this->readymixers = 0;
+        }
+    }
+
+    //Get the public keys still work to do 
+    this->node.get(
+        dht::InfoHash::get("publickeys"),
+            [](const std::vector<std::shared_ptr<dht::Value>>& values) {
+                for (const auto& v : values)
+                    std::cout << "Got value: " << *v << std::endl
+
+                    string x = string(reinterpret_cast<char*>(v.get());
+
+                    size_t pos = 0;
+                    std::string token;
+                    pos = x.find(":");
+                    string pub = x.substr(0,pos);
+                    string ip = x.erase(0, pos + string(":").length());
+                    GiveMeDataForPublic(pub, ip);
+                return true; // keep looking for values
+            },
+            [](bool success) {
+                std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
+            }
+    );
+
     // The first node in the network will not use a bootstrap
     // node to join the network. I will use hardcoded addresses
     // so that a node can join the network.
     this->node.bootstrap("142.93.188.57", "4222");
 
-    // put some data on the dht
-    this->node.putSigned("IP_LIST", this->myip, [](bool ok){
+    this->node.putSigned("IP_LIST", this->mixer_ip, [](bool ok){
         if(not ok){
             cout << "Failed to add adress" << endl;
         }
     });
 
-    // TODO: Fix this later
     this->node.get("FIRST", [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
         // Callback called when values are found
         for (const auto& value : values){
             std::cout << "Found value: " << *value << std::endl;
-            is_the_first = true;
             return true;
         }
+        this->is_the_first = true;
         return false; // return false to stop the search
     });
 
-    // Get some known nodes from other nodes
-    this->node.get("IP_LIST", [](const std::vector<std::shared_ptr<dht::Value>>& values) {
-        // Callback called when values are found
-        for (const auto& value : values)
-            std::cout << "Found value: " << *value << std::endl;
-        return true; // return false to stop the search
-    });
+    // If we are the first tell other nodes to back off
+    if(this->is_the_first){
+        this->node.putSigned("FIRST", this->mixer_ip, [](bool ok){
+            if(not ok){
+                cout << "Failed to add adress" << endl;
+            }
+        });
+    }
 
     this->node.join();
     std::thread t1(ListenForMessages);
     t1.join();
 
-    if(is_the_first){
+    if(this->is_the_first){
         this->StartRoundAsCoordinator();
     }else{
         this->StartRoundAsMixer();
     }
+}
+
+void GiveMeDataForPublic(std::string pub, std::string ip){
+    ipspub[ip] = pub;
 }
 
 Mixer::~Mixer(){
@@ -113,53 +140,19 @@ Mixer::~Mixer(){
     //this->node.shutdown();
 }
 
-void GetMessageFromClients(std::string message){
-    msgs.push_back(message);
-}
-
 // TODO: has to wait for other server
 // figure out how to take turns
 void Mixer::StartRoundAsMixer(){
-    rpc::client client(this->public_ip, rpc::constants::DEFAULT_PORT);
-    for(auto x : msgs){
-        client.send("GetMessageFromClients", x);
-    }
+    HttpServer httpserver(8000);
+    MixerServer s(httpserver,
+                 JSONRPC_SERVER_V1V2);
+    s.StartListening();
     //std::cout << "The result is: " << result << std::endl;
 }
 
 void Mixer::StartRoundAsCoordinator(){
-     // Start another thread that listens for incoming messages
-
-    //Sets the deadline to 20 seconds
-    // TODO: in the future set this acording to the amount
-    // of connected clients.
-    //this->deadline = 20;
-    
-    // TODO: Download messages from each server and shuffle them
-    // Send an rpc to all servers and tell them to send their messages
-    // to me 
-    
-    // Right now assume the messages have already been encrypted with the
-    // receipents public keys
-
-
     // Connect to a server
-    int vote;
-    for(std::string ip : this->mixers){
-        HttpClient httpclient("http://" + ip + ":8000");
-        MixerClient c(httpclient, JSONRPC_CLIENT_V2);
-
-        try {
-            std::string x = c.request("mailman");
-            if(x == "mailmangranted"){
-                vote++;
-            }
-        } catch (JsonRpcException &e) {
-            cerr << e.what() << endl;
-        }
-    }
-    if(vote != mixers.size()){
-        // Mixer lost the election
+    if(!this->is_the_first){
         this->StartRoundAsMixer();
     }
 
@@ -170,31 +163,74 @@ void Mixer::StartRoundAsCoordinator(){
 
     //Ask for messages
     for(std::string ip : this->mixers){
-        HttpClient httpclient("http://" + ip + ":8000");
-        MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+        bool go = true;
+        while(go){
+            HttpClient httpclient("http://" + ip + ":8000");
+            MixerClient c(httpclient, JSONRPC_CLIENT_V2);
 
-        try {
-           c.request("messages");
-        } catch (JsonRpcException &e) {
-            cerr << e.what() << endl;
+            try {
+               auto msg = c.request("messages");
+               if(msg == "0") go = false;
+               this->messages.push_back(msg);
+            } catch (JsonRpcException &e) {
+                cerr << e.what() << endl;
+            }
         }
     }
 
     std::vector<unsigned char*> ciphers;
 
     // Encrypt each message with public key
-    for(string x : msgs){
-        unsigned char ciphertext[CIPHERTEXT_LEN];
+    for(string x : this->messages){
+        unsigned char ciphertext[crypto_box_SEALBYTES + x.size()];
         crypto_box_seal(ciphertext, reinterpret_cast<const unsigned char*>(x.c_str()),
          x.length(), this->private_key);
         ciphers.push_back(ciphertext);
     }
 
     // Shuffle the messages
-    Shuffle shu(ciphers, 5);
-    // Send them to the next node.
-    // The next node will do the same thing 
+    auto v1 = rand() % RAND_MAX;
+    Shuffle shu(ciphers, v1);
+    
+    // Find a new mixnet server
+    std::string newNodeIp;
+    for(std::string ip : this->mixers){
+        bool go = true;
+        while(go){
+            HttpClient httpclient("http://" + ip + ":8000");
+            MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+
+            try {
+               auto msg = c.request("nextnode");
+               if(msg == "yes"){
+                   go = false;
+                   newNodeIp = ip;
+               }
+            } catch (JsonRpcException &e) {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+    if(!newNodeIp.empty()){
+        senddata(newNodeIp, this->messages);
+    }else{
+        // Do nothing for now
+    }
     s.StopListening();
+}
+
+// Send data to the next node
+void senddata(std::string ip, std::vector<std::string> msgs){
+    HttpClient httpclient("http://" + ip + ":8000");
+    MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+
+    try {
+        for(auto s : msgs){
+            auto result = c.getMessage(s);
+        }
+    } catch (JsonRpcException &e) {
+        cerr << e.what() << endl;
+    }
 }
 
 void Mixer::ListenForMessages(){
@@ -242,7 +278,7 @@ void Mixer::ListenForMessages(){
                     close(newsockfd);
                     break;
                 }
-                msgs.push_back(msg);
+                this->messages.push_back(msg);
 
                 char* ack = "Got your message";
                 send(newsockfd, ack, sizeof(ack), 0);
