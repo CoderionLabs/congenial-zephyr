@@ -4,7 +4,7 @@
 
 #ifndef JSONRPC_CPP_STUB_MIXERCLIENT_H_
 #define JSONRPC_CPP_STUB_MIXERCLIENT_H_
-#define throw(...)
+//#define throw(...) is deprecated but still compiles
 
 #include <jsonrpccpp/client.h>
 

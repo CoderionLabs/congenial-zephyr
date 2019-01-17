@@ -8,9 +8,9 @@
 
 //Core Libs
 #include <fstream>
-#include <openssl/sha.h>
 #include <opendht.h>
 #include <vector>
+#include <random>
 #include <fstream>
 #include <thread>
 #include <sodium.h>
@@ -23,6 +23,10 @@
 #include <cstdlib>
 #include "shuffle.hpp"
 #include <unistd.h>
+
+#include <thread>
+#include <future>
+#include <ctime>
 
 #include <stdio.h>
 #include <map>
@@ -63,11 +67,12 @@ private:
 public:
     Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes);
     //void ListenForMessages();
-    void StartRoundAsCoordinator();
     void StartRoundAsMixer();
     ~Mixer();
 };
 
+void senddata(std::string ip, std::string msg);
+void StartServerInBackground();
 void GetPrimaryIp(char* buffer, size_t buflen);
 void ListenForMessages();
 

@@ -2,8 +2,13 @@
 
 using namespace jsonrpc;
 
+
+//GLOBALS...
+HttpServer httpserver(8000);
+MixerServer s(httpserver,
+            JSONRPC_SERVER_V1V2);
 map<string,string> ipspub;
-std::vector<std::string> messages;
+std::vector<std::string> requests;
 
 //TODO: Implement Bully leader election
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
@@ -84,14 +89,8 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
 
     this->node.join();
 
-    std::thread t1(ListenForMessages);
-    t1.join();
-
-    if(this->is_the_first){
-        this->StartRoundAsCoordinator();
-    }else{
-        this->StartRoundAsMixer();
-    }
+    
+    this->StartRoundAsMixer();
 }
 
 void GiveMeDataForPublic(std::string pub, std::string ip){
@@ -115,96 +114,64 @@ Mixer::~Mixer(){
     //this->node.shutdown();
 }
 
-// TODO: has to wait for other server
-// figure out how to take turns
-void Mixer::StartRoundAsMixer(){
-    HttpServer httpserver(8000);
-    MixerServer s(httpserver,
-                 JSONRPC_SERVER_V1V2);
+void StartServerInBackground(){
     s.StartListening();
-
-    
-    //std::cout << "The result is: " << result << std::endl;
+    std::this_thread::sleep_until(std::chrono::system_clock::now() +
+    std::chrono::hours(std::numeric_limits<int>::max()));
 }
 
-void Mixer::StartRoundAsCoordinator(){
-    // Connect to a server
-    if(!this->is_the_first){
-        this->StartRoundAsMixer();
-    }
+void Mixer::StartRoundAsMixer(){
 
-    HttpServer httpserver(8000);
-    MixerServer s(httpserver,
-                 JSONRPC_SERVER_V1V2);
-    s.StartListening();
+    //Start a server in the background
+    auto f = std::async(std::launch::async, StartServerInBackground);
 
-    //Ask for messages
-    for(std::string ip : this->mixers){
-        bool go = true;
-        while(go){
-            HttpClient httpclient("http://" + ip + ":8000");
-            MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+    //Start a message listener in the background
+    auto f = std::async(std::launch::async, ListenForMessages);
 
-            try {
-               auto msg = c.request("messages");
-               if(msg == "0") go = false;
-               messages.push_back(msg);
-            } catch (JsonRpcException &e) {
-                cerr << e.what() << endl;
+
+    // Decrypt all the requests and send them to their
+    // approrite mixers
+    while(true){
+        std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests));
+        s.msgs.clear();
+        if(requests.size() != 0){
+            auto tmprequest = requests;
+            requests.clear();
+
+            std::mt19937 rng;
+            rng.seed(std::random_device()());
+            std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
+
+            auto x = dist6(rng);
+
+            Shuffle shu(tmprequest, (int) x);
+
+            // Strip off a layer of encryption and send to the next
+            // mixer.
+            for(auto x : shu.vec){
+                unsigned char* decrypted;
+                crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
+                x.length(), this->public_key, this->private_key);
+
+                std::string conv = reinterpret_cast<char*>(decrypted);
+                auto pos = conv.find(":");
+                std::string nextmixer = conv.substr(0, pos);
+                conv.erase(0, pos + 1);
+
+                senddata(nextmixer, conv);
             }
         }
     }
-
-    std::vector<unsigned char*> ciphers;
-
-    // Encrypt each message with public key
-    for(string x : messages){
-        unsigned char ciphertext[crypto_box_SEALBYTES + x.size()];
-        crypto_box_seal(ciphertext, reinterpret_cast<const unsigned char*>(x.c_str()),
-         x.length(), this->private_key);
-        ciphers.push_back(ciphertext);
-    }
-
-    // Shuffle the messages
-    auto v1 = rand() % RAND_MAX;
-    Shuffle shu(ciphers, v1);
     
-    // Find a new mixnet server
-    std::string newNodeIp;
-    for(std::string ip : this->mixers){
-        bool go = true;
-        while(go){
-            HttpClient httpclient("http://" + ip + ":8000");
-            MixerClient c(httpclient, JSONRPC_CLIENT_V2);
-
-            try {
-               auto msg = c.request("nextnode");
-               if(msg == "yes"){
-                   go = false;
-                   newNodeIp = ip;
-               }
-            } catch (JsonRpcException &e) {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-    if(!newNodeIp.empty()){
-        senddata(newNodeIp, messages);
-    }else{
-        // Do nothing for now
-    }
-    s.StopListening();
 }
 
 // Send data to the next node
-void senddata(std::string ip, std::vector<std::string> msgs){
+void senddata(std::string ip, std::string msg){
     HttpClient httpclient("http://" + ip + ":8000");
     MixerClient c(httpclient, JSONRPC_CLIENT_V2);
 
     try {
-        for(auto s : msgs){
-            auto result = c.getMessage(s);
-        }
+        c.getMessage(msg);
     } catch (JsonRpcException &e) {
         cerr << e.what() << endl;
     }
@@ -260,7 +227,7 @@ void ListenForMessages(){
                     std::string str = ConvertMapToString(ipspub);
                     send(newsockfd, str.c_str(), sizeof(str), 0);
                 }else{
-                    messages.push_back(msg);
+                    requests.push_back(msg);
                     char* ack = "MessageRecieved";
                     send(newsockfd, ack, sizeof(ack), 0);
                 }

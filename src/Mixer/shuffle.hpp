@@ -11,8 +11,8 @@ class Shuffle
 public:
     void UnShuffle();
     Shuffle(std::vector<T> input, int seed);
-private:
     std::vector<T> vec;
+private:
     int seed;
     int size;
 };
