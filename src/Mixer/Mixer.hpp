@@ -50,7 +50,7 @@ private:
     std::vector<std::string> myip;
     std::vector<std::string> mixers;
     std::vector<std::string> mailboxes;
-    std::vector<std::string> messages;
+    //std::vector<std::string> messages;
     std::map<std::string, std::string> whos;
     std::string mixer_ip;
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
@@ -62,7 +62,7 @@ private:
     
 public:
     Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes);
-    void ListenForMessages();
+    //void ListenForMessages();
     void StartRoundAsCoordinator();
     void StartRoundAsMixer();
     ~Mixer();
@@ -70,6 +70,10 @@ public:
 
 void GetPrimaryIp(char* buffer, size_t buflen);
 void ListenForMessages();
+
+// Basic conversion functions needed for sending public keys
+std::string ConvertMapToString(std::map<string,string> mymap);
+std::map<string,string> ConvertStringToMap(std::string mapstring);
 
 // Returns hostname for the local computer 
 void checkHostName(int hostname) 

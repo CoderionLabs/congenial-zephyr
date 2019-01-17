@@ -1,9 +1,9 @@
 #include "Mixer.hpp"
 
-using namespace std;
 using namespace jsonrpc;
 
 map<string,string> ipspub;
+std::vector<std::string> messages;
 
 //TODO: Implement Bully leader election
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
@@ -22,17 +22,22 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     // listen on port 4222.
     this->node.run(4222, dht::crypto::generateIdentity(), true);
 
-    string plugin; const char* r = "ready";
+    // The first node in the network will not use a bootstrap
+    // node to join the network. Mixer address will be loaded from the 
+    // config file. The first mixer in the list will be used as a bootstrap node
+    this->node.bootstrap(mixers[0], "4222");
+
+    string plugin; string r = "ready";
     plugin = string(reinterpret_cast<char*>(this->public_key)) + ":" + mixer_ip;
 
     this->node.put(
         dht::InfoHash::get("publickeys"),
-        dht::Value((const uint8_t*)plugin.c_str(), sizeof(plugin))
+        dht::Value((const uint8_t*)plugin.data(), sizeof(plugin))
     );
 
     this->node.put(
         dht::InfoHash::get("ready"),
-        dht::Value((const uint8_t*) r)
+        dht::Value((const uint8_t*) r.data(), r.size())
     );
 
     // Wait for all the other nodes to be ready
@@ -60,17 +65,16 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     this->node.get(
         dht::InfoHash::get("publickeys"),
             [](const std::vector<std::shared_ptr<dht::Value>>& values) {
-                for (const auto& v : values)
-                    std::cout << "Got value: " << *v << std::endl
-
-                    string x = string(reinterpret_cast<char*>(v.get());
-
+                for (const auto& v : values){
+                    std::string mydata {v->data.begin(), v->data.end()};
+                    
                     size_t pos = 0;
                     std::string token;
-                    pos = x.find(":");
-                    string pub = x.substr(0,pos);
-                    string ip = x.erase(0, pos + string(":").length());
+                    pos = mydata.find(":");
+                    string pub = mydata.substr(0,pos);
+                    string ip = mydata.erase(0, pos + string(":").length());
                     GiveMeDataForPublic(pub, ip);
+                }
                 return true; // keep looking for values
             },
             [](bool success) {
@@ -78,37 +82,8 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             }
     );
 
-    // The first node in the network will not use a bootstrap
-    // node to join the network. I will use hardcoded addresses
-    // so that a node can join the network.
-    this->node.bootstrap("142.93.188.57", "4222");
-
-    this->node.putSigned("IP_LIST", this->mixer_ip, [](bool ok){
-        if(not ok){
-            cout << "Failed to add adress" << endl;
-        }
-    });
-
-    this->node.get("FIRST", [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
-        // Callback called when values are found
-        for (const auto& value : values){
-            std::cout << "Found value: " << *value << std::endl;
-            return true;
-        }
-        this->is_the_first = true;
-        return false; // return false to stop the search
-    });
-
-    // If we are the first tell other nodes to back off
-    if(this->is_the_first){
-        this->node.putSigned("FIRST", this->mixer_ip, [](bool ok){
-            if(not ok){
-                cout << "Failed to add adress" << endl;
-            }
-        });
-    }
-
     this->node.join();
+
     std::thread t1(ListenForMessages);
     t1.join();
 
@@ -147,6 +122,8 @@ void Mixer::StartRoundAsMixer(){
     MixerServer s(httpserver,
                  JSONRPC_SERVER_V1V2);
     s.StartListening();
+
+    
     //std::cout << "The result is: " << result << std::endl;
 }
 
@@ -171,7 +148,7 @@ void Mixer::StartRoundAsCoordinator(){
             try {
                auto msg = c.request("messages");
                if(msg == "0") go = false;
-               this->messages.push_back(msg);
+               messages.push_back(msg);
             } catch (JsonRpcException &e) {
                 cerr << e.what() << endl;
             }
@@ -181,7 +158,7 @@ void Mixer::StartRoundAsCoordinator(){
     std::vector<unsigned char*> ciphers;
 
     // Encrypt each message with public key
-    for(string x : this->messages){
+    for(string x : messages){
         unsigned char ciphertext[crypto_box_SEALBYTES + x.size()];
         crypto_box_seal(ciphertext, reinterpret_cast<const unsigned char*>(x.c_str()),
          x.length(), this->private_key);
@@ -212,7 +189,7 @@ void Mixer::StartRoundAsCoordinator(){
         }
     }
     if(!newNodeIp.empty()){
-        senddata(newNodeIp, this->messages);
+        senddata(newNodeIp, messages);
     }else{
         // Do nothing for now
     }
@@ -233,7 +210,7 @@ void senddata(std::string ip, std::vector<std::string> msgs){
     }
 }
 
-void Mixer::ListenForMessages(){
+void ListenForMessages(){
     int sockfd; //to create socket
     int newsockfd; //to accept connection
     
@@ -278,16 +255,54 @@ void Mixer::ListenForMessages(){
                     close(newsockfd);
                     break;
                 }
-                this->messages.push_back(msg);
-
-                char* ack = "Got your message";
-                send(newsockfd, ack, sizeof(ack), 0);
+                if(msg == "publickeys"){
+                    // Send the user all the public keys of the mixnodes
+                    std::string str = ConvertMapToString(ipspub);
+                    send(newsockfd, str.c_str(), sizeof(str), 0);
+                }else{
+                    messages.push_back(msg);
+                    char* ack = "MessageRecieved";
+                    send(newsockfd, ack, sizeof(ack), 0);
+                }
             } 
             exit(0);
          } else {
             close(newsockfd); //sock is closed BY PARENT
         }
-    } 
+    }
+}
+
+std::string ConvertMapToString(std::map<string,string> mymap){
+    std::string result;
+    for(auto const& x : mymap){
+        result += "{";
+        result += x.first;
+        result += ":";
+        result += x.second;
+        result += "}";
+        result += ",";
+    }
+    result.pop_back();
+    return result;
+}
+
+std::map<string,string> ConvertStringToMap(std::string mapstring){
+    std::map<string, string> result;
+    while(!mapstring.empty()){
+        auto pos = mapstring.find("{");
+        auto pos1 = mapstring.find(":");
+        string x = mapstring.substr(pos +1, (pos1 - pos) -1);
+
+        auto pos2 = mapstring.find("}");
+        string y = mapstring.substr(pos1 +1, (pos2 - pos1) -1);
+        result[x] = y;
+        try{
+            mapstring.erase(pos,pos2 + 2);
+        }catch(std::exception e){
+            break;
+        }
+    }
+    return result;
 }
 
 // Gets the global ip address of the server
