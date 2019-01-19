@@ -25,9 +25,8 @@ private:
    pairing_t pairing;   //The pair of bilinear map
 public:
     void setup(int rbits, int qbits);
-    void extract(element_t Qid, element_t Sid, std::string id);
-    std::string decrypt(element_t private_key, std::string content);
-    std::string encrypt(std::string msg, std::string id, char* xor_result);
+    void extract(element_t public_key_r, element_t private_key_r, std::string id);
 };
 
-
+std::string decrypt(element_t private_key, std::string content);
+std::string encrypt(std::string msg, std::string id, char* xor_result);

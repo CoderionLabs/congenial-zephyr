@@ -7,24 +7,24 @@ void PKG::setup(int rbits, int qbits){
     std::cout << "System Parameters Have been setup" << std::endl;
 }
 
-void PKG::extract(element_t public_key, element_t private_key, std::string id){
+void PKG::extract(element_t public_key_r, element_t private_key_r, std::string id){
     // TODO: Authentication code sent to email
-    element_init_G1(public_key, this->pairing);
-    element_init_G1(private_key, this->pairing);
+    element_init_G1(public_key_r, this->pairing);
+    element_init_G1(private_key_r, this->pairing);
     char* ID = const_cast<char*>(id.c_str());
-    get_private_key(ID, pairing, masterkey, private_key);
-    get_public_key(ID, pairing, public_key);
+    get_private_key(ID, pairing, masterkey, private_key_r);
+    get_public_key(ID, pairing, public_key_r);
 }
 
-std::string PKG::encrypt(std::string msg, std::string id, char* xor_result){
+std::string encrypt(std::string msg, std::string id, element_t P, element_t Ppub, pairing_t pairing){
     //TODO: send U,V,nonce, and ciphertext to the reciever
     element_t U;
+    char xor_result[SIZE];
     char shamessage[SIZE];                                 // Sha1 Hash    
     sha_fun(const_cast<char*>(msg.c_str()), shamessage);   //Get the message digest
     
-    element_init_G1(U, this->pairing);
-    encryption(const_cast<char*>(msg.c_str()), const_cast<char*>(id.c_str()),
-     P, Ppub, U, xor_result, this->pairing);
+    element_init_G1(U, pairing);
+    encryption(shamessage, const_cast<char*>(id.c_str()),P, Ppub, U, xor_result, pairing);
 
 
     unsigned char nonce[crypto_secretbox_NONCEBYTES];
@@ -51,7 +51,7 @@ std::string PKG::encrypt(std::string msg, std::string id, char* xor_result){
     return j.dump();
 }
 
-std::string PKG::decrypt(element_t private_key, std::string content){
+std::string decrypt(element_t private_key, std::string content, pairing_t pairing){
     char xor_result_receiver[SIZE];
     json j = json::parse(content);
     std::string u = j["u"];
@@ -62,7 +62,7 @@ std::string PKG::decrypt(element_t private_key, std::string content){
     element_t U;
     element_from_bytes(U, const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(u.c_str())));
 
-    decryption(private_key, this->pairing, U, const_cast<char*>(v.c_str()), xor_result_receiver);
+    decryption(private_key, pairing, U, const_cast<char*>(v.c_str()), xor_result_receiver);
 
     unsigned char* decrypted;
     if (crypto_secretbox_open_easy(decrypted, reinterpret_cast<const unsigned char*>(c.c_str()), sizeof(c),
