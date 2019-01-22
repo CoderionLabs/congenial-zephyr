@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <utility>
 #include <ibe/bf_4_1.hpp>
 #include <sodium/crypto_secretbox.h>
 #include <sodium/randombytes.h>
@@ -34,7 +35,6 @@ public:
     element_t P, Ppub, masterkey; // Master public and private keys
     pairing_t pairing;            //The pair of bilinear map
     void setup(int rbits, int qbits);
-
     void extract(element_t public_key_r, element_t private_key_r, std::string id);
 };
 
