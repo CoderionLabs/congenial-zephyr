@@ -17,7 +17,7 @@ std::string encrypt(std::string msg, std::string id, element_t P, element_t Ppub
     //TODO: send U,V,nonce, and ciphertext to the reciever
     element_t U;
     char xor_result[SIZE];
-    memset(xor_result, 0, sizeof(char)*SIZE);
+     memset(xor_result, 0, sizeof(char)*SIZE);
 
     char shamessage[SIZE];                                 // Sha1 Hash    
     sha_fun(&msg[0], shamessage);   //Get the message digest

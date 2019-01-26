@@ -9,20 +9,7 @@
 
 int main(){
     using namespace std;
-
-    /*unsigned char key[crypto_secretbox_KEYBYTES];
-    unsigned char nonce[crypto_secretbox_NONCEBYTES];
-    unsigned char ciphertext[CIPHERTEXT_LEN];
-
-    crypto_secretbox_keygen(key);
-    randombytes_buf(nonce, sizeof nonce);
-    crypto_secretbox_easy(ciphertext, MESSAGE, MESSAGE_LEN, nonce, key);
-
-    unsigned char decrypted[MESSAGE_LEN];
-    if (crypto_secretbox_open_easy(decrypted, ciphertext, CIPHERTEXT_LEN, nonce, key) != 0) {
-        std::cout << "Failed" << std::endl;
-    }
-    std::cout << decrypted << std::endl;*/
+    // Test 
     std::string message = "You can't just stop here you still have more ahead.";
     std::string id = "friedrichdoku";
 
