@@ -29,7 +29,6 @@ int main(){
     PKG p;
     p.setup(5,5);
     element_t public_key, private_key;
-
     p.extract(public_key, private_key, id);
 
     auto str = encrypt(message,id,p.P, p.Ppub,p.pairing);

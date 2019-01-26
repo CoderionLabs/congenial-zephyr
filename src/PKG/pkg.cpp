@@ -9,9 +9,8 @@ void PKG::extract(element_t public_key_r, element_t private_key_r, std::string i
     // TODO: Authentication code sent to email
     element_init_G1(public_key_r, this->pairing);
     element_init_G1(private_key_r, this->pairing);
-    char* ID = const_cast<char*>(id.c_str());
-    get_private_key(ID, this->pairing, this->masterkey, public_key_r);
-    get_public_key(ID, this->pairing, private_key_r);
+    get_private_key(&id[0], this->pairing, this->masterkey, public_key_r);
+    get_public_key(&id[0], this->pairing, private_key_r);
 }
 
 std::string encrypt(std::string msg, std::string id, element_t P, element_t Ppub, pairing_t pairing){
@@ -48,7 +47,7 @@ std::string encrypt(std::string msg, std::string id, element_t P, element_t Ppub
         cereal::BinaryOutputArchive oarchive(ss);
 
         oarchive(c); // Write the data to the archive
-    } 
+    }
 
 
     //assert(x == U);
@@ -73,6 +72,8 @@ std::string decrypt(element_t private_key, std::string content, pairing_t pairin
     element_init_G1(U, pairing);
     element_from_bytes(U, tmp);
 
+    char xord[c.v.length()];
+    
     decryption(private_key, pairing, U, &c.v[0], xor_result_receiver);
 
     unsigned char decrypted[52]; //TODO: Change this later
