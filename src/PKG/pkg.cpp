@@ -1,46 +1,49 @@
 #include "pkg.hpp"
 
-void PKG::setup(int rbits, int qbits){
-    setup_sys(rbits, qbits, this->P, this->Ppub, this->pairing, this->masterkey);
-    std::cout << "System Parameters Have been setup" << std::endl;
+void PKG::setup(){
+     //initialize IBE library
+    IBE_init();
+
+    //generate new system parameters:
+    //128-bit prime, 64-bit subgroup size
+
+    IBE_setup(params, master, 512, 160, "dokuenterprise");
 }
 
-void PKG::extract(element_t public_key_r, element_t private_key_r, std::string id){
-    // TODO: Authentication code sent to email
-    element_init_G1(public_key_r, this->pairing);
-    element_init_G1(private_key_r, this->pairing);
-    get_private_key(&id[0], this->pairing, this->masterkey, private_key_r);
-    get_public_key(&id[0], this->pairing, public_key_r);
+void PKG::extract(std::string id, byte_string_t key){
+   // TODO: Authenticate
+   byte_string_t x;
+   IBE_extract(key, this->master, id.c_str(), this->params);
 }
 
-std::string encrypt(std::string msg, std::string id, element_t P, element_t Ppub, pairing_t pairing){
-    //TODO: send U,V,nonce, and ciphertext to the reciever
-    element_t U;
-    char xor_result[SIZE];
-     memset(xor_result, 0, sizeof(char)*SIZE);
+std::string encrypt(std::string id, params_t pars, std::string msg){
+    byte_string_t secret;
+    byte_string_t U;
 
-    char shamessage[SIZE];                                 // Sha1 Hash    
-    sha_fun(&msg[0], shamessage);   //Get the message digest
-    
-    element_init_G1(U, pairing);
-    encryption(shamessage, &id[0],P, Ppub, U, xor_result, pairing);
+    IBE_KEM_encrypt(secret, U, &id[0], pars);
+
+    unsigned char* dd = (unsigned char*) malloc(sizeof(unsigned char) * 100);
+    convert_to_encrypt(secret, dd);
 
     unsigned char nonce[crypto_secretbox_NONCEBYTES];
-    unsigned char ciphertext[crypto_secretbox_MACBYTES  + msg.length()];
-    randombytes_buf(nonce, sizeof(nonce));
-    crypto_secretbox_easy(ciphertext, reinterpret_cast<unsigned char*>(&msg[0]),
-        msg.length(), nonce, reinterpret_cast<unsigned char*>(shamessage));
- 
-    // Make a string
-    unsigned char ubytes[element_length_in_bytes(U)];
-    element_to_bytes(ubytes, U);
+    unsigned char ciphertext[crypto_secretbox_MACBYTES + sizeof(msg)];
+    unsigned char out[crypto_hash_sha256_BYTES];
+    crypto_hash_sha256(out, dd, sizeof(dd));
+    
+    //cout << out << endl;
 
-    std::string u(reinterpret_cast<char*>(ubytes));
-    std::string v(xor_result);
-    std::string n(reinterpret_cast<char*>(nonce));
-    std::string ciphertextstr(reinterpret_cast<char*>(ciphertext));
+    randombytes_buf(nonce, sizeof nonce);
+    crypto_secretbox_easy(ciphertext, reinterpret_cast<const unsigned char*>(msg.c_str()),
+         msg.size(), nonce, out);
 
-    contents c{u,v,n,ciphertextstr};
+    // Put nonce, ciphertext, and U into the envolope
+
+    std::string nonce_str = reinterpret_cast<char*>(nonce);
+    std::string ciphertext_str = reinterpret_cast<char*>(ciphertext);
+    std::string U_str = reinterpret_cast<char*>(U->data);
+    // Length of U is sizeof(U->data)/sizeof(unsigned char);
+
+    contents c{nonce_str, ciphertext_str, U_str};
     //Serialize
     std::stringstream ss; 
 
@@ -51,39 +54,60 @@ std::string encrypt(std::string msg, std::string id, element_t P, element_t Ppub
         oarchive(c); // Write the data to the archive
     }
 
-    std::cout << shamessage << std::endl;
-    //assert(x == U);
-    std::cout << "ENCRYPTOIN PASSED" << std::endl;
     return ss.str();
 }
 
-std::string decrypt(element_t private_key, std::string content, pairing_t pairing){
-    char xor_result_receiver[SIZE];
-    memset(xor_result_receiver, 0, sizeof(char)*SIZE);
-    
+std::string decrypt(std::string cipher, byte_string_t key, params_t pars){
     std::stringstream ss;
-    ss.write(content.c_str(),content.size());
+    ss.write(cipher.c_str(),cipher.size());
     contents c;
     {
         cereal::BinaryInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
     }
-
-    element_t U;
-    unsigned char* tmp = reinterpret_cast<unsigned char*>(&c.u[0]);
-
-    element_init_G1(U, pairing);
-    element_from_bytes(U, tmp);
-
-    char xord[c.v.length()];
     
-    decryption(private_key, pairing, U, &c.v[0], xor_result_receiver);
-    std::cout << xor_result_receiver << std::endl;
-
-    unsigned char decrypted[52]; //TODO: Change this later
-    if (crypto_secretbox_open_easy(decrypted, reinterpret_cast<unsigned char*>(&c.ciphertext[0]), c.ciphertext.length(),
-        reinterpret_cast<unsigned char*>(&c.nonce[0]), reinterpret_cast<unsigned char*>(xor_result_receiver)) != 0) {
-        std::cout << "Failed" << std::endl;
+    byte_string_t U;
+    
+    unsigned char tmp[sizeof(c.u)];
+    for(int i = 0; i < c.u.size(); i++){
+        tmp[i] = c.u[i];
     }
-    return reinterpret_cast<char*>(decrypted);
+
+    U->data = tmp;
+    U->len = sizeof(U->data)/sizeof(unsigned char);
+    U->origlen = sizeof(U->data)/sizeof(unsigned char);
+
+
+    byte_string_t secret;
+    IBE_KEM_decrypt(secret, U, key, pars);
+
+
+    unsigned char* dd2 = (unsigned char*) malloc(sizeof(unsigned char) * 100);
+    convert_to_encrypt(secret, dd2);
+    // Test Recipent
+    unsigned char out2[crypto_hash_sha256_BYTES];
+    crypto_hash_sha256(out2, dd2, sizeof(dd2));
+    //cout << out2 << endl;
+
+    unsigned char decrypted[100000]; //TODO: hack fix later
+    if (crypto_secretbox_open_easy(decrypted, reinterpret_cast<unsigned char*>(&c.u[0]),
+     c.u.size(),  reinterpret_cast<unsigned char*>(&c.nonce[0]), out2) != 0) {
+        printf("Failed to decrypted message\n");
+    }else{
+        std::cout << decrypted << std::endl;
+    }
+
+}
+
+void convert_to_encrypt(byte_string_t x, unsigned char* ur){
+   char s[1000]; std::string result = "";
+   for(int i = 0; i < x->len; i++){
+        snprintf(s, 1000, "%02X", x->data[i]);
+        result += s;
+        memset(s, 0, sizeof s);
+   }
+
+   for(int i = 0; i < result.size(); i++){
+       ur[i] =  result[i];
+   }
 }
