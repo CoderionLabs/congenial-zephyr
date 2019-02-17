@@ -2,7 +2,7 @@
 CC = g++
 
 CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM 
-LDFLAGS= -shared -L/usr/local/lib -lsibe -lsodium
+LDFLAGS= -shared -L/usr/local/lib -lsibe -lsodium -lboost_system
 
 SOURCES = $(shell echo *.cpp)
 HEADERS = $(shell echo *.hpp)

@@ -40,10 +40,9 @@
         "optional": "cpp",
         "string_view": "cpp",
         "variant": "cpp",
-        "__config": "cpp",
-        "__nullptr": "cpp",
-        "algorithm": "cpp",
         "clocale": "cpp",
+        "complex": "cpp",
+        "condition_variable": "cpp",
         "cstdarg": "cpp",
         "cstddef": "cpp",
         "cstdio": "cpp",
@@ -51,8 +50,13 @@
         "cstring": "cpp",
         "ctime": "cpp",
         "cwchar": "cpp",
-        "condition_variable": "cpp",
+        "forward_list": "cpp",
+        "future": "cpp",
         "memory": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "numeric": "cpp",
+        "__config": "cpp",
+        "__nullptr": "cpp",
+        "algorithm": "cpp"
     }
 }

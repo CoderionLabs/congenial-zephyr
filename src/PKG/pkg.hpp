@@ -9,9 +9,13 @@
 #include <utility>
 #include <string>
 #include <ibe/bf_4_1.hpp>
+#include <algorithm>
+#include <iterator>
+#include <boost/lexical_cast.hpp>
 #include <sodium/crypto_secretbox.h>
 #include <sodium/randombytes.h>
 #include <sodium/crypto_hash_sha256.h>
+#include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
@@ -25,11 +29,13 @@ struct contents{
     std::string nonce;
     std::string ciphertext;
     std::string u;
+    std::string size;
+    unsigned long ciphersize;
 
     template<class Archive>
     void serialize(Archive & archive)
     {
-        archive(nonce, ciphertext, u); 
+        archive(nonce, ciphertext, u, size, ciphersize); 
     }
 };
 typedef struct contents contents;
@@ -39,10 +45,11 @@ class PKG
 public:
     params_t params; // public
     byte_string_t master; //unknown to user
+    ~PKG();
     void setup();
     void extract(std::string id, byte_string_t key);
 };
 
 void convert_to_encrypt(byte_string_t x, unsigned char* ur);
-std::string decrypt(std::string cipher, byte_string_t key, params_t pars);
-std::string encrypt(std::string id, params_t pars, std::string msg);
+std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars);
+std::string pkg_encrypt(std::string id, params_t pars, std::string msg);
