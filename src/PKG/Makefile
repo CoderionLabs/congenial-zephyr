@@ -20,5 +20,10 @@ $(TARGET) : $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 
 install:
-	cp $(HEADERS) /usr/local/include/zepher
+	mkdir /usr/local/include/zephyr
+	cp $(HEADERS) /usr/local/include/zephyr
 	cp libpkg.so /usr/local/lib
+
+testfile:
+	g++ -std=c++11 test/test.cpp -lpkg
+	./a.out

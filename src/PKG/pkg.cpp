@@ -1,13 +1,13 @@
 #include "pkg.hpp"
 
-void PKG::setup(){
+void PKG::setup(std::string system){
      //initialize IBE library
     IBE_init();
 
     //generate new system parameters:
     //128-bit prime, 64-bit subgroup size
 
-    IBE_setup(this->params, this->master, 512, 160, "dokuenterprise");
+    IBE_setup(this->params, this->master, 512, 160, &system[0]);
     std::cout << "SETUP DONE" << std::endl;
 }
 
@@ -52,7 +52,7 @@ std::string pkg_encrypt(std::string id, params_t pars, std::string msg){
     randombytes_buf(nonce, sizeof(nonce));
 
     crypto_secretbox_easy(ciphertext, reinterpret_cast<unsigned char*>(&msg[0]),
-        msg.length(), nonce, out);
+        msg.length(), nonce, dd);
 
     std::cout << "CIPHERTEXT " << ciphertext << std::endl;
 
@@ -135,7 +135,7 @@ std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars){
     //int x = std::stoi(c.ciphersize);
     //std::cout << x << std::endl;
     
-    if (crypto_secretbox_open_easy(decrypted, ciphertmpgo, size, noncetmp, out2) != 0) {
+    if (crypto_secretbox_open_easy(decrypted, ciphertmpgo, size, noncetmp, dd2) != 0) {
         printf("Failed to decrypted message\n");
     }else{
         std::cout << decrypted << std::endl;

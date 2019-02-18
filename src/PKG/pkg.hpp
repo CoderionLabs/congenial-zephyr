@@ -47,7 +47,7 @@ public:
     params_t params; // public
     byte_string_t master; //unknown to user
     ~PKG();
-    void setup();
+    void setup(std::string system);
     void extract(std::string id, byte_string_t key);
 };
 

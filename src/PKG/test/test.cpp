@@ -17,10 +17,12 @@ int main(){
     using namespace std;
 
     PKG p;
-    p.setup();
-    byte_string_t key;
+    p.setup("dokuenterprise");
+    byte_string_t key, ad_key;
     auto str = pkg_encrypt("fried", p.params,"Everyone still has a ways to go.");
     p.extract("fried", key);
+    p.extract("ethan", ad_key);
+    auto j2 = pkg_decrypt(str, ad_key, p.params);
     auto j = pkg_decrypt(str, key, p.params);
     //byte_string_clear(key);
 }
