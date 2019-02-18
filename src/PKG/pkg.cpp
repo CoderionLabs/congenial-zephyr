@@ -45,7 +45,7 @@ std::string pkg_encrypt(std::string id, params_t pars, std::string msg){
     unsigned char nonce[crypto_secretbox_NONCEBYTES];
     unsigned char out[crypto_hash_sha256_BYTES];
     crypto_hash_sha256(out, dd, sizeof(dd));
-    
+
     std::cout << dd << std::endl;
     std::cout << "KEY " << out << std::endl;
 
@@ -63,15 +63,19 @@ std::string pkg_encrypt(std::string id, params_t pars, std::string msg){
         data[i] = U->data[i];
     }
 
+    // Convert to binary
+    std::string binary = std::bitset<8>(ciphersize).to_string();
+
     std::string nonce_str(reinterpret_cast<char*>(nonce));
     std::string ciphertext_str(reinterpret_cast<char*>(ciphertext));
     std::string U_str(data, data + U->len);
     std::string size = std::to_string(U->len);
+    std::string ciphersize_str(binary);
     // Length of U is sizeof(U->data)/sizeof(unsigned char);
 
-    contents c{nonce_str, ciphertext_str, U_str, ciphersize};
+    contents c{nonce_str, ciphertext_str, U_str, size, ciphersize_str};
     //Serialize
-    std::stringstream ss; 
+    std::stringstream ss;
 
     {
         // Create an output archive
@@ -80,7 +84,11 @@ std::string pkg_encrypt(std::string id, params_t pars, std::string msg){
         oarchive(c); // Write the data to the archive
     }
     byte_string_clear(U);
-    
+
+    /*std::cout << "LET ME TEST SOMETHING FIRST" << std::endl;
+    unsigned long sizel = stoul(ciphersize_str);
+    std::cout << "THIS IS IT " <<  sizel << std::endl;*/
+
     std::cout << "ENCRYPT DONE" << std::endl;
     return ss.str();
 }
@@ -92,13 +100,15 @@ std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars){
     {
         cereal::BinaryInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
-    }    
+    }
+    auto size = std::bitset<8>(c.ciphersize).to_ulong();;
+    std::cout << "THIS IS SIZE " << size << std::endl;
     byte_string_t U;
     byte_string_init(U, std::stoi(c.size));
     U->data = reinterpret_cast<unsigned char*>(&c.u[0]);
 
     byte_string_t secret;
-    
+
     IBE_KEM_decrypt(secret, U, key, pars);
     std::cout << "Decrypted died" << std::endl;
 
@@ -124,18 +134,19 @@ std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars){
     std::cout << "CIPHERTEXT " << ciphertmpgo << std::endl;
     //int x = std::stoi(c.ciphersize);
     //std::cout << x << std::endl;
-    if (crypto_secretbox_open_easy(decrypted, ciphertmpgo, c.ciphersize, noncetmp, out2) != 0) {
+    
+    if (crypto_secretbox_open_easy(decrypted, ciphertmpgo, size, noncetmp, out2) != 0) {
         printf("Failed to decrypted message\n");
     }else{
         std::cout << decrypted << std::endl;
     }
-    
+
     byte_string_clear(U);
     byte_string_clear(secret);
-    
+
     std::string result;
     result = reinterpret_cast<char*>(decrypted);
-    
+
     return result;
 }
 

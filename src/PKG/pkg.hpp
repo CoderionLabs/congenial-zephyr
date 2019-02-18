@@ -11,11 +11,12 @@
 #include <ibe/bf_4_1.hpp>
 #include <algorithm>
 #include <iterator>
+#include <bitset>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/lexical_cast.hpp>
 #include <sodium/crypto_secretbox.h>
 #include <sodium/randombytes.h>
 #include <sodium/crypto_hash_sha256.h>
-#include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
 
@@ -30,7 +31,7 @@ struct contents{
     std::string ciphertext;
     std::string u;
     std::string size;
-    unsigned long ciphersize;
+    std::string ciphersize;
 
     template<class Archive>
     void serialize(Archive & archive)
