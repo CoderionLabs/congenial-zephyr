@@ -20,7 +20,7 @@ $(TARGET) : $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 
 install:
-	mkdir /usr/local/include/zephyr
+	mkdir -p /usr/local/include/zephyr
 	cp $(HEADERS) /usr/local/include/zephyr
 	cp libpkg.so /usr/local/lib
 
