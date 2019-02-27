@@ -53,6 +53,14 @@
         "cwchar": "cpp",
         "condition_variable": "cpp",
         "memory": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "*.ipp": "cpp",
+        "forward_list": "cpp",
+        "future": "cpp",
+        "numeric": "cpp",
+        "valarray": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "csignal": "cpp"
     }
 }

@@ -1,11 +1,13 @@
 # g++ main.cpp `pkg-config --cflags glib-2.0` -lzepher
 CC = g++
 
-CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM 
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM  -I=$(ROOT_DIR)/include
 LDFLAGS= -shared -L/usr/local/lib -lsibe -lsodium -lboost_system
 
 SOURCES = $(shell echo *.cpp)
-HEADERS = $(shell echo *.hpp)
+HEADERS = $(ROOT_DIR)/include/json.hpp $(ROOT_DIR)/include/pkg.hpp $(ROOT_DIR)/include/utils.hpp
 OBJECTS=$(SOURCES:.cpp=.o)
 
 TARGET=libpkg.so

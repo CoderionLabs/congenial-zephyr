@@ -41,6 +41,18 @@ struct contents{
 };
 typedef struct contents contents;
 
+struct bytestring_wrap{
+    std::string data;
+    std::string size;
+
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(data,size); 
+    }
+};
+typedef struct bytestring_wrap bytestring_wrap;
+
 class PKG
 {
 public:
@@ -48,6 +60,8 @@ public:
     byte_string_t master; //unknown to user
     ~PKG();
     void setup(std::string system);
+    std::string serialize_params(params_t p);
+    std::string serialize_bytestring(byte_string_t b);
     void extract(std::string id, byte_string_t key);
 };
 

@@ -8,6 +8,10 @@ void PKG::setup(std::string system){
     //128-bit prime, 64-bit subgroup size
 
     IBE_setup(this->params, this->master, 512, 160, &system[0]);
+    /*FILE *fp;
+    fopen("file.txt", "w+");
+    params_out(fp, this->params);*/
+    //fclose(fp);
     std::cout << "SETUP DONE" << std::endl;
 }
 
@@ -21,6 +25,33 @@ void PKG::extract(std::string id, byte_string_t key){
    // TODO: Authenticate
    IBE_extract(key, this->master, &id[0], this->params);
    std::cout << "EXTRACT DONE" << std::endl;
+}
+
+std::string PKG::serialize_params(params_t p){
+    byte_string_t b;
+    IBE_serialize_params(b,p);
+    auto s = serialize_bytestring(b);
+    return s;
+}
+
+std::string PKG::serialize_bytestring(byte_string_t b){
+    unsigned char data[b->len];
+    for(int i = 0; i < b->len; i++){
+        data[i] = b->data[i];
+    }
+    std::string b_str(data, data + b->len);
+    std::string size = std::to_string(b->len);
+    
+    bytestring_wrap present{b_str, size};
+    //Serialize
+    std::stringstream ss;
+    {
+        // Create an output archive
+        cereal::BinaryOutputArchive oarchive(ss);
+
+        oarchive(present); // Write the data to the archive
+    }
+    return ss.str();
 }
 
 std::string pkg_encrypt(std::string id, params_t pars, std::string msg){
@@ -76,7 +107,6 @@ std::string pkg_encrypt(std::string id, params_t pars, std::string msg){
     contents c{nonce_str, ciphertext_str, U_str, size, ciphersize_str};
     //Serialize
     std::stringstream ss;
-
     {
         // Create an output archive
         cereal::BinaryOutputArchive oarchive(ss);
