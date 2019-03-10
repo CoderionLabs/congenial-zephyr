@@ -7,17 +7,66 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <future>
 #include <memory>
 #include <string>
 #include <fstream>
 #include <thread>
 #include <vector>
+#include <iostream>
+#include <zephyr/email.hpp>
 
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+#include <zephyr/pkg.hpp>
+extern "C"{
+    #include <sibe/ibe.h>
+    #include <sibe/ibe_progs.h>
+}
+CONF_CTX *cnfctx;
+params_t params;
+
+namespace beast = boost::beast;         
+namespace http = beast::http;           
+namespace websocket = beast::websocket; 
+namespace net = boost::asio;         
+using tcp = boost::asio::ip::tcp;  
+std::string serilized_parameters;
+PKG p;
+
+std::string from;
+std::string from_password;
+
+void send_email(std::string email, std::string code){
+    Email e;
+	int curlError = 0;
+	// e.dump();
+
+	e.setTo(email);
+	e.setFrom(from);
+	e.setSubject("Zephyr Authentication");
+	e.setCc("");
+	e.setBody("Enter this " + code);
+
+	e.setSMTP_host("smtps://smtp.gmail.com:465");
+	e.setSMTP_username(from);
+	e.setSMTP_password(from_password);
+
+	//e.addAttachment("junk.txt");
+	// e.addAttachment("email.h");
+	// e.addAttachment("main.cpp");
+
+	e.constructEmail();
+	e.dump();
+
+	curlError = e.send();
+
+	if (curlError){
+		std::cout << "Error sending email!" << std::endl;
+	}
+
+	else{
+		std::cout << "Email sent successfully!" << std::endl;
+	}
+}
 
 
 // Generate a random string to send to email
@@ -115,13 +164,15 @@ public:
         if(ec)
             fail(ec, "read");
 
-        // Authenticate
+        // Authenticate T
         std::ostringstream os; os << boost::beast::make_printable(buffer_.data());
         std::string email = os.str();
-        // TODO: Authenticate with email. Right now I wll make it simple and unsecure.
-        char code[6];
-        gen_random(code, 6);
-        std::cout << "Example code:" << code << std::endl;
+
+        char code[24];
+        gen_random(code,24);
+        std::cout << "Email recieved:" << email << std::endl; 
+        send_email(email, code);
+        
 
         ws_.text(ws_.got_text());
         ws_.async_write(
@@ -243,17 +294,25 @@ public:
 int main(int argc, char* argv[])
 {
     // Check command line arguments.
-    if (argc != 4)
+    if (argc != 6)
     {
         std::cerr <<
-            "Usage: pkgs <address> <port> <threads>\n" <<
+            "Usage: pkgs <address> <port> <threads> <gmailuser> <gmailpassword>\n" <<
             "Example:\n" <<
-            "    pkgs 0.0.0.0 8080 1\n";
+            "    pkgs 0.0.0.0 8080 1 example@gmail.com 'password'\n" <<
+            "    your password may need quotes if it has special characters";
         return EXIT_FAILURE;
     }
+
+    // Setup the PKG
+    p.setup("dokuenterprise");
+    serilized_parameters = p.serialize_params(p.params);
+
     auto const address = net::ip::make_address(argv[1]);
     auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
     auto const threads = std::max<int>(1, std::atoi(argv[3]));
+    from = argv[4];
+    from_password = argv[5];
 
     // The io_context is required for all I/O
     net::io_context ioc{threads};

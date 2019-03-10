@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cassert>
 #include <zephyr/pkg.hpp>
- extern "C"{
+extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
 }

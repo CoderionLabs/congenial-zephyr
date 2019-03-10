@@ -1,2 +1,5 @@
 a.out
 *.o
+pkgc
+pkgs
+test
