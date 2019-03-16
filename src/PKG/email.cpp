@@ -312,6 +312,8 @@ int Email::send(void) const
 	if (curl) {
 		/* Set username and password */
 		curl_easy_setopt(curl, CURLOPT_USERNAME, this->smtp_user.c_str());
+		curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
 		curl_easy_setopt(curl, CURLOPT_PASSWORD, this->smtp_password.c_str());
 
 		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0); // allows emails to be sent 
