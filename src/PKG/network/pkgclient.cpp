@@ -1,9 +1,9 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <cstdlib>
-#include <functional>
 #include <iostream>
-#include <memory>
 #include <string>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -11,228 +11,113 @@ namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-bool gotcode = false;
-bool readkey = false;
-bool readparams = false;
 std::string key, params;
 
-//------------------------------------------------------------------------------
-
-// Report a failure
-void
-fail(beast::error_code ec, char const* what)
-{
-    std::cerr << what << ": " << ec.message() << "\n";
-}
-
 // Sends a WebSocket message and prints the response
-class session : public std::enable_shared_from_this<session>
+int main(int argc, char** argv)
 {
-    tcp::resolver resolver_;
-    websocket::stream<beast::tcp_stream> ws_;
-    beast::multi_buffer buffer_;
-    std::string host_;
-    std::string text_;
-
-public:
-    // Resolver and socket require an io_context
-    explicit
-    session(net::io_context& ioc)
-        : resolver_(beast::make_strand(ioc))
-        , ws_(beast::make_strand(ioc))
+    try
     {
-    }
+        // Check command line arguments.
+        if(argc != 4)
+        {
+            std::cerr <<
+                "Usage: pkgc <host> <port> <text>\n" <<
+                "Example:\n" <<
+                "    pkgc echo.websocket.org 80 \"Hello, world!\"\n";
+            return EXIT_FAILURE;
+        }
 
-    // Start the asynchronous operation
-    void
-    run(
-        char const* host,
-        char const* port,
-        char const* text)
-    {
-        // Save these for later
-        host_ = host;
-        text_ = text;
+        auto const host = argv[1];
+        auto const port = argv[2];
+        auto const text = argv[3];
+
+        // The io_context is required for all I/O
+        net::io_context ioc;
+
+        // These objects perform our I/O
+        tcp::resolver resolver{ioc};
+        websocket::stream<tcp::socket> ws{ioc};
 
         // Look up the domain name
-        resolver_.async_resolve(
-            host,
-            port,
-            beast::bind_front_handler(
-                &session::on_resolve,
-                shared_from_this()));
-    }
-
-    void
-    on_resolve(
-        beast::error_code ec,
-        tcp::resolver::results_type results)
-    {
-        if(ec)
-            return fail(ec, "resolve");
-
-        // Set the timeout for the operation
-        beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+        auto const results = resolver.resolve(host, port);
 
         // Make the connection on the IP address we get from a lookup
-        beast::get_lowest_layer(ws_).async_connect(
-            results,
-            beast::bind_front_handler(
-                &session::on_connect,
-                shared_from_this()));
-    }
-
-    void
-    on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type)
-    {
-        if(ec)
-            return fail(ec, "connect");
-
-        // Turn off the timeout on the tcp_stream, because
-        // the websocket stream has its own timeout system.
-        beast::get_lowest_layer(ws_).expires_never();
-
-        // Set suggested timeout settings for the websocket
-        ws_.set_option(
-            websocket::stream_base::suggested_settings(
-                websocket::role_type::client));
+        net::connect(ws.next_layer(), results.begin(), results.end());
 
         // Set a decorator to change the User-Agent of the handshake
-        ws_.set_option(websocket::stream_base::decorator(
+        ws.set_option(websocket::stream_base::decorator(
             [](websocket::request_type& req)
             {
                 req.set(http::field::user_agent,
                     std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-client-async");
+                        " websocket-client-coro");
             }));
 
         // Perform the websocket handshake
-        ws_.async_handshake(host_, "/",
-            beast::bind_front_handler(
-                &session::on_handshake,
-                shared_from_this()));
-    }
+        ws.handshake(host, "/");
 
-    void
-    on_handshake(beast::error_code ec)
-    {
-        if(ec)
-            return fail(ec, "handshake");
-        
-        // Send the message
-        ws_.async_write(
-            net::buffer(text_),
-            beast::bind_front_handler(
-                &session::on_write,
-                shared_from_this()));
-        
-    }
+        // Send the email address
+        ws.write(net::buffer(std::string(text)));
 
-    void
-    on_write(
-        beast::error_code ec,
-        std::size_t bytes_transferred)
-    {
-        boost::ignore_unused(bytes_transferred);
-
-        if(ec)
-            return fail(ec, "write");
-        
-        // Read a message into our buffer
-        ws_.async_read(
-            buffer_,
-            beast::bind_front_handler(
-                &session::on_read,
-                shared_from_this()));
-    }
-
-    void
-    on_read(
-        beast::error_code ec,
-        std::size_t bytes_transferred)
-    {
-        boost::ignore_unused(bytes_transferred);
-
-        if(ec)
-            return fail(ec, "read");
-
-        // Send the code back
-        if(readkey){
-            std::ostringstream os; os << boost::beast::make_printable(buffer_.data());
-            key = os.str();
-            std::cout << "KEY:" << key << std::endl;
-            readparams = true;
-            readkey = false;
-        }else if(readparams){
-            std::ostringstream os; os << boost::beast::make_printable(buffer_.data());
-            params = os.str();
-            std::cout << "PARAMS:" << params << std::endl;
-            ws_.async_close(websocket::close_code::normal,
-            beast::bind_front_handler(
-                &session::on_close,
-                shared_from_this()));
-        }else if(!gotcode){
-            std::string code;
-            std::cout << beast::make_printable(buffer_.data()) << std::endl;
-            std::cin >> code;
-            ws_.async_write(
-                net::buffer(code),
-                beast::bind_front_handler(
-                &session::on_write,
-                shared_from_this()));
-            gotcode = true;
-        }else{
-            std::cout << beast::make_printable(buffer_.data()) << std::endl;
-            readkey = true;
-        }
-        buffer_.clear();
+        beast::flat_buffer buffer;
+        ws.read(buffer);
 
         // Close the WebSocket connection
-        /*ws_.async_close(websocket::close_code::normal,
-            beast::bind_front_handler(
-                &session::on_close,
-                shared_from_this()));*/
-    }
+        //ws.close(websocket::close_code::normal);
 
-    void
-    on_close(beast::error_code ec)
-    {
-        if(ec)
-            return fail(ec, "close");
-
-        // If we get here then the connection is closed gracefully
 
         // The make_printable() function helps print a ConstBufferSequence
-        std::cout << beast::make_printable(buffer_.data()) << std::endl;
+        std::ostringstream os;
+        os <<  beast::make_printable(buffer.data());
+        std::string prompt = os.str();
+        os.str("");
+        os.clear();
+        buffer.consume(buffer.size());
+
+        std::string code;
+        std::cout << prompt << std::endl;
+        std::cin >> code;
+        ws.write(net::buffer(std::string(code)));
+
+        ws.read(buffer);
+        os << beast::make_printable(buffer.data());
+        std::string req = os.str();
+        os.str("");
+        os.clear();
+        buffer.consume(buffer.size());
+        std::cout << "REQ" << req << std::endl;
+        if(req == "Looking good, I will send you your keys."){
+            std::cout << "Getting Keys...";
+            sleep(20);
+            ws.read(buffer);
+            os << beast::make_printable(buffer.data());
+            std::string key = os.str();
+            os.str("");
+            os.clear();
+            buffer.consume(buffer.size());
+
+            ws.read(buffer);
+            os << beast::make_printable(buffer.data());
+            std::string params = os.str();
+            os.str("");
+            os.clear();
+            buffer.consume(buffer.size());
+
+            std::cout << "DONE" << std::endl;
+            std::cout << "KEY " << key << std::endl;
+            std::cout << "PARAMS " << params << std::endl;
+            ws.close(websocket::close_code::normal);
+
+        }else{
+            std::cout << "FAILED" << std::endl;
+            ws.close(websocket::close_code::abnormal);
+        }
     }
-};
-
-//------------------------------------------------------------------------------
-
-int main(int argc, char** argv)
-{
-    // Check command line arguments.
-    if(argc != 4)
+    catch(std::exception const& e)
     {
-        std::cerr <<
-            "Usage: pkgc <host> <port> <text>\n" <<
-            "Example:\n" <<
-            "    pkgc echo.websocket.org 80 \"Hello, world!\"\n";
+        std::cerr << "Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-    auto const host = argv[1];
-    auto const port = argv[2];
-    auto const text = argv[3];
-
-    // The io_context is required for all I/O
-    net::io_context ioc;
-
-    // Launch the asynchronous operation
-    std::make_shared<session>(ioc)->run(host, port, text);
-
-    // Run the I/O service. The call will return when
-    // the socket is closed.
-    ioc.run();
-
     return EXIT_SUCCESS;
 }
