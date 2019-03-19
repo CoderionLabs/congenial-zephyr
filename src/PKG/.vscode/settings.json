@@ -61,6 +61,10 @@
         "valarray": "cpp",
         "codecvt": "cpp",
         "complex": "cpp",
-        "csignal": "cpp"
+        "csignal": "cpp",
+        "cfenv": "cpp",
+        "cinttypes": "cpp",
+        "random": "cpp",
+        "iterator": "cpp"
     }
 }

@@ -34,6 +34,9 @@ PKG p;
 
 std::string from;
 std::string from_password;
+std::string email;
+std::string code_tmp;
+
 
 void send_email(std::string email, std::string code){
     Email e;
@@ -166,20 +169,42 @@ public:
 
         // Authenticate T
         std::ostringstream os; os << boost::beast::make_printable(buffer_.data());
-        std::string email = os.str();
+        std::string eorcode = os.str();
+        os.clear();
+       
+        if(code_tmp == eorcode){
+            std::string okay = "Okay looks legit. I will send you your keys";
+            std::cout << "CODE MATCH FOUND" << std::endl;
+            ws_.write(beast::flat_buffer(okay.data()).data());
+            // Send the keys to the client
+            byte_string_t key;
+            p.extract(email,key);
+            std::string sendkey = p.serialize_bytestring(key);
+            std::string sendparams = p.serialize_params(p.params);
 
-        char code[24];
-        gen_random(code,24);
-        std::cout << "Email recieved:" << email << std::endl; 
-        send_email(email, code);
-        
+            std::cout << "KEY GEN:" << sendkey << std::endl;
 
-        ws_.text(ws_.got_text());
-        ws_.async_write(
-            buffer_.data(),
-            beast::bind_front_handler(
-                &session::on_write,
-                shared_from_this()));
+            ws_.write(boost::asio::buffer(sendkey).data());
+
+            ws_.write(boost::asio::buffer(sendparams).data());
+        }else{
+            char code[24];
+            gen_random(code,24);
+            std::cout << "Email recieved:" << eorcode << std::endl; 
+            email = eorcode;
+            send_email(eorcode, code);
+            code_tmp = code;
+
+            ws_.text(true);
+            std::string prompt = "Enter the code that was sent to your email account";
+            ws_.async_write(
+                boost::asio::buffer(prompt),
+                beast::bind_front_handler(
+                    &session::on_write,
+                    shared_from_this()));
+        }
+
+        buffer_.clear();
     }
 
     void
@@ -197,6 +222,22 @@ public:
 
         // Do another read
         do_read();
+    }
+
+    void
+    on_write_no_read(
+        beast::error_code ec,
+        std::size_t bytes_transferred)
+    {
+        boost::ignore_unused(bytes_transferred);
+
+        if(ec)
+            return fail(ec, "write");
+
+        // Clear the buffer
+        buffer_.consume(buffer_.size());
+
+        // Do another read
     }
 };
 

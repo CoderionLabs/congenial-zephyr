@@ -11,6 +11,10 @@ namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+bool gotcode = false;
+bool readkey = false;
+bool readparams = false;
+std::string key, params;
 
 //------------------------------------------------------------------------------
 
@@ -121,6 +125,7 @@ public:
             beast::bind_front_handler(
                 &session::on_write,
                 shared_from_this()));
+        
     }
 
     void
@@ -151,11 +156,42 @@ public:
         if(ec)
             return fail(ec, "read");
 
-        // Close the WebSocket connection
-        ws_.async_close(websocket::close_code::normal,
+        // Send the code back
+        if(readkey){
+            std::ostringstream os; os << boost::beast::make_printable(buffer_.data());
+            key = os.str();
+            std::cout << "KEY:" << key << std::endl;
+            readparams = true;
+            readkey = false;
+        }else if(readparams){
+            std::ostringstream os; os << boost::beast::make_printable(buffer_.data());
+            params = os.str();
+            std::cout << "PARAMS:" << params << std::endl;
+            ws_.async_close(websocket::close_code::normal,
             beast::bind_front_handler(
                 &session::on_close,
                 shared_from_this()));
+        }else if(!gotcode){
+            std::string code;
+            std::cout << beast::make_printable(buffer_.data()) << std::endl;
+            std::cin >> code;
+            ws_.async_write(
+                net::buffer(code),
+                beast::bind_front_handler(
+                &session::on_write,
+                shared_from_this()));
+            gotcode = true;
+        }else{
+            std::cout << beast::make_printable(buffer_.data()) << std::endl;
+            readkey = true;
+        }
+        buffer_.clear();
+
+        // Close the WebSocket connection
+        /*ws_.async_close(websocket::close_code::normal,
+            beast::bind_front_handler(
+                &session::on_close,
+                shared_from_this()));*/
     }
 
     void
