@@ -10,7 +10,6 @@ MixerServer s(httpserver,
 map<string,string> ipspub;
 std::vector<std::string> requests;
 
-//TODO: Implement Bully leader election
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
 
@@ -111,7 +110,8 @@ Mixer::~Mixer(){
             cout << "Failed to publish known nodes" << endl;
         }
     });
-    //this->node.shutdown();
+    // Shutdown the DHT node
+    this->node.shutdown();
 }
 
 void StartServerInBackground(){
@@ -126,7 +126,7 @@ void Mixer::StartRoundAsMixer(){
     auto f = std::async(std::launch::async, StartServerInBackground);
 
     //Start a message listener in the background
-    auto f = std::async(std::launch::async, ListenForMessages);
+    auto fL = std::async(std::launch::async, ListenForMessages);
 
 
     // Decrypt all the requests and send them to their
@@ -211,7 +211,7 @@ void ListenForMessages(){
         newsockfd = accept(sockfd, (struct sockaddr * ) &clientAddress, (socklen_t*) &clientAddressLength);
         printf("connected to client: %s\n", inet_ntoa(clientAddress.sin_addr));
         
-        //child process is created for serving each new clients
+        //child process is created for serving each new client
         pid = fork();
         if (pid == 0) //child process rec and send
         {
