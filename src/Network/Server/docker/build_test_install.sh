@@ -20,7 +20,7 @@ tar -xf openssl-1.0.0a.tar.gz
 cd openssl-1.0.0a
 ./config --prefix=/usr/local/openssl-1.0
 make
-make install
+make install_sw
 cd ../
 
 cd Mixer
