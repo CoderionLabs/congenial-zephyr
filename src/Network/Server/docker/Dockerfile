@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y \
   liblzma-dev \
   libsnappy-dev \
   make \
+  wget \
   git \
   zlib1g-dev \
   binutils-dev \
@@ -40,6 +41,6 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir /app
 RUN git clone https://github.com/DokuEnterprise/congenial-zephyr
 RUN cd congenial-zephyr/src
-COPY Network/Server/docker/build_test_install.sh /app
+RUN cp /congenial-zephyr/src/Network/Server/docker/build_test_install.sh /app
 RUN chmod a+x /app/build_test_install.sh
 RUN cd /app && ./build_test_install.sh
