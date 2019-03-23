@@ -23,6 +23,7 @@ make
 make install_sw
 ls
 cd ../
+ls
 
 cd Mixer
 make
