@@ -36,7 +36,7 @@
 #include <stdlib.h>//sizeof
 #include <netinet/in.h>//INADDR_ANY
 
-#include "mixerclient.h"
+#include "mixerclient.hpp"
 #include "mixerserver.hpp"
 #include <jsonrpccpp/client/connectors/httpclient.h>
 #include <jsonrpccpp/server/connectors/httpserver.h>
@@ -71,6 +71,7 @@ public:
     ~Mixer();
 };
 
+void GiveMeDataForPublic(std::string pub, std::string ip);
 void senddata(std::string ip, std::string msg);
 void StartServerInBackground();
 void GetPrimaryIp(char* buffer, size_t buflen);

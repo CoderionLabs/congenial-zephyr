@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <vector>
-#include "abstractmixerserver.h"
+#include "abstractmixerserver.hpp"
 
 using namespace jsonrpc;
 using namespace std;

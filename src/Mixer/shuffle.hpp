@@ -20,7 +20,7 @@ private:
 // Fisher Yates Shuffle
 template <class T>
 Shuffle<T>::Shuffle(std::vector<T> input, int seed){
-    memcpy(this->vec, input, sizeof(input));
+    std::copy(input.begin(), input.end(), std::back_inserter(this->vec));
     this->seed = seed;
     this->size = input.size();
     int random; srand(this->seed);

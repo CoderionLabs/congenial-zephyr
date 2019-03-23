@@ -111,7 +111,7 @@ Mixer::~Mixer(){
         }
     });
     // Shutdown the DHT node
-    this->node.shutdown();
+    //this->node.shutdown();
 }
 
 void StartServerInBackground(){
@@ -144,7 +144,7 @@ void Mixer::StartRoundAsMixer(){
 
             auto x = dist6(rng);
 
-            Shuffle shu(tmprequest, (int) x);
+            Shuffle<std::string> shu(tmprequest, (int) x);
 
             // Strip off a layer of encryption and send to the next
             // mixer.
@@ -192,7 +192,7 @@ void ListenForMessages(){
     //create socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     //initialize the socket addresses
-    memset( & serverAddress, 0, sizeof(serverAddress));
+    memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     serverAddress.sin_port = htons(PORT);

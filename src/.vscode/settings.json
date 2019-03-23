@@ -57,6 +57,9 @@
         "numeric": "cpp",
         "__config": "cpp",
         "__nullptr": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "valarray": "cpp",
+        "codecvt": "cpp",
+        "csignal": "cpp"
     }
 }
