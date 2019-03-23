@@ -21,6 +21,7 @@ cd openssl-1.0.0a
 ./config --prefix=/usr/local/openssl-1.0
 make
 make install_sw
+ls
 cd ../
 
 cd Mixer
