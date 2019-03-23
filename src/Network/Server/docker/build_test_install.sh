@@ -25,6 +25,7 @@ ls
 cd ../
 ls
 cd congenial-zephyr
+cd src
 
 cd Mixer
 make
