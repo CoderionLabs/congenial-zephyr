@@ -24,6 +24,7 @@ make install_sw
 ls
 cd ../
 ls
+cd congenial-zephyr
 
 cd Mixer
 make

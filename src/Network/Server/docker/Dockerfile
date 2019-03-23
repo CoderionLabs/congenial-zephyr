@@ -39,8 +39,8 @@ RUN apt-get update && apt-get install -y \
   libiberty-dev
 
 RUN mkdir /app
-RUN git clone https://github.com/DokuEnterprise/congenial-zephyr
-RUN cd congenial-zephyr/src
-RUN cp /congenial-zephyr/src/Network/Server/docker/build_test_install.sh /app
+RUN git clone https://github.com/DokuEnterprise/congenial-zephyr /app/congenial-zephyr
+RUN cd /app/congenial-zephyr/src
+RUN cp /app/congenial-zephyr/src/Network/Server/docker/build_test_install.sh /app
 RUN chmod a+x /app/build_test_install.sh
 RUN cd /app && ./build_test_install.sh
