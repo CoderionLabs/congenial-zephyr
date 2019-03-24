@@ -34,7 +34,7 @@ cd ../../
 #install cereal
 wget https://github.com/USCiLab/cereal/archive/v1.2.2.tar.gz
 tar -xzf v1.2.2.tar.gz
-cd v1.2.2 && cd include
+cd cereal-1.2.2 && cd include
 cp -R cereal /usr/local/include
 cd ../../
 
