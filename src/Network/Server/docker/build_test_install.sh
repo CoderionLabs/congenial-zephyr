@@ -31,6 +31,14 @@ make -j4
 make install
 cd ../../
 
+git clone https://github.com/savoirfairelinux/opendht.git
+cd opendht
+mkdir build && cd build
+cmake -DOPENDHT_PYTHON=ON -DCMAKE_INSTALL_PREFIX=/usr ..
+make -j4
+sudo make install
+cd ../../
+
 wget http://www.openssl.org/source/openssl-1.0.0a.tar.gz
 tar -xf openssl-1.0.0a.tar.gz
 cd openssl-1.0.0a
