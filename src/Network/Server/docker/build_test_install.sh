@@ -16,7 +16,7 @@ mkdir $CPLUS_INCLUDE_PATH/zephyr
 mkdir $CPLUS_INCLUDE_PATH/sibe
 
 # Install OpenDHT dependencies
-apt-get install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev libgnutls-dev librestbed-dev libjsoncpp-dev
+apt-get install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev libgnutls-dev libjsoncpp-dev
 
 # Install python binding dependencies
 apt-get install cython3 python3-dev python3-setuptools
