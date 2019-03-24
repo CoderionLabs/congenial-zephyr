@@ -42,7 +42,7 @@ cd ../../
 git clone https://github.com/DokuEnterprise/crypto
 cd crypto
 cd stanfordibe
-cp ../../Network/Server/docker/libssl.so.1.0.0 .
+cp /app/congenial-zephyr/src/Network/Server/docker/libssl.so.1.0.0 .
 make
 make install
 cd ../../
