@@ -9,8 +9,8 @@ then
 	PREFIX=/usr
 fi
 
-#export LD_LIBRARY_PATH=$PREFIX/lib
-#export CPLUS_INCLUDE_PATH=$PREFIX/include
+export LD_LIBRARY_PATH=$PREFIX/lib
+export CPLUS_INCLUDE_PATH=$PREFIX/include
 export CURRENT_PATH=.
 mkdir $CPLUS_INCLUDE_PATH/zephyr
 mkdir $CPLUS_INCLUDE_PATH/sibe
