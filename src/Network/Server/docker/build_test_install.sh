@@ -31,6 +31,13 @@ make -j4
 make install
 cd ../../
 
+#install cereal
+wget https://github.com/USCiLab/cereal/archive/v1.2.2.tar.gz
+tar -xzf cereal-1.2.2.tar.gz
+cd cereal-1.2.2 && cd include
+cp -R cereal /usr/local/include
+cd ../../
+
 git clone https://github.com/savoirfairelinux/opendht.git
 cd opendht
 mkdir build && cd build
