@@ -16,13 +16,13 @@ mkdir $CPLUS_INCLUDE_PATH/zephyr
 mkdir $CPLUS_INCLUDE_PATH/sibe
 
 # Install OpenDHT dependencies
-apt-get install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev libgnutls-dev libjsoncpp-dev
+apt-get -y install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev libgnutls-dev libjsoncpp-dev
 
 # Install python binding dependencies
-apt-get install cython3 python3-dev python3-setuptools
+apt-get -y install cython3 python3-dev python3-setuptools
 
 # Build and install msgpack-c
-apt-get install build-essential cmake
+apt-get -y install build-essential cmake
 wget https://github.com/msgpack/msgpack-c/releases/download/cpp-2.1.1/msgpack-2.1.1.tar.gz
 tar -xzf msgpack-2.1.1.tar.gz
 cd msgpack-2.1.1 && mkdir build && cd build
