@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y \
   libsodium-dev \
   libgoogle-glog-dev \
   libjsonrpccpp-dev \
+  libmicrohttpd-dev \
   libcurl4-gnutls-dev \
   libjsonrpccpp-tools \
   libgflags-dev \
