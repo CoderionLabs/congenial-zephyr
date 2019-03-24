@@ -39,6 +39,14 @@ make -j4
 make install
 cd ../../
 
+git clone https://github.com/DokuEnterprise/crypto
+cd crypto
+cd stanfordibe
+cp ../../Network/Server/docker/libssl.so.1.0.0 .
+make
+make install
+cd ../../
+
 wget http://www.openssl.org/source/openssl-1.0.0a.tar.gz
 tar -xf openssl-1.0.0a.tar.gz
 cd openssl-1.0.0a
@@ -58,13 +66,8 @@ cd ../
 cd PKG
 make
 make install
-cd ../
-git clone https://github.com/DokuEnterprise/crypto
-cd crypto
-cd stanfordibe
-cp ../../Network/Server/docker/libssl.so.1.0.0 .
-make
-make install
+
+
 
 
 CMD ["/bin/bash"]
