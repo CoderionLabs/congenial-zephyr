@@ -8,7 +8,6 @@
 #include <cassert>
 #include <utility>
 #include <string>
-#include <ibe/bf_4_1.hpp>
 #include <algorithm>
 #include <iterator>
 #include <bitset>
