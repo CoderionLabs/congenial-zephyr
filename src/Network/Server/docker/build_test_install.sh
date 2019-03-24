@@ -36,7 +36,7 @@ cd opendht
 mkdir build && cd build
 cmake -DOPENDHT_PYTHON=ON -DCMAKE_INSTALL_PREFIX=/usr ..
 make -j4
-sudo make install
+make install
 cd ../../
 
 wget http://www.openssl.org/source/openssl-1.0.0a.tar.gz
