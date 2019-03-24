@@ -73,8 +73,3 @@ cd ../
 cd PKG
 make
 make install
-
-
-
-
-CMD ["/bin/bash"]
