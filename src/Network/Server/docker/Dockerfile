@@ -45,4 +45,5 @@ RUN cd /app/congenial-zephyr/src
 RUN cp /app/congenial-zephyr/src/Network/Server/docker/build_test_install.sh /app
 RUN chmod a+x /app/build_test_install.sh
 RUN cd /app && ./build_test_install.sh
-#RUN /app/congenial-zephyr/src/Network/Server/docker/
+RUN g++ /app/congenial-zephyr/src/Network/Server/runmixer.cpp -lzephyr -ljsonrpccpp-server -lsodium
+RUN /app/congenial-zephyr/src/Network/Server/a.out
