@@ -12,6 +12,7 @@ std::vector<std::string> requests;
 
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
+    dht::DhtRunner node;
     auto mtx = std::make_shared<std::mutex>();
     auto cv = std::make_shared<std::condition_variable>();
     auto ready = std::make_shared<bool>(false);
@@ -27,9 +28,8 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     for(std::string w : x){
         this->myip.push_back(w);
     }
-    
     // listen on port 4222.
-    std::cout << "Starting DHT NODE..." << std::endl;
+    std::cout << "Starting DHT this->node..." << std::endl;
     this->node.run(4222, dht::crypto::generateIdentity(), true);
     std::cout << "DONE" << std::endl;
 
@@ -37,38 +37,38 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     // node to join the network. Mixer address will be loaded from the 
     // config file. The first mixer in the list will be used as a bootstrap node
     std::cout << "BOOTSTRAPING..." << std::endl;
-    this->node.bootstrap(mixers[0], "4222");
+    this->node.bootstrap("bootstrap.ring.cx", "4222");
+    std::cout << "DONE" << std::endl;
 
-    auto wait = [=]{
+    auto wait = [=] {
         *ready = true;
         std::unique_lock<std::mutex> lk(*mtx);
         cv->wait(lk);
         *ready = false;
     };
-
-    auto done_cb = [=](bool success){
-        if (success){
-            std::cout << "Success!" << std::endl;
+    auto done_cb = [=](bool success) {
+        if (success) {
+            std::cout << "success!" << std::endl;
         } else {
-            std::cout << "Failed.. " << std::endl;
+            std::cout << "failed..." << std::endl;
         }
         std::unique_lock<std::mutex> lk(*mtx);
-        cv->wait(lk, [=]{return *ready;});
+        cv->wait(lk, [=]{ return *ready; });
         cv->notify_one();
     };
 
     string plugin; string r = "ready";
     plugin = string(reinterpret_cast<char*>(this->public_key)) + ":" + mixer_ip;
 
-    this->node.put(dht::InfoHash::get("publickeys"), dht::Value((const uint8_t*)plugin.data(), sizeof(plugin)), [=] (bool success) {
+    this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
-        done_cb(success);
+        done_cb(success);   
     });
 
     // block to see the result of the put
     wait();
 
-    this->node.put(dht::InfoHash::get("ready"),dht::Value((const uint8_t*) r.data(), r.size()), [=] (bool success){
+    this->node.put("ready",dht::Value((const uint8_t*) r.data(), r.size()), [=] (bool success){
         std::cout << "Put read: ";
         done_cb(success);
     });
@@ -80,15 +80,15 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     std::cout << "Waiting for other nodes" << std::endl;
     while(true){
         this->node.get(
-            dht::InfoHash::get("ready"),
+            "ready",
             [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
                 for (const auto& v : values)
                     this->readymixers++;
                 return true; // keep looking for values
             },
-            [](bool success) {
+            [=](bool success) {
                 std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
-                donce_cb(success);
+                done_cb(success);
             }
         );
         wait();
@@ -105,7 +105,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
 
     //Get the public keys still work to do 
     this->node.get(
-        dht::InfoHash::get("publickeys"),
+        "publickeys",
             [](const std::vector<std::shared_ptr<dht::Value>>& values) {
                 for (const auto& v : values){
                     std::string mydata {v->data.begin(), v->data.end()};
@@ -119,7 +119,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
                 }
                 return true; // keep looking for values
             },
-            [](bool success) {
+            [=](bool success) {
                 std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
                 done_cb(success);
             }
