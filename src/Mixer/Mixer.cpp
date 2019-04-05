@@ -12,9 +12,14 @@ std::vector<std::string> requests;
 
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
+    auto mtx = std::make_shared<std::mutex>();
+    auto cv = std::make_shared<std::condition_variable>();
+    auto ready = std::make_shared<bool>(false);
 
+    std::cout << "Creating Keys..." << std::endl;
     crypto_box_keypair(this->public_key, this->private_key);
     auto tmpid = this->node.getNodeId().to_c_str();
+    std::cout << "DONE" << std::endl;
     
     memcpy(this->id, tmpid, sizeof(tmpid));    
 
@@ -24,27 +29,55 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     }
     
     // listen on port 4222.
+    std::cout << "Starting DHT NODE..." << std::endl;
     this->node.run(4222, dht::crypto::generateIdentity(), true);
+    std::cout << "DONE" << std::endl;
 
     // The first node in the network will not use a bootstrap
     // node to join the network. Mixer address will be loaded from the 
     // config file. The first mixer in the list will be used as a bootstrap node
+    std::cout << "BOOTSTRAPING..." << std::endl;
     this->node.bootstrap(mixers[0], "4222");
+
+    auto wait = [=]{
+        *ready = true;
+        std::unique_lock<std::mutex> lk(*mtx);
+        cv->wait(lk);
+        *ready = false;
+    };
+
+    auto done_cb = [=](bool success){
+        if (success){
+            std::cout << "Success!" << std::endl;
+        } else {
+            std::cout << "Failed.. " << std::endl;
+        }
+        std::unique_lock<std::mutex> lk(*mtx);
+        cv->wait(lk, [=]{return *ready;});
+        cv->notify_one();
+    };
 
     string plugin; string r = "ready";
     plugin = string(reinterpret_cast<char*>(this->public_key)) + ":" + mixer_ip;
 
-    this->node.put(
-        dht::InfoHash::get("publickeys"),
-        dht::Value((const uint8_t*)plugin.data(), sizeof(plugin))
-    );
+    this->node.put(dht::InfoHash::get("publickeys"), dht::Value((const uint8_t*)plugin.data(), sizeof(plugin)), [=] (bool success) {
+        std::cout << "Put public key: ";
+        done_cb(success);
+    });
 
-    this->node.put(
-        dht::InfoHash::get("ready"),
-        dht::Value((const uint8_t*) r.data(), r.size())
-    );
+    // block to see the result of the put
+    wait();
+
+    this->node.put(dht::InfoHash::get("ready"),dht::Value((const uint8_t*) r.data(), r.size()), [=] (bool success){
+        std::cout << "Put read: ";
+        done_cb(success);
+    });
+
+    // block to see the result of the put
+    wait();
 
     // Wait for all the other nodes to be ready
+    std::cout << "Waiting for other nodes" << std::endl;
     while(true){
         this->node.get(
             dht::InfoHash::get("ready"),
@@ -55,12 +88,17 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             },
             [](bool success) {
                 std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
+                donce_cb(success);
             }
         );
+        wait();
 
         if(this->readymixers == mixers.size()){
             break;
         }else{
+            std::cout << "Not everyone is ready yet sleeping" << std::endl;
+            std::cout << this->readymixers << std::endl;
+            sleep(10);
             this->readymixers = 0;
         }
     }
@@ -83,8 +121,10 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             },
             [](bool success) {
                 std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
+                done_cb(success);
             }
     );
+    wait();
 
     this->node.join();
 

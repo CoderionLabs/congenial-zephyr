@@ -11,6 +11,8 @@
 #include <opendht.h>
 #include <vector>
 #include <random>
+#include <mutex>
+#include <memory>
 #include <fstream>
 #include <thread>
 #include <sodium.h>
