@@ -1,8 +1,9 @@
 # To build use:
 # docker build -t dems .
 
-
-#$ docker create -t -i dems 
+# docker network create --driver bridge --ipv6 --subnet 2a02:6b8:b010:9020:1::/80 ipv6_dems
+# docker create --name dems0 --network ipv6_dems -t -i dems
+# and create other containers
 
 #$ docker start -a -i 6d8af538ec5
 
