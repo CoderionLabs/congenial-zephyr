@@ -87,10 +87,10 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
                     std::string power {v->data.begin(), v->data.end()};
                     std::cout << "Found value: " << power << std::endl;
                 }
-                std::cout << "That's all I found" << std::endl;
                 return true; // keep looking for values
             },
             [=](bool success) {
+                std::cout << "That's all I found" << std::endl;
                 std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
                 done_cb(success);
             }

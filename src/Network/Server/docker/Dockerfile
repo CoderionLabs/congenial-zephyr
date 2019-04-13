@@ -2,7 +2,7 @@
 # docker build -t dems .
 
 
-#$ docker create -t -i fedora bash
+#$ docker create -t -i dems 
 
 #$ docker start -a -i 6d8af538ec5
 
