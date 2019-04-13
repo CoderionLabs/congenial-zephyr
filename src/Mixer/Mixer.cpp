@@ -84,7 +84,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
                 for (const auto& v : values){
                     this->readymixers++;
-                    std::string power {value->data.begin(), value->data.end()};
+                    std::string power {v->data.begin(), v->data.end()};
                     std::cout << "Found value: " << power << std::endl;
                 }
                 return true; // keep looking for values
