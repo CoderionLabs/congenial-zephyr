@@ -27,11 +27,32 @@ void PKG::extract(std::string id, byte_string_t key){
    std::cout << "EXTRACT DONE" << std::endl;
 }
 
+void deserialize_params(std::string in, params_t p){
+    byte_string_t tmp;
+    deserialize_bytestring(in, tmp);
+    IBE_deserialize_params(p, tmp);
+}
+
 std::string PKG::serialize_params(params_t p){
     byte_string_t b;
     IBE_serialize_params(b,p);
     auto s = serialize_bytestring(b);
     return s;
+}
+
+void deserialize_bytestring(std::string p, byte_string_t result){
+    std::stringstream ss;
+    ss.write(p.c_str(), p.size());
+    bytestring_wrap c;
+    {
+        cereal::BinaryInputArchive iarchive(ss);
+        iarchive(c); // Read the data from the archive
+    }
+    for(int i = 0; i < c.data.size(); i++){
+        result->data[i] = c.data[i];
+    }
+    int size = std::stoi(c.size);
+    result->len = size;
 }
 
 std::string PKG::serialize_bytestring(byte_string_t b){

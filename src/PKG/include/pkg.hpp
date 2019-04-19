@@ -67,3 +67,5 @@ public:
 void convert_to_encrypt(byte_string_t x, unsigned char* ur);
 std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars);
 std::string pkg_encrypt(std::string id, params_t pars, std::string msg);
+void deserialize_bytestring(std::string p, byte_string_t result);
+void deserialize_params(std::string in, params_t p);
