@@ -7,7 +7,7 @@
 
 #$ docker start -a -i 6d8af538ec5
 
-# docker inspect -f '{{.Name}} - {{.NetworkSettings.IPAddress }}' $(docker ps -aq)
+# docker inspect <container name or container id>
 
 
 
@@ -34,6 +34,9 @@ RUN apt-get update && apt-get install -y \
   libsodium-dev \
   libgoogle-glog-dev \
   libjsonrpccpp-dev \
+  iputils-ping \
+  net-tools \
+  netcat \
   libmicrohttpd-dev \
   libcurl4-gnutls-dev \
   libjsonrpccpp-tools \

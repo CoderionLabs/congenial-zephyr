@@ -7,7 +7,7 @@ CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM  -I=$(ROOT_DIR)/include
 LDFLAGS= -shared -L/usr/local/lib -lsibe -lsodium -lboost_system -lcurl
 
 SOURCES = $(shell echo *.cpp)
-HEADERS = $(ROOT_DIR)/include/json.hpp $(ROOT_DIR)/include/pkg.hpp $(ROOT_DIR)/include/email.hpp
+HEADERS = $(ROOT_DIR)/include/json.hpp $(ROOT_DIR)/include/pkg.hpp $(ROOT_DIR)/include/email.hpp $(ROOT_DIR)/include/pkgc.hpp
 OBJECTS=$(SOURCES:.cpp=.o)
 
 TARGET=libpkg.so
