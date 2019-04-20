@@ -21,6 +21,15 @@ apt-get -y install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev lib
 # Install python binding dependencies
 apt-get -y install cython3 python3-dev python3-setuptools
 
+# Install boost beast
+wget https://github.com/boostorg/beast/archive/boost-1.66.0.tar.gz
+tar -xzf boost-1.66.0.tar.gz
+cd beast-boost-1.66.0 && cd include
+mkdir -p $PREFIX/include/boost
+cp beast $PREFIX/include/boost
+cp beast.hpp $PREFIX/include/boost
+
+
 # Build and install msgpack-c
 apt-get -y install build-essential cmake
 wget https://github.com/msgpack/msgpack-c/releases/download/cpp-2.1.1/msgpack-2.1.1.tar.gz
