@@ -12,6 +12,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <sodium.h>
+
+CONF_CTX *cnfctx;
+params_t params;
 
 using namespace std;
 // Mixers, Mailboxes, PKGS
@@ -33,8 +37,8 @@ int main(){
     // Load the configuration file
     string filepath = "";
     vector<vector<std::string>> vec;
-    get_config_info(vec, filepath);
-    getkeysfrompkg(vec[2][0], 55555, email);
+    vec = get_config_info(filepath);
+    getkeysfrompkg(vec[2][0], to_string(55555), email);
     cout << "Now copy the KEY here" << endl;
     cin >> key;
     cout << "Now copy the PARAMS here" << endl;
@@ -55,6 +59,12 @@ int main(){
     auto map = ConvertStringToMap(data);
     auto mixenc = map[ip];
     // Seal with crypto sercret box also append destination address to it data:ip
+    int CIPHERTEXT_LEN = crypto_box_SEALBYTES + msg.length();
+    unsigned char ciphertext[CIPHERTEXT_LEN];
+    crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&msg[0]), msg.length(),
+      reinterpret_cast<unsigned char*>(&mixenc[0]));
+    // Send it back to the mixer
+    talktomixer(ip, reinterpret_cast<char*>(ciphertext));
     return 0;
 }
 
@@ -63,11 +73,12 @@ std::string talktomixer(std::string ip, std::string msg){
     int sock = 0, valread; 
     struct sockaddr_in serv_addr; 
 
+    char buffer[1024];
     bzero(buffer, sizeof(buffer));
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
     { 
         printf("\n Socket creation error \n"); 
-        return -1; 
+        return "FAIL"; 
     } 
    
     memset(&serv_addr, '0', sizeof(serv_addr)); 
@@ -76,18 +87,18 @@ std::string talktomixer(std::string ip, std::string msg){
     serv_addr.sin_port = htons(8080); 
        
     // Convert IPv4 and IPv6 addresses from text to binary form 
-    if(inet_pton(AF_INET, ip, &serv_addr.sin_addr)<=0)  
+    if(inet_pton(AF_INET, ip.c_str(), &serv_addr.sin_addr)<=0)  
     { 
         printf("\nInvalid address/ Address not supported \n"); 
-        return -1; 
+        return "FAIL"; 
     } 
    
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) 
     { 
         printf("\nConnection Failed \n"); 
-        return -1; 
+        return "FAIL";  
     } 
-    send(sock , msg.c_str() , strlen(msg) , 0 ); 
+    send(sock , msg.c_str() , msg.length() , 0 ); 
     printf("Hello message sent\n"); 
     valread = read( sock , buffer, 1024); 
     return std::string(buffer);
