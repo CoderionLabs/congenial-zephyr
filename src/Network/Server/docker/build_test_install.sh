@@ -24,9 +24,9 @@ apt-get -y install cython3 python3-dev python3-setuptools
 # Install boost beast
 wget https://github.com/boostorg/beast/archive/boost-1.66.0.tar.gz
 tar -xzf boost-1.66.0.tar.gz
-cd beast-boost-1.66.0 && cd include && cd -r boost
+cd beast-boost-1.66.0 && cd include && cd boost
 mkdir -p $PREFIX/include/boost
-cp beast $PREFIX/include/boost
+cp -R beast $PREFIX/include/boost
 cp beast.hpp $PREFIX/include/boost
 
 
