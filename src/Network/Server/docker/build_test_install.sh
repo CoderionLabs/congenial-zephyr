@@ -31,13 +31,13 @@ cd boost_1_67_0/
 cd ../
 
 # Install boost beast
-wget https://github.com/boostorg/beast/archive/boost-1.66.0.tar.gz
-tar -xzf boost-1.66.0.tar.gz
-cd beast-boost-1.66.0 && cd include && cd boost
-mkdir -p $PREFIX/include/boost
-cp -R beast $PREFIX/include/boost
-cp beast.hpp $PREFIX/include/boost
-cd ../../../
+# wget https://github.com/boostorg/beast/archive/boost-1.66.0.tar.gz
+# tar -xzf boost-1.66.0.tar.gz
+# cd beast-boost-1.66.0 && cd include && cd boost
+# mkdir -p $PREFIX/include/boost
+# cp -R beast $PREFIX/include/boost
+# cp beast.hpp $PREFIX/include/boost
+# cd ../../../
 
 
 # Build and install msgpack-c

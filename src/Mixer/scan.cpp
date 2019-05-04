@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Doku Enterprise
  * Author: Friedrich Doku
  * -----
- * Last Modified: Friday April 19th 2019 6:32:07 am
+ * Last Modified: Saturday May 4th 2019 1:44:23 pm
  * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
  *   along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #include "scan.hpp"
 
 std::vector<std::vector<std::string>> get_config_info(std::string filename){
@@ -26,15 +25,28 @@ std::vector<std::vector<std::string>> get_config_info(std::string filename){
     }
     std::string data; std::map<std::string,int> types;
     std::vector<std::vector<std::string>> myvec;
-    types["MIXERS"] = 0;
-    types["MAILBOXES"] = 1;
-    types["PKGS"] = 2;
-    int arr;
+    types["MIXERS"] = 1;
+    types["MAILBOXES"] = 2;
+    types["PKGS"] = 3;
+    int arr = 0;
     while(in >> data){
-        int tmp = types[data];
-        if(tmp != 0){
+        int tmp = types[data] -1;
+        if(tmp != -1){
             arr = tmp;
         }
         myvec[arr].push_back(data);
     }
 }
+//EXAMPLE
+//MIXERS
+//1.0.012
+//10.0.0.12
+//127.0.0.1
+//MAILBOXES
+//IP
+//IP
+//IP
+//PKGS
+//IP
+//IP
+//IP
