@@ -19,25 +19,30 @@
 #include "scan.hpp"
 
 std::vector<std::vector<std::string>> get_config_info(std::string filename){
-    std::ifstream in(filename);
+    std::ifstream in;
+    in.open(filename);
     if(in.fail()){
         std::cout << "Failed to open file" << std::endl;
     }
     std::string data; std::map<std::string,int> types;
-    std::vector<std::vector<std::string>> myvec;
+    std::vector<std::vector<std::string>> myvec(3);
     types["MIXERS"] = 1;
     types["MAILBOXES"] = 2;
     types["PKGS"] = 3;
     int arr = 0;
     while(in >> data){
+        //std::cout << data << std::endl;
         int tmp = types[data] -1;
+        //std::cout << tmp << std::endl;
         if(tmp != -1){
             arr = tmp;
         }
         myvec[arr].push_back(data);
     }
+    std::cout << "DONE" << std::endl;
+    return myvec;
 }
-//EXAMPLE
+//EXAMPLE FILE
 //MIXERS
 //1.0.012
 //10.0.0.12
