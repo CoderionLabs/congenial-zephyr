@@ -27,7 +27,7 @@ tar xzvf boost_1_67_0.tar.gz
 cd boost_1_67_0/
 ./bootstrap.sh --prefix=/usr/local
 ./b2
-sudo ./b2 install
+./b2 install
 cd ../
 
 # Install boost beast
