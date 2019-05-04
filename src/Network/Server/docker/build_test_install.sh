@@ -21,6 +21,15 @@ apt-get -y install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev lib
 # Install python binding dependencies
 apt-get -y install cython3 python3-dev python3-setuptools
 
+# Install boost
+wget -O boost_1_67_0.tar.gz https://sourceforge.net/projects/boost/files/boost/1.67.0/boost_1_67_0.tar.gz/download
+tar xzvf boost_1_67_0.tar.gz
+cd boost_1_67_0/
+./bootstrap.sh --prefix=/usr/local
+./b2
+sudo ./b2 install
+cd ../
+
 # Install boost beast
 wget https://github.com/boostorg/beast/archive/boost-1.66.0.tar.gz
 tar -xzf boost-1.66.0.tar.gz
