@@ -28,6 +28,7 @@ cd beast-boost-1.66.0 && cd include && cd boost
 mkdir -p $PREFIX/include/boost
 cp -R beast $PREFIX/include/boost
 cp beast.hpp $PREFIX/include/boost
+cd ../../../
 
 
 # Build and install msgpack-c
