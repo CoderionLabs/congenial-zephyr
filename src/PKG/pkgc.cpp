@@ -109,8 +109,8 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
             os.clear();
             buffer.consume(buffer.size());
 
-            myvec.push_back(base64_decode(key));
-            myvec.push_back(base64_decode(params));
+            myvec.push_back(key);
+            myvec.push_back(params);
             std::cout << "DONE" << std::endl;
             ws.close(websocket::close_code::normal);
 

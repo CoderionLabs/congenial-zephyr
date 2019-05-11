@@ -170,8 +170,8 @@ do_session(tcp::socket& socket)
                 
 
                 // Send the keys
-                ws.write(net::buffer(base64_encode(reinterpret_cast<const unsigned char*>(&sendkey[0]), sendkey.size())));
-                ws.write(net::buffer(base64_encode(reinterpret_cast<const unsigned char*>(&sendparams[0]), sendparams.size())));
+                ws.write(net::buffer(sendkey));
+                ws.write(net::buffer(sendparams));
                 
             }else{
                 std::string msg = "Wrong Code!";
