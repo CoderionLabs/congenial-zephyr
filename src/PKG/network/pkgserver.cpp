@@ -21,8 +21,6 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <cstdlib>
-#include <cstdio>
-#include <fstream>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -64,13 +62,7 @@ void send_email(std::string email, std::string code){
 	e.setFrom(from);
 	e.setSubject("Zephyr Authentication");
 	e.setCc("");
-    if(email != code){
-        e.setBody("Enter this " + code);
-    }else{
-        e.setBody("The attached files are your keys copy the data.");
-        e.addAttachment("/app/congenial-zephyr/src/PKG/network/sendkey.txt");
-        e.addAttachment("/app/congenial-zephyr/src/PKG/network/sendparams.txt");
-    }
+	e.setBody("Enter this " + code);
 
 	e.setSMTP_host("smtps://smtp.gmail.com:465");
 	e.setSMTP_username(from);
@@ -92,28 +84,6 @@ void send_email(std::string email, std::string code){
 	else{
 		std::cout << "Email sent successfully!" << std::endl;
 	}
-}
-
-void create_files(std::string key, std::string params){
-    std::ofstream out ,out1;
-    out.open("/app/congenial-zephyr/src/PKG/network/sendkey.txt");
-    if(out.fail()){
-        std::cerr << "FAILED TO OPEN KEY FILE" << std::endl;
-    }
-    out << key;
-
-    out1.open("/app/congenial-zephyr/src/PKG/network/sendparams.txt");
-    if(out1.fail()){
-        std::cerr << "FAILED TO OPEN PARAMS FILE" << std::endl;
-    }
-    out1 << params;
-    out.close();
-    out1.close();
-}
-
-void removefiles(){
-    std::remove("/app/congenial-zephyr/src/PKG/network/sendkey.txt");
-    std::remove("/app/congenial-zephyr/src/PKG/network/sendparams.txt");
 }
 
 
@@ -155,7 +125,6 @@ do_session(tcp::socket& socket)
         std::ostringstream os;
         for(;;)
         {
-            removefiles();
             // This buffer will hold the incoming message
             beast::flat_buffer buffer;
 
@@ -190,24 +159,18 @@ do_session(tcp::socket& socket)
             std::cout << "GOT CODE FROM CLIENT" << gotcode << std::endl;
             std::cout << "GOT CODE " << code << std::endl;
             if(gotcode == code){
-                std::string msg = "Looking good, I will send you your keys via email.";
+                std::string msg = "Looking good, I will send you your keys.";
                 ws.write(net::buffer(std::string(msg)));
 
                 byte_string_t key;
                 p.extract(email,key);
                 std::string sendkey = p.serialize_bytestring(key);
                 std::string sendparams = p.serialize_params(p.params);
-                std::cout << sendkey << std::endl;
                 
 
                 // Send the keys
-                //ws.write(net::buffer(std::string(sendkey)));
-                //ws.write(net::buffer(std::string(sendparams)));
-
-                create_files(sendkey, sendparams);
-                send_email(email,email);
-
-
+                ws.write(net::buffer(std::string(sendkey)));
+                ws.write(net::buffer(std::string(sendparams)));
                 
             }else{
                 std::string msg = "Wrong Code!";
