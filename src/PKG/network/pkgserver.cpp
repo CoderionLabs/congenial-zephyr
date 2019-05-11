@@ -98,13 +98,13 @@ void create_files(std::string key, std::string params){
     std::ofstream out ,out1;
     out.open("sendkey.txt");
     if(out.fail()){
-        std::cerr << "FAILED TO OPEN KEY FILE" << endl;
+        std::cerr << "FAILED TO OPEN KEY FILE" << std::endl;
     }
     out << key;
 
     out1.open("sendparams.txt");
     if(out1.fail()){
-        std::cerr << "FAILED TO OPEN PARAMS FILE" << endl;
+        std::cerr << "FAILED TO OPEN PARAMS FILE" << std::endl;
     }
     out1 << params;
     out.close();
