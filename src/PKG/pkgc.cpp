@@ -27,8 +27,9 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 std::string key, params;
 
 // Sends a WebSocket message and prints the response
-int getkeysfrompkg(std::string hostname, std::string portnumber, std::string email)
+std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnumber, std::string email)
 {
+    std::vector<std::string> myvec;
     try
     {
 
@@ -108,9 +109,9 @@ int getkeysfrompkg(std::string hostname, std::string portnumber, std::string ema
             os.clear();
             buffer.consume(buffer.size());
 
+            myvec.push_back(base64_decode(key));
+            myvec.push_back(base64_decode(params));
             std::cout << "DONE" << std::endl;
-            std::cout << "KEY " << key << std::endl;
-            std::cout << "PARAMS " << params << std::endl;
             ws.close(websocket::close_code::normal);
 
         }else{
@@ -121,7 +122,7 @@ int getkeysfrompkg(std::string hostname, std::string portnumber, std::string ema
     catch(std::exception const& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        return EXIT_FAILURE;
+        return myvec;
     }
-    return EXIT_SUCCESS;
+    return myvec;
 }

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <boost/beast/core.hpp>
+#include <zephyr/base64.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -28,4 +29,4 @@
 #include <iostream>
 #include <string>
 
-int getkeysfrompkg(std::string hostname, std::string portnumber, std::string email);
+std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnumber, std::string email);

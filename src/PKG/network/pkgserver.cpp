@@ -27,6 +27,7 @@
 #include <thread>
 
 #include <zephyr/email.hpp>
+#include <zephyr/base64.hpp>
 
 #include <zephyr/pkg.hpp>
 extern "C"{
@@ -169,8 +170,8 @@ do_session(tcp::socket& socket)
                 
 
                 // Send the keys
-                ws.write(net::buffer(std::string(sendkey)));
-                ws.write(net::buffer(std::string(sendparams)));
+                ws.write(net::buffer(base64_encode(reinterpret_cast<const unsigned char*>(&sendkey[0]), sendkey.size());));
+                ws.write(net::buffer(base64_encode(reinterpret_cast<const unsigned char*>(&sendparams[0]), sendparams.size());));
                 
             }else{
                 std::string msg = "Wrong Code!";

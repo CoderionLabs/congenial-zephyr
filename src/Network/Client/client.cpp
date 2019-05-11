@@ -61,16 +61,15 @@ int main(){
     vec = get_config_info(filepath);
     cout << "PASSED HERE" << endl;
     cout << "Asking " << vec[2][1] << " for data" << endl;
-    getkeysfrompkg(vec[2][1], to_string(8080), email);
-    cout << "Now copy the KEY here" << endl;
-    cin >> key;
-    cout << "Now copy the PARAMS here" << endl;
-    cin >> params;
+    auto x = getkeysfrompkg(vec[2][1], to_string(8080), email);
+    cout << "GOT IT" << endl;
     // Get your private key
     byte_string_t keyb;
     params_t paramsb;
-    deserialize_bytestring(key, keyb);
-    deserialize_params(params, paramsb);
+    cout << x[0] << endl;
+    cout << x[1] << endl;
+    deserialize_bytestring(x[0], keyb);
+    deserialize_params(x[1], paramsb);
 
     // Encrypt message for user
     pkg_encrypt(email, paramsb, msg);
