@@ -22,23 +22,23 @@ apt-get -y install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev lib
 apt-get -y install cython3 python3-dev python3-setuptools
 
 # Install boost
-wget -O boost_1_67_0.tar.gz https://sourceforge.net/projects/boost/files/boost/1.67.0/boost_1_67_0.tar.gz/download
-tar xzvf boost_1_67_0.tar.gz
-cd boost_1_67_0/
+wget -O boost_1_70_0.tar.gz https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz
+tar xzvf boost_1_70_0.tar.gz
+cd boost_1_70_0/
 ./bootstrap.sh --prefix=/usr/local
 ./b2
 ./b2 install
 cd ../
 
 # Install boost beast
-git clone https://github.com/DokuEnterprise/boost boostdems
-cd boostdems && cd include && cd boost
-mkdir -p $PREFIX/include/boost
-rm -R $PREFIX/include/boost/beast
-rm $PREFIX/include/boost/beast.hpp
-cp -R beast $PREFIX/include/boost
-cp beast.hpp $PREFIX/include/boost
-cd ../../../
+#git clone https://github.com/DokuEnterprise/boost boostdems
+#cd boostdems && cd include && cd boost
+#mkdir -p $PREFIX/include/boost
+#rm -R $PREFIX/include/boost/beast
+#rm $PREFIX/include/boost/beast.hpp
+#cp -R beast $PREFIX/include/boost
+#cp beast.hpp $PREFIX/include/boost
+#cd ../../../
 
 
 # Build and install msgpack-c
