@@ -68,8 +68,8 @@ void send_email(std::string email, std::string code){
         e.setBody("Enter this " + code);
     }else{
         e.setBody("The attached files are your keys copy the data.");
-        e.addAttachment("sendkey.txt");
-        e.addAttachment("sendparams.txt");
+        e.addAttachment("/app/congenial-zephyr/src/PKG/network/sendkey.txt");
+        e.addAttachment("/app/congenial-zephyr/src/PKG/network/sendparams.txt");
     }
 
 	e.setSMTP_host("smtps://smtp.gmail.com:465");
@@ -96,13 +96,13 @@ void send_email(std::string email, std::string code){
 
 void create_files(std::string key, std::string params){
     std::ofstream out ,out1;
-    out.open("sendkey.txt");
+    out.open("/app/congenial-zephyr/src/PKG/network/sendkey.txt");
     if(out.fail()){
         std::cerr << "FAILED TO OPEN KEY FILE" << std::endl;
     }
     out << key;
 
-    out1.open("sendparams.txt");
+    out1.open("/app/congenial-zephyr/src/PKG/network/sendparams.txt");
     if(out1.fail()){
         std::cerr << "FAILED TO OPEN PARAMS FILE" << std::endl;
     }
@@ -112,8 +112,8 @@ void create_files(std::string key, std::string params){
 }
 
 void removefiles(){
-    std::remove("sendkey.txt");
-    std::remove("sendparams.txt");
+    std::remove("/app/congenial-zephyr/src/PKG/network/sendkey.txt");
+    std::remove("/app/congenial-zephyr/src/PKG/network/sendparams.txt");
 }
 
 
