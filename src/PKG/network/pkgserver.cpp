@@ -170,7 +170,7 @@ do_session(tcp::socket& socket)
             char code[24];
             gen_random(code,24);
 
-            send_email(email, code,false);
+            send_email(email, code);
 
             // Ask for the code
             ws.text(ws.got_binary());
