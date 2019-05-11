@@ -21,6 +21,8 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <cstdlib>
+#include <cstdio>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -62,7 +64,13 @@ void send_email(std::string email, std::string code){
 	e.setFrom(from);
 	e.setSubject("Zephyr Authentication");
 	e.setCc("");
-	e.setBody("Enter this " + code);
+    if(email != code){
+        e.setBody("Enter this " + code);
+    }else{
+        e.setBody("The attached files are your keys copy the data.");
+        e.addAttachment("sendkey.txt");
+        e.addAttachment("sendparams.txt");
+    }
 
 	e.setSMTP_host("smtps://smtp.gmail.com:465");
 	e.setSMTP_username(from);
@@ -84,6 +92,28 @@ void send_email(std::string email, std::string code){
 	else{
 		std::cout << "Email sent successfully!" << std::endl;
 	}
+}
+
+void create_files(std::string key, std::string params){
+    std::ofstream out ,out1;
+    out.open("sendkey.txt");
+    if(out.fail()){
+        std::cerr << "FAILED TO OPEN KEY FILE" << endl;
+    }
+    out << key;
+
+    out1.open("sendparams.txt");
+    if(out1.fail()){
+        std::cerr << "FAILED TO OPEN PARAMS FILE" << endl;
+    }
+    out1 << params;
+    out.close();
+    out1.close();
+}
+
+void removefiles(){
+    std::remove("sendkey.txt");
+    std::remove("sendparams.txt");
 }
 
 
@@ -125,6 +155,7 @@ do_session(tcp::socket& socket)
         std::ostringstream os;
         for(;;)
         {
+            removefiles();
             // This buffer will hold the incoming message
             beast::flat_buffer buffer;
 
@@ -139,7 +170,7 @@ do_session(tcp::socket& socket)
             char code[24];
             gen_random(code,24);
 
-            send_email(email, code);
+            send_email(email, code,false);
 
             // Ask for the code
             ws.text(ws.got_binary());
@@ -159,7 +190,7 @@ do_session(tcp::socket& socket)
             std::cout << "GOT CODE FROM CLIENT" << gotcode << std::endl;
             std::cout << "GOT CODE " << code << std::endl;
             if(gotcode == code){
-                std::string msg = "Looking good, I will send you your keys.";
+                std::string msg = "Looking good, I will send you your keys via email.";
                 ws.write(net::buffer(std::string(msg)));
 
                 byte_string_t key;
@@ -169,8 +200,13 @@ do_session(tcp::socket& socket)
                 
 
                 // Send the keys
-                ws.write(net::buffer(std::string(sendkey)));
-                ws.write(net::buffer(std::string(sendparams)));
+                //ws.write(net::buffer(std::string(sendkey)));
+                //ws.write(net::buffer(std::string(sendparams)));
+
+                create_files(sendkey, sendparams);
+                send_email(email,email);
+
+
                 
             }else{
                 std::string msg = "Wrong Code!";

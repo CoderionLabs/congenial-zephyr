@@ -47,17 +47,21 @@ void error(const char *msg)
 std::string talktomixer(std::string ip, std::string msg);
 
 int main(){
-    string msg,email,key, params;
+    string msg,email,key, params, filepath;
     cout << "Enter message" << endl;
     cin >> msg;
     cout << "Enter recievers email" << endl;
     cin >> email;
+    cout << "Enter config file path" << endl;
+    cin >> filepath;
 
     // Load the configuration file
-    string filepath = "";
+    //string filepath = "";
     vector<vector<std::string>> vec;
     vec = get_config_info(filepath);
-    getkeysfrompkg(vec[2][0], to_string(55555), email);
+    cout << "PASSED HERE" << endl;
+    cout << "Asking " << vec[2][1] << " for data" << endl;
+    getkeysfrompkg(vec[2][1], to_string(8080), email);
     cout << "Now copy the KEY here" << endl;
     cin >> key;
     cout << "Now copy the PARAMS here" << endl;
@@ -73,6 +77,9 @@ int main(){
 
     // Select random mixer and send data to it
     int num = rand() % vec[0].size() -1;
+    if(num == 0){
+        num++;
+    }
     string ip = vec[0][num];
     auto data = talktomixer(ip, "publickeys");
     auto map = ConvertStringToMap(data);
