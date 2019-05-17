@@ -180,7 +180,7 @@ do_session(tcp::socket& socket)
                 }
 
                 // Send the keys
-                ws.write(ss.str());                
+                ws.write(net::buffer(ss.str()));                
             }else{
                 std::string msg = "Wrong Code!";
                 ws.write(net::buffer(std::string(msg)));
