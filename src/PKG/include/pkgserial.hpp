@@ -5,12 +5,12 @@
 
 struct pkgkeys{
     std::string keys;
-    std::stirng params;
+    std::string params;
 
     template<class Archive>
     void serialize(Archive & archive)
     {
         archive(keys, params);
     }
-}
+};
 typedef struct pkgkeys pkgkeys;
