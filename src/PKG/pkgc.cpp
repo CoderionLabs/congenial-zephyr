@@ -98,19 +98,17 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
             ws.read(buffer);
             os << beast::make_printable(buffer.data());
             std::string key = os.str();
-            os.str("");
-            os.clear();
-            buffer.consume(buffer.size());
 
-            ws.read(buffer);
-            os << beast::make_printable(buffer.data());
-            std::string params = os.str();
-            os.str("");
-            os.clear();
-            buffer.consume(buffer.size());
+            std::stringstream ss;
+            ss.write(key.c_str(),key.size());
+            pkgkeys c;
+            {
+                cereal::BinaryInputArchive iarchive(ss);
+                iarchive(c); // Read the data from the archive
+            }
 
-            myvec.push_back(base64_decode(key));
-            myvec.push_back(base64_decode(params));
+            myvec.push_back(c.keys);
+            myvec.push_back(c.params);
             std::cout << "DONE" << std::endl;
             ws.close(websocket::close_code::normal);
 

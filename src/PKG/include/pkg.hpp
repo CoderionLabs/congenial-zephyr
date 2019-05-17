@@ -43,7 +43,6 @@ extern "C"{
     #include <sibe/ibe_progs.h>
 }
 
-
 struct contents{
     std::string nonce;
     std::string ciphertext;

@@ -30,6 +30,7 @@
 #include <zephyr/base64.hpp>
 
 #include <zephyr/pkg.hpp>
+#include <zephyr/pkgserial.hpp>
 extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
@@ -168,11 +169,18 @@ do_session(tcp::socket& socket)
                 std::string sendkey = p.serialize_bytestring(key);
                 std::string sendparams = p.serialize_params(p.params);
                 
+                pkgkeys c{sendkey, sendparams};
+                //Serialize
+                std::stringstream ss;
+                {
+                    // Create an output archive
+                    cereal::BinaryOutputArchive oarchive(ss);
+
+                    oarchive(c); // Write the data to the archive
+                }
 
                 // Send the keys
-                ws.write(net::buffer(base64_encode(reinterpret_cast<const unsigned char*>(&sendkey[0]), sendkey.size())));
-                ws.write(net::buffer(base64_encode(reinterpret_cast<const unsigned char*>(&sendparams[0]), sendparams.size())));
-                
+                ws.write(ss.str());                
             }else{
                 std::string msg = "Wrong Code!";
                 ws.write(net::buffer(std::string(msg)));
