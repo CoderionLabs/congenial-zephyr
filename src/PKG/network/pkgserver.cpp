@@ -180,10 +180,10 @@ do_session(tcp::socket& socket)
                 
                 pkgkeys c{sendkey, sendparams};
                 //Serialize
-                std::stringstream ss;
+                std::stringstream ss(std::ios::binary);
                 {
                     // Create an output archive
-                    cereal::JSONOutputArchive oarchive(ss);
+                    cereal::BinaryOutputArchive oarchive(ss);
 
                     oarchive(c); // Write the data to the archive
                 }

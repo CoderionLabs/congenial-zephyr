@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cereal/types/string.hpp>
-#include <cereal/archives/json.hpp>
+#include <cereal/archives/binary.hpp>
 #include <boost/locale/conversion.hpp>
 
 struct pkgkeys{
