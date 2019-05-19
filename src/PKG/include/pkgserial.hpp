@@ -2,6 +2,7 @@
 
 #include <cereal/types/string.hpp>
 #include <cereal/archives/binary.hpp>
+#include <boost/locale/conversion.hpp>
 
 struct pkgkeys{
     std::string keys;

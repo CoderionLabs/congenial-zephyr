@@ -31,6 +31,7 @@
 
 #include <zephyr/pkg.hpp>
 #include <zephyr/pkgserial.hpp>
+#include <zephyr/utf8.h>
 extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
@@ -54,6 +55,14 @@ std::string from_password;
 std::string email;
 std::string code_tmp;
 //------------------------------------------------------------------------------
+
+
+void fix_utf8_string(std::string& str)
+{
+    std::string temp;
+    utf8::replace_invalid(str.begin(), str.end(), back_inserter(temp));
+    str = temp;
+}
 
 void send_email(std::string email, std::string code){
     Email e;
@@ -178,9 +187,11 @@ do_session(tcp::socket& socket)
 
                     oarchive(c); // Write the data to the archive
                 }
-
+                
                 // Send the keys
-                ws.write(net::buffer(ss.str()));                
+                std::string enc = ss.str();
+                fix_utf8_string(enc);
+                ws.write(net::buffer(enc));                
             }else{
                 std::string msg = "Wrong Code!";
                 ws.write(net::buffer(std::string(msg)));

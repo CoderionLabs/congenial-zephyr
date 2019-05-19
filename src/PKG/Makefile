@@ -7,7 +7,8 @@ CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM  -I=$(ROOT_DIR)/include
 LDFLAGS= -shared -L/usr/local/lib -lsibe -lsodium -lboost_system -lcurl
 
 SOURCES = $(shell echo *.cpp)
-HEADERS = $(ROOT_DIR)/include/json.hpp $(ROOT_DIR)/include/pkg.hpp $(ROOT_DIR)/include/email.hpp $(ROOT_DIR)/include/pkgc.hpp $(ROOT_DIR)/include/base64.hpp $(ROOT_DIR)/include/pkgserial.hpp
+HEADERS = $(ROOT_DIR)/include/json.hpp $(ROOT_DIR)/include/pkg.hpp $(ROOT_DIR)/include/email.hpp $(ROOT_DIR)/include/pkgc.hpp $(ROOT_DIR)/include/base64.hpp $(ROOT_DIR)/include/pkgserial.hpp $(ROOT_DIR)/include/utf8.h 
+UTF8HEADERS = $(ROOT_DIR)/include/utf8/checked.h $(ROOT_DIR)/include/utf8/core.h $(ROOT_DIR)/include/utf8/unchecked.h
 OBJECTS=$(SOURCES:.cpp=.o)
 
 TARGET=libpkg.so
@@ -26,7 +27,9 @@ $(TARGET) : $(OBJECTS)
 
 install:
 	mkdir -p /usr/local/include/zephyr
+	mkdir -p /usr/local/include/zephyr/utf8
 	cp $(HEADERS) /usr/local/include/zephyr
+	cp $(UTF8HEADERS) /usr/local/include/zephyr/utf8
 	cp libpkg.so /usr/local/lib
 
 testfile:
