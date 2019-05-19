@@ -177,6 +177,9 @@ do_session(tcp::socket& socket)
                 p.extract(email,key);
                 std::string sendkey = p.serialize_bytestring(key);
                 std::string sendparams = p.serialize_params(p.params);
+
+                std::cout << sendkey << std::endl << std::endl << std::endl << std::endl;
+                std::cout << sendparams << std::endl << std::endl << std::endl << std::endl;
                 
                 pkgkeys c{sendkey, sendparams};
                 //Serialize
