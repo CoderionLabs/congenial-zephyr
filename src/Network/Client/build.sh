@@ -1,0 +1,1 @@
+g++ client.cpp -lsodium -lzephyr -lpkg -lpthread

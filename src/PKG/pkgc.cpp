@@ -104,7 +104,7 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
             ss.write(key.c_str(),key.size());
             pkgkeys c;
             {
-                cereal::BinaryInputArchive iarchive(ss);
+                cereal::JSONInputArchive iarchive(ss);
                 iarchive(c); // Read the data from the archive
             }
 

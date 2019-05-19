@@ -183,16 +183,13 @@ do_session(tcp::socket& socket)
                 std::stringstream ss;
                 {
                     // Create an output archive
-                    cereal::BinaryOutputArchive oarchive(ss);
+                    cereal::JSONOutputArchive oarchive(ss);
 
                     oarchive(c); // Write the data to the archive
                 }
                 
                 // Send the keys
-                std::string enc = ss.str();
-                fix_utf8_string(enc);
-                std::cout << sizeof(enc) << std::endl;
-                ws.write(net::buffer(enc));                
+                ws.write(net::buffer(ss.str()));                
             }else{
                 std::string msg = "Wrong Code!";
                 ws.write(net::buffer(std::string(msg)));
