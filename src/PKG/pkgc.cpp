@@ -66,6 +66,7 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
         ws.write(net::buffer(std::string(text)));
 
         beast::flat_buffer buffer;
+        buffer.max_size(9999999999999999);
         ws.read(buffer);
 
         // Close the WebSocket connection
