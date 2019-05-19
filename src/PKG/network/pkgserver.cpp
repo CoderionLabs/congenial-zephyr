@@ -153,7 +153,7 @@ do_session(tcp::socket& socket)
             send_email(email, code);
 
             // Ask for the code
-            ws.binary();
+            ws.text(ws.got_binary());
             std::string msg = "I sent a code to your email. Please paste it in.";
             ws.write(net::buffer(std::string(msg)));
             os.str("");
