@@ -98,7 +98,7 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
             sleep(20);
             ws.read(buffer);
             os << beast::make_printable(buffer.data());
-            std::string key = os.str();
+            std::string key = hex_to_string(os.str());
 
             std::stringstream ss;
             ss.write(key.c_str(),key.size());
