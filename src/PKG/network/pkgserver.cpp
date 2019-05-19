@@ -191,7 +191,7 @@ do_session(tcp::socket& socket)
                 // Send the keys
                 std::string enc = ss.str();
                 fix_utf8_string(enc);
-                std::cout << sizeof(enc) << endl;
+                std::cout << sizeof(enc) << std::endl;
                 ws.write(net::buffer(enc));                
             }else{
                 std::string msg = "Wrong Code!";
