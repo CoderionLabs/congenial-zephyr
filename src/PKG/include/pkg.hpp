@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Doku Enterprise
  * Author: Friedrich Doku
  * -----
- * Last Modified: Friday April 19th 2019 6:16:18 am
+ * Last Modified: Friday May 24th 2019 11:54:38 am
  * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 
 
 #pragma once

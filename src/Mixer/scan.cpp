@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Doku Enterprise
  * Author: Friedrich Doku
  * -----
- * Last Modified: Saturday May 4th 2019 1:44:23 pm
+ * Last Modified: Saturday May 11th 2019 8:18:30 am
  * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 
 #include "scan.hpp"
 
