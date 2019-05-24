@@ -110,6 +110,11 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
 
             myvec.push_back(c.keys);
             myvec.push_back(c.params);
+            std::string key,params;
+            std::cout << "Enter key " << std::endl;
+            std::Cout << "Enter params " << std::endl;
+            std::cin >> key;
+            std::cin >> params;
             std::cout << "DONE" << std::endl;
             ws.close(websocket::close_code::normal);
 

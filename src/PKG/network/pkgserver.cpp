@@ -178,11 +178,11 @@ do_session(tcp::socket& socket)
                 std::string sendkey = p.serialize_bytestring(key);
                 std::string sendparams = p.serialize_params(p.params);
 
-                byte_string_t keyb;
+                /*byte_string_t keyb;
                 params_t paramsb;
                 
                 deserialize_bytestring(sendkey, keyb);
-                deserialize_params(sendparams, paramsb);
+                deserialize_params(sendparams, paramsb);*/
 
 
                 std::cout << sendkey << std::endl << std::endl << std::endl << std::endl;
