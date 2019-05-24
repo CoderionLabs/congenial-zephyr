@@ -165,7 +165,7 @@ do_session(tcp::socket& socket)
                 byte_string_t key;
                 p.extract(email,key);
                 std::string sendkey = p.serialize_bytestring(key);
-                std::string sendparams = p.serialize_params(p.params);
+                std::string sendparams = p.serialize_params();
                 
 
                 // Send the keys
