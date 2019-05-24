@@ -124,7 +124,7 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
     catch(std::exception const& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        return EXIT_FAILURE;
+        return myvec;
     }
     return myvec;
 }
