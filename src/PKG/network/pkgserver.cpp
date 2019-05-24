@@ -16,7 +16,6 @@
  *   along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -27,11 +26,8 @@
 #include <thread>
 
 #include <zephyr/email.hpp>
-#include <zephyr/base64.hpp>
 
 #include <zephyr/pkg.hpp>
-#include <zephyr/pkgserial.hpp>
-#include <zephyr/utf8.h>
 extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
@@ -55,14 +51,6 @@ std::string from_password;
 std::string email;
 std::string code_tmp;
 //------------------------------------------------------------------------------
-
-
-void fix_utf8_string(std::string& str)
-{
-    std::string temp;
-    utf8::replace_invalid(str.begin(), str.end(), back_inserter(temp));
-    str = temp;
-}
 
 void send_email(std::string email, std::string code){
     Email e;
@@ -177,29 +165,12 @@ do_session(tcp::socket& socket)
                 p.extract(email,key);
                 std::string sendkey = p.serialize_bytestring(key);
                 std::string sendparams = p.serialize_params(p.params);
-
-                /*byte_string_t keyb;
-                params_t paramsb;
                 
-                deserialize_bytestring(sendkey, keyb);
-                deserialize_params(sendparams, paramsb);*/
 
-
-                std::cout << sendkey << std::endl << std::endl << std::endl << std::endl;
-                std::cout << sendparams << std::endl << std::endl << std::endl << std::endl;
-                
-                pkgkeys c{sendkey, sendparams};
-                //Serialize
-                std::ostringstream ss;
-                {
-                    // Create an output archive
-                    cereal::BinaryOutputArchive oarchive(ss);
-
-                    oarchive(c); // Write the data to the archive
-                }
-                
                 // Send the keys
-                ws.write(net::buffer(string_to_hex(ss.str())));                
+                ws.write(net::buffer(std::string(sendkey)));
+                ws.write(net::buffer(std::string(sendparams)));
+                
             }else{
                 std::string msg = "Wrong Code!";
                 ws.write(net::buffer(std::string(msg)));

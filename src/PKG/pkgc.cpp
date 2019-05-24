@@ -66,7 +66,6 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
         ws.write(net::buffer(std::string(text)));
 
         beast::flat_buffer buffer;
-        buffer.max_size(9999999999999999);
         ws.read(buffer);
 
         // Close the WebSocket connection
@@ -98,24 +97,23 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
             sleep(20);
             ws.read(buffer);
             os << beast::make_printable(buffer.data());
-            std::string key = hex_to_string(os.str());
+            std::string key = os.str();
+            os.str("");
+            os.clear();
+            buffer.consume(buffer.size());
 
-            std::stringstream ss;
-            ss.write(key.c_str(),key.size());
-            pkgkeys c;
-            {
-                cereal::BinaryInputArchive iarchive(ss);
-                iarchive(c); // Read the data from the archive
-            }
+            ws.read(buffer);
+            os << beast::make_printable(buffer.data());
+            std::string params = os.str();
+            os.str("");
+            os.clear();
+            buffer.consume(buffer.size());
 
-            myvec.push_back(c.keys);
-            myvec.push_back(c.params);
-            std::string key,params;
-            std::cout << "Enter key " << std::endl;
-            std::Cout << "Enter params " << std::endl;
-            std::cin >> key;
-            std::cin >> params;
             std::cout << "DONE" << std::endl;
+            std::cout << "KEY " << key << std::endl;
+            std::cout << "PARAMS " << params << std::endl;
+            myvec.push_back(key);
+            myvec.push_back(params);
             ws.close(websocket::close_code::normal);
 
         }else{
@@ -126,7 +124,7 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
     catch(std::exception const& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        return myvec;
+        return EXIT_FAILURE;
     }
     return myvec;
 }
