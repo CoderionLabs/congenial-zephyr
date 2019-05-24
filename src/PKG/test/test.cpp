@@ -41,7 +41,17 @@ int main(){
     auto str = pkg_encrypt("fried", p.params,"Everyone still has a ways to go.");
     p.extract("fried", key);
     p.extract("ethan", ad_key);
+
+    //Test key Serialization
+    auto keystr = p.serialize_bytestring(key);
+    byte_string_t keytmp;
+    deserialize_bytestring(keystr,keytmp);
+
+    // Test params Serialization
+    auto paramstr = p.serialize_params();
+    params_t paramtmp;
+    deserialize_params(paramstr, paramtmp);
+
     auto j2 = pkg_decrypt(str, ad_key, p.params);
-    auto j = pkg_decrypt(str, key, p.params);
-    //byte_string_clear(key);
+    auto j = pkg_decrypt(str, keytmp, paramtmp);
 }

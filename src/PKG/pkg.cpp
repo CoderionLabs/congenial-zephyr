@@ -49,12 +49,14 @@ void PKG::extract(std::string id, byte_string_t key){
 void deserialize_params(std::string in, params_t p){
     byte_string_t tmp;
     deserialize_bytestring(in, tmp);
+    std::cout << "START" << std::endl;
     IBE_deserialize_params(p, tmp);
+    std::cout << "END" << std::endl;
 }
 
-std::string PKG::serialize_params(params_t p){
+std::string PKG::serialize_params(){
     byte_string_t b;
-    IBE_serialize_params(b,p);
+    IBE_serialize_params(b,this->params);
     auto s = serialize_bytestring(b);
     return s;
 }
@@ -67,22 +69,20 @@ void deserialize_bytestring(std::string p, byte_string_t result){
         cereal::BinaryInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
     }
-    for(int i = 0; i < c.data.size(); i++){
+    byte_string_init(result, c.size);
+    for(int i = 0; i < c.size; i++){
         result->data[i] = c.data[i];
     }
-    int size = std::stoi(c.size);
-    result->len = size;
 }
 
 std::string PKG::serialize_bytestring(byte_string_t b){
-    unsigned char data[b->len];
+    std::vector<unsigned char> data;
     for(int i = 0; i < b->len; i++){
-        data[i] = b->data[i];
+        data.push_back(b->data[i]);
     }
-    std::string b_str(data, data + b->len);
-    std::string size = std::to_string(b->len);
+    int size = (b->len);
     
-    bytestring_wrap present{b_str, size};
+    bytestring_wrap present{data, size};
     //Serialize
     std::stringstream ss;
     {

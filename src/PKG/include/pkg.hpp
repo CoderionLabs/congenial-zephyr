@@ -28,6 +28,7 @@
 #include <utility>
 #include <string>
 #include <algorithm>
+#include <vector>
 #include <iterator>
 #include <bitset>
 #include <boost/numeric/conversion/cast.hpp>
@@ -36,6 +37,8 @@
 #include <sodium/randombytes.h>
 #include <sodium/crypto_hash_sha256.h>
 #include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/memory.hpp>
 #include <cereal/archives/binary.hpp>
 
 extern "C"{
@@ -59,8 +62,8 @@ struct contents{
 typedef struct contents contents;
 
 struct bytestring_wrap{
-    std::string data;
-    std::string size;
+    std::vector<unsigned char> data;
+    int size;
 
     template<class Archive>
     void serialize(Archive & archive)
@@ -77,7 +80,7 @@ public:
     byte_string_t master; //unknown to user
     ~PKG();
     void setup(std::string system);
-    std::string serialize_params(params_t p);
+    std::string serialize_params();
     std::string serialize_bytestring(byte_string_t b);
     void extract(std::string id, byte_string_t key);
 };
