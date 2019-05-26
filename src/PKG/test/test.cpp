@@ -56,7 +56,7 @@ int main(){
 
     cout <<  "SIZE OF FULL DATA IS " << sizeof(paramtmp) + sizeof(keytmp) << endl;
 
-    auto str2 = pkg_encrypt("fried", paramtmp,"Life is a constant struggle.");
+    auto str2 = pkg_encrypt("fried", paramtmp,"msg");
 
     auto j3 = pkg_decrypt(str2, keytmp, paramtmp);
     auto j = pkg_decrypt(str, keytmp, paramtmp);

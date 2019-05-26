@@ -99,7 +99,7 @@ int main(int argc, char** argv)
         std::cout << prompt << std::endl;
         std::cin >> code;
         ws.write(net::buffer(std::string(code)));
-
+        
         ws.read(buffer);
         os << beast::make_printable(buffer.data());
         std::string req = os.str();

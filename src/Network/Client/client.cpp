@@ -80,7 +80,7 @@ int main(){
     cout <<  "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
-    auto enc = pkg_encrypt("fried", paramsb, "msg");
+    std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
     cout << "MADE IT HERE FINISHED" << endl;
     // Select random mixer and send data to it
     int num = rand() % vec[0].size() -1;
