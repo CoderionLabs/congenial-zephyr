@@ -72,13 +72,15 @@ int main(){
     deserialize_params(x[1], paramsb);
 
     // Encrypt message for user
-    pkg_encrypt(email, paramsb, msg);
+    cout << "MADE IT HERE 2" << endl;
+    auto enc = pkg_encrypt(email, paramsb, msg);
 
     // Select random mixer and send data to it
     int num = rand() % vec[0].size() -1;
     if(num == 0){
         num++;
     }
+    cout << "MADE IT HERE" << endl;
     string ip = vec[0][num];
     auto data = talktomixer(ip, "publickeys");
     auto map = ConvertStringToMap(data);
