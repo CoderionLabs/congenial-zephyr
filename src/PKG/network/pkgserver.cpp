@@ -166,8 +166,8 @@ do_session(tcp::socket& socket)
                 std::string sendparams = p.serialize_params();
                 int size = sizeof(sendkey) + sizeof(sendparams);
 
-                std::string msg = "Looking good, I will send you your keys. You should expect a total of "  + std::to_string(size) + 
-                " bytes";
+                std::string msg = "Looking good, I will send you your keys.";
+                std::cout <<  "You should expect a total of "  << std::to_string(size) << " bytes" << std::endl;
                 ws.write(net::buffer(std::string(msg)));
                 // Send the keys
                 ws.write(net::buffer(std::string(sendkey)));
