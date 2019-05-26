@@ -78,8 +78,9 @@ int main(){
     deserialize_params(param_serial_tmp, paramsb);
 
     FILE * filePointer; 
-    filePointer = fopen("params.txt","w");
+    filePointer = fopen("params.txt","w+");
     params_out(filePointer, paramsb);
+    fclose(filePointer);
 
     cout <<  "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
     // Encrypt message for user

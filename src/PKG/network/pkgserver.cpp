@@ -22,6 +22,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <cstdlib>
 #include <functional>
+#include <stdio.h> 
 #include <iostream>
 #include <string>
 #include <thread>
@@ -161,9 +162,10 @@ do_session(tcp::socket& socket)
             if(gotcode == code){
 
                 FILE * filePointer; 
-                filePointer = fopen("params.txt","w");
+                filePointer = fopen("params.txt","w+");
                 params_out(filePointer, p.params);
-                
+                fclose(filePointer);
+
                 byte_string_t key;
                 p.extract(email,key);
                 std::string sendkey = p.serialize_bytestring(key);
