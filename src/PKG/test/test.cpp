@@ -42,6 +42,8 @@ int main(){
     p.extract("fried", key);
     p.extract("ethan", ad_key);
 
+   
+
     //Test key Serialization
     auto keystr = p.serialize_bytestring(key);
     byte_string_t keytmp;
@@ -52,6 +54,12 @@ int main(){
     params_t paramtmp;
     deserialize_params(paramstr, paramtmp);
 
-    auto j2 = pkg_decrypt(str, ad_key, p.params);
+    cout <<  "SIZE OF FULL DATA IS " << sizeof(paramtmp) + sizeof(keytmp) << endl;
+
+    auto str2 = pkg_encrypt("fried", paramtmp,"Life is a constant struggle.");
+
+    auto j3 = pkg_decrypt(str2, keytmp, paramtmp);
     auto j = pkg_decrypt(str, keytmp, paramtmp);
+    auto j2 = pkg_decrypt(str, ad_key, p.params);
+    
 }

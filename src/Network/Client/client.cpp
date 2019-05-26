@@ -32,6 +32,10 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sodium.h>
+extern "C"{
+    #include <sibe/ibe.h>
+    #include <sibe/ibe_progs.h>
+}
 
 CONF_CTX *cnfctx;
 params_t params;
@@ -68,19 +72,22 @@ int main(){
     params_t paramsb;
     cout << x[0] << endl;
     cout << x[1] << endl;
-    deserialize_bytestring(x[0], keyb);
-    deserialize_params(x[1], paramsb);
+    std::string key_serial_tmp = std::move(x[0]);
+    std::string param_serial_tmp = std::move(x[1]);
+    deserialize_bytestring(key_serial_tmp, keyb);
+    deserialize_params(param_serial_tmp, paramsb);
 
+    cout <<  "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
-    auto enc = pkg_encrypt("email", paramsb, "msg");
-
+    auto enc = pkg_encrypt("fried", paramsb, "msg");
+    cout << "MADE IT HERE FINISHED" << endl;
     // Select random mixer and send data to it
     int num = rand() % vec[0].size() -1;
     if(num == 0){
         num++;
     }
-    cout << "MADE IT HERE" << endl;
+   
     string ip = vec[0][num];
     auto data = talktomixer(ip, "publickeys");
     auto map = ConvertStringToMap(data);

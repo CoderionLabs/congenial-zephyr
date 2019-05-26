@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cereal/types/string.hpp>
-#include <cereal/archives/binary.hpp>
+#include <cereal/archives/portable_binary.hpp>
 #include <string>
 #include <algorithm>
 #include <stdexcept>
