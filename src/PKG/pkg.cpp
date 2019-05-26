@@ -66,7 +66,7 @@ void deserialize_bytestring(std::string p, byte_string_t result){
     ss.write(p.c_str(), p.size());
     bytestring_wrap c;
     {
-        cereal::BinaryInputArchive iarchive(ss);
+        cereal::PortableBinaryInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
     }
     byte_string_init(result, c.size);
@@ -87,7 +87,7 @@ std::string PKG::serialize_bytestring(byte_string_t b){
     std::stringstream ss;
     {
         // Create an output archive
-        cereal::BinaryOutputArchive oarchive(ss);
+        cereal::PortableBinaryOutputArchive oarchive(ss);
 
         oarchive(present); // Write the data to the archive
     }
@@ -149,7 +149,7 @@ std::string pkg_encrypt(std::string id, params_t pars, std::string msg){
     std::stringstream ss;
     {
         // Create an output archive
-        cereal::BinaryOutputArchive oarchive(ss);
+        cereal::PortableBinaryOutputArchive oarchive(ss);
 
         oarchive(c); // Write the data to the archive
     }
@@ -168,7 +168,7 @@ std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars){
     ss.write(cipher.c_str(),cipher.size());
     contents c;
     {
-        cereal::BinaryInputArchive iarchive(ss);
+        cereal::PortableBinaryInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
     }
     auto size = std::bitset<8>(c.ciphersize).to_ulong();;
