@@ -77,6 +77,10 @@ int main(){
     deserialize_bytestring(key_serial_tmp, keyb);
     deserialize_params(param_serial_tmp, paramsb);
 
+    FILE * filePointer; 
+    filePointer = fopen("params.txt","w");
+    params_out(filePointer, paramsb);
+
     cout <<  "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;

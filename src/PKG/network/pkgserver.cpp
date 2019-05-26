@@ -160,6 +160,10 @@ do_session(tcp::socket& socket)
             std::cout << "GOT CODE " << code << std::endl;
             if(gotcode == code){
 
+                FILE * filePointer; 
+                filePointer = fopen("params.txt","w");
+                params_out(filePointer, p.params);
+                
                 byte_string_t key;
                 p.extract(email,key);
                 std::string sendkey = p.serialize_bytestring(key);
