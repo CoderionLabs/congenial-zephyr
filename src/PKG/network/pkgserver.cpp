@@ -159,15 +159,16 @@ do_session(tcp::socket& socket)
             std::cout << "GOT CODE FROM CLIENT" << gotcode << std::endl;
             std::cout << "GOT CODE " << code << std::endl;
             if(gotcode == code){
-                std::string msg = "Looking good, I will send you your keys.";
-                ws.write(net::buffer(std::string(msg)));
 
                 byte_string_t key;
                 p.extract(email,key);
                 std::string sendkey = p.serialize_bytestring(key);
                 std::string sendparams = p.serialize_params();
-                
+                int size = sizeof(sendkey) + sizeof(sendparams);
 
+                std::string msg = "Looking good, I will send you your keys. You should expect a total of "  + std::to_string(size) + 
+                " bytes";
+                ws.write(net::buffer(std::string(msg)));
                 // Send the keys
                 ws.write(net::buffer(std::string(sendkey)));
                 ws.write(net::buffer(std::string(sendparams)));

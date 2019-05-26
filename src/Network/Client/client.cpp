@@ -73,7 +73,7 @@ int main(){
 
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
-    auto enc = pkg_encrypt(email, paramsb, msg);
+    auto enc = pkg_encrypt("email", paramsb, "msg");
 
     // Select random mixer and send data to it
     int num = rand() % vec[0].size() -1;

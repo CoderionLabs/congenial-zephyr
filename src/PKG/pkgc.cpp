@@ -114,6 +114,8 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
             std::cout << "PARAMS " << params << std::endl;
             myvec.push_back(key);
             myvec.push_back(params);
+
+            std::cout << "RECIVED " << sizeof(myvec) << " bytes" << std::endl;
             ws.close(websocket::close_code::normal);
 
         }else{
