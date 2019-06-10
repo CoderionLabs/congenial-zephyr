@@ -3,7 +3,7 @@ CC = g++
 
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM  -I=$(ROOT_DIR)/include
+CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM  -I$(ROOT_DIR)/include
 LDFLAGS= -shared -L/usr/local/lib -lsibe -lsodium -lboost_system -lcurl
 
 SOURCES = $(shell echo *.cpp)
