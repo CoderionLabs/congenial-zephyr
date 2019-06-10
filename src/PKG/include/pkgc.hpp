@@ -20,7 +20,7 @@
 #pragma once
 
 #include <boost/beast/core.hpp>
-#include <zephyr/base64.hpp>
+#include "base64.hpp"
 #include <zephyr/pkgserial.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
