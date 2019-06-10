@@ -21,7 +21,7 @@
 
 #include <boost/beast/core.hpp>
 #include "base64.hpp"
-#include <zephyr/pkgserial.hpp>
+#include "pkgserial.hpp"
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
