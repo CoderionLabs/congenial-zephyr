@@ -70,6 +70,7 @@ int main(){
     // Get your private key
     byte_string_t keyb;
     params_t paramsb;
+    IBE_init();
     cout << x[0] << endl;
     cout << x[1] << endl;
     std::string key_serial_tmp = std::move(x[0]);
