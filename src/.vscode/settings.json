@@ -61,6 +61,10 @@
         "valarray": "cpp",
         "codecvt": "cpp",
         "csignal": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "bit": "cpp",
+        "map": "cpp",
+        "set": "cpp",
+        "string": "cpp"
     }
 }

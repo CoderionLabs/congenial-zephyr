@@ -27,6 +27,11 @@ HttpServer httpserver(8000);
 MixerServer s(httpserver,
             JSONRPC_SERVER_V1V2);
 map<string,string> ipspub;
+
+
+std::mutex msg_mutex;
+std::condition_variable cv;
+bool ready = false;
 std::vector<std::string> requests;
 
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
@@ -195,11 +200,18 @@ void Mixer::StartRoundAsMixer(){
     // Decrypt all the requests and send them to their
     // approrite mixers
     while(true){
+        std::unique_lock<std::mutex> lck(msg_mutex);
+        while(!ready){cv.wait(lck);}
+
+        msg_mutex.lock();
         std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests));
+        msg_mutex.unlock();
         s.msgs.clear();
         if(requests.size() != 0){
             auto tmprequest = requests;
+            msg_mutex.lock();
             requests.clear();
+            msg_mutex.unlock();
 
             std::mt19937 rng;
             rng.seed(std::random_device()());
@@ -217,6 +229,7 @@ void Mixer::StartRoundAsMixer(){
                 x.length(), this->public_key, this->private_key);
 
                 std::string conv = reinterpret_cast<char*>(decrypted);
+                std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;
                 auto pos = conv.find(":");
                 std::string nextmixer = conv.substr(0, pos);
                 conv.erase(0, pos + 1);
@@ -224,6 +237,7 @@ void Mixer::StartRoundAsMixer(){
                 senddata(nextmixer, conv);
             }
         }
+        ready = false;
     }
     
 }
@@ -267,7 +281,8 @@ void ListenForMessages(){
     // allow 5 pending connetions
     listen(sockfd, 5);
 
-    while (1) { 
+    while (1) {
+        std::unique_lock<std::mutex> lck(msg_mutex);
         //parent process waiting to accept a new connection
         printf("\n*****Waitng to accept a connection:*****\n");
         clientAddressLength = sizeof(clientAddress);
@@ -290,7 +305,9 @@ void ListenForMessages(){
                     std::string str = ConvertMapToString(ipspub);
                     send(newsockfd, str.c_str(), sizeof(str), 0);
                 }else{
+                    msg_mutex.lock();
                     requests.push_back(msg);
+                    msg_mutex.unlock();
                     char* ack = "MessageRecieved";
                     send(newsockfd, ack, sizeof(ack), 0);
                 }
@@ -299,6 +316,8 @@ void ListenForMessages(){
          } else {
             close(newsockfd); //sock is closed BY PARENT
         }
+        ready = true;
+        cv.notify_all();
     }
 }
 

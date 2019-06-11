@@ -29,6 +29,7 @@
 #include <fstream>
 #include <opendht.h>
 #include <vector>
+#include <condition_variable>
 #include <random>
 #include <mutex>
 #include <memory>

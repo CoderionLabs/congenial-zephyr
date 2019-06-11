@@ -98,13 +98,20 @@ int main(){
     auto data = talktomixer(ip, "publickeys");
     auto map = ConvertStringToMap(data);
     auto mixenc = map[ip];
+    
+    cout << "START OF MIXENC" << endl;
+    cout << mixenc << endl;
+    cout << "END OF MIXENC" << endl;
+
+    cout << "Talking to " << ip << endl;
     // Seal with crypto sercret box also append destination address to it data:ip
     int CIPHERTEXT_LEN = crypto_box_SEALBYTES + msg.length();
     unsigned char ciphertext[CIPHERTEXT_LEN];
     crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&msg[0]), msg.length(),
       reinterpret_cast<unsigned char*>(&mixenc[0]));
     // Send it back to the mixer
-    talktomixer(ip, reinterpret_cast<char*>(ciphertext));
+    auto gotbuf = talktomixer(ip, reinterpret_cast<char*>(ciphertext));
+    cout << gotbuf << endl;
     return 0;
 }
 
