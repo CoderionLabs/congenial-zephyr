@@ -203,15 +203,11 @@ void Mixer::StartRoundAsMixer(){
         std::unique_lock<std::mutex> lck(msg_mutex);
         while(!ready){cv.wait(lck);}
 
-        msg_mutex.lock();
         std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests));
-        msg_mutex.unlock();
         s.msgs.clear();
         if(requests.size() != 0){
             auto tmprequest = requests;
-            msg_mutex.lock();
             requests.clear();
-            msg_mutex.unlock();
 
             std::mt19937 rng;
             rng.seed(std::random_device()());
@@ -238,6 +234,7 @@ void Mixer::StartRoundAsMixer(){
             }
         }
         ready = false;
+        cv.notify_all();
     }
     
 }
@@ -283,6 +280,7 @@ void ListenForMessages(){
 
     while (1) {
         std::unique_lock<std::mutex> lck(msg_mutex);
+        while(ready){cv.wait(lck);}
         //parent process waiting to accept a new connection
         printf("\n*****Waitng to accept a connection:*****\n");
         clientAddressLength = sizeof(clientAddress);
@@ -305,9 +303,7 @@ void ListenForMessages(){
                     std::string str = ConvertMapToString(ipspub);
                     send(newsockfd, str.c_str(), sizeof(str), 0);
                 }else{
-                    msg_mutex.lock();
                     requests.push_back(msg);
-                    msg_mutex.unlock();
                     char* ack = "MessageRecieved";
                     send(newsockfd, ack, sizeof(ack), 0);
                 }
