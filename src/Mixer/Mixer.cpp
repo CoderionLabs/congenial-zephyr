@@ -201,8 +201,8 @@ void Mixer::StartRoundAsMixer(){
     thread t(StartServerInBackground);
     //Start a message listener in the background
     thread t1 (ListenForMessages);
-    t.join();
-    t1.join();
+    t.detach();
+    t1.detach();
 
     while(true){
         if(!dowork.load()){
