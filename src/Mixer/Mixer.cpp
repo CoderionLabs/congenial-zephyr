@@ -28,10 +28,8 @@ MixerServer s(httpserver,
             JSONRPC_SERVER_V1V2);
 map<string,string> ipspub;
 
-
-std::mutex msg_mutex;
-std::condition_variable cv;
-bool ready = false;
+std::atomic<bool> ready = false;
+std::vector<std::string> requests_tmp;
 std::vector<std::string> requests;
 
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
@@ -200,41 +198,37 @@ void Mixer::StartRoundAsMixer(){
     // Decrypt all the requests and send them to their
     // approrite mixers
     while(true){
-        std::unique_lock<std::mutex> lck(msg_mutex);
-        while(!ready){cv.wait(lck);}
+        if(!ready){
+            std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
+            s.msgs.clear();
+            if(requests_tmp.size() != 0){
+                std::mt19937 rng;
+                rng.seed(std::random_device()());
+                std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
 
-        std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests));
-        s.msgs.clear();
-        if(requests.size() != 0){
-            auto tmprequest = requests;
-            requests.clear();
+                auto x = dist6(rng);
 
-            std::mt19937 rng;
-            rng.seed(std::random_device()());
-            std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
+                Shuffle<std::string> shu(requests_tmp, (int) x);
 
-            auto x = dist6(rng);
+                // Strip off a layer of encryption and send to the next
+                // mixer.
+                for(auto x : shu.vec){
+                    unsigned char* decrypted;
+                    crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
+                    x.length(), this->public_key, this->private_key);
 
-            Shuffle<std::string> shu(tmprequest, (int) x);
+                    std::string conv = reinterpret_cast<char*>(decrypted);
+                    std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;
+                    auto pos = conv.find(":");
+                    std::string nextmixer = conv.substr(0, pos);
+                    conv.erase(0, pos + 1);
 
-            // Strip off a layer of encryption and send to the next
-            // mixer.
-            for(auto x : shu.vec){
-                unsigned char* decrypted;
-                crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
-                x.length(), this->public_key, this->private_key);
-
-                std::string conv = reinterpret_cast<char*>(decrypted);
-                std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;
-                auto pos = conv.find(":");
-                std::string nextmixer = conv.substr(0, pos);
-                conv.erase(0, pos + 1);
-
-                senddata(nextmixer, conv);
+                    senddata(nextmixer, conv);
+                }
             }
         }
-        ready = false;
-        cv.notify_all();
+        requests_tmp.clear();
+        ready = true;
     }
     
 }
@@ -279,8 +273,6 @@ void ListenForMessages(){
     listen(sockfd, 5);
 
     while (1) {
-        std::unique_lock<std::mutex> lck(msg_mutex);
-        while(ready){cv.wait(lck);}
         //parent process waiting to accept a new connection
         printf("\n*****Waitng to accept a connection:*****\n");
         clientAddressLength = sizeof(clientAddress);
@@ -312,8 +304,11 @@ void ListenForMessages(){
          } else {
             close(newsockfd); //sock is closed BY PARENT
         }
-        ready = true;
-        cv.notify_all();
+        if(ready){
+            std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
+            requests.clear();
+            ready = false;
+        }
     }
 }
 

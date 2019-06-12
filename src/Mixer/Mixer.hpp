@@ -30,6 +30,7 @@
 #include <opendht.h>
 #include <vector>
 #include <condition_variable>
+#include <atomic>
 #include <random>
 #include <mutex>
 #include <memory>
