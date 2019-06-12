@@ -207,6 +207,8 @@ void Mixer::StartRoundAsMixer(){
                 std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
 
                 auto x = dist6(rng);
+                std::cout << "THIS IS IT" << std::endl;
+                std::cout << requests_tmp[0] << std::endl;
 
                 Shuffle<std::string> shu(requests_tmp, (int) x);
 
