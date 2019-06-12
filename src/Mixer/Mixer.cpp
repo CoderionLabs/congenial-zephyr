@@ -208,6 +208,7 @@ void Mixer::StartRoundAsMixer(){
         if(!dowork.load()){
             std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
             s.msgs.clear();
+            std::cout << "IM IN HERE" << std::endl;
             if(requests_tmp.size() != 0){
                 std::mt19937 rng;
                 rng.seed(std::random_device()());
@@ -234,8 +235,8 @@ void Mixer::StartRoundAsMixer(){
 
                     senddata(nextmixer, conv);
                 }
-            }
-            requests_tmp.clear();
+                requests_tmp.clear();
+            } 
             dowork = true;
         }
     }
