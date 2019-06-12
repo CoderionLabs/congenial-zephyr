@@ -311,10 +311,10 @@ void ListenForMessages(){
                         std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
                         requests.clear();
                         dowork = false;
+                        std::cout << dowork << std::endl;
                     }
                 }
             } 
-            exit(0);
          } else {
             close(newsockfd); //sock is closed BY PARENT
         }
