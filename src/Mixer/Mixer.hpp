@@ -99,7 +99,6 @@ void senddata(std::string ip, std::string msg);
 void StartServerInBackground();
 void GetPrimaryIp(char* buffer, size_t buflen);
 void ListenForMessages();
-void StartMessageSender();
 
 // Basic conversion functions needed for sending public keys
 std::string ConvertMapToString(std::map<string,string> mymap);
