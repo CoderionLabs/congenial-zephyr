@@ -186,15 +186,7 @@ void StartServerInBackground(){
     std::chrono::hours(std::numeric_limits<int>::max()));
 }
 
-void Mixer::StartRoundAsMixer(){
-
-    //Start a server in the background
-    auto f = std::async(std::launch::async, StartServerInBackground);
-
-    //Start a message listener in the background
-    auto fL = std::async(std::launch::async, ListenForMessages);
-
-
+void StartMessageSender(){
     // Decrypt all the requests and send them to their
     // approrite mixers
     while(true){
@@ -229,10 +221,22 @@ void Mixer::StartRoundAsMixer(){
                 }
             }
         }
+        sleep(10);
         requests_tmp.clear();
         ready = true;
     }
-    
+}
+
+void Mixer::StartRoundAsMixer(){
+
+    //Start a server in the background
+    auto f = std::async(std::launch::async, StartServerInBackground);
+
+    //Start a message listener in the background
+    auto fL = std::async(std::launch::async, ListenForMessages);
+
+    auto fL2 = std::async(std::launch::async, StartMessageSender);
+
 }
 
 // Send data to the next node
@@ -301,15 +305,15 @@ void ListenForMessages(){
                     char* ack = "MessageRecieved";
                     send(newsockfd, ack, sizeof(ack), 0);
                 }
+                if(ready){
+                    std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
+                    requests.clear();
+                    ready = false;
+                }
             } 
             exit(0);
          } else {
             close(newsockfd); //sock is closed BY PARENT
-        }
-        if(ready){
-            std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
-            requests.clear();
-            ready = false;
         }
     }
 }
