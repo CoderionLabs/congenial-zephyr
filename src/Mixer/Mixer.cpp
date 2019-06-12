@@ -28,7 +28,7 @@ MixerServer s(httpserver,
             JSONRPC_SERVER_V1V2);
 map<string,string> ipspub;
 
-std::atomic<bool> ready = false;
+std::atomic<bool> ready{false};
 std::vector<std::string> requests_tmp;
 std::vector<std::string> requests;
 
