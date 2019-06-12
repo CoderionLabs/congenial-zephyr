@@ -47,7 +47,6 @@
 #include "shuffle.hpp"
 #include <unistd.h>
 
-#include <thread>
 #include <future>
 #include <ctime>
 

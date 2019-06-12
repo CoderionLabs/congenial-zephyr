@@ -28,7 +28,7 @@ MixerServer s(httpserver,
             JSONRPC_SERVER_V1V2);
 map<string,string> ipspub;
 
-std::atomic<bool> ready{false};
+std::atomic_bool dowork;
 std::vector<std::string> requests_tmp;
 std::vector<std::string> requests;
 
@@ -180,22 +180,32 @@ Mixer::~Mixer(){
     //this->node.shutdown();
 }
 
+void setWork(std::atomic_bool& ab){
+    ab = true;
+}
+
 void StartServerInBackground(){
-    s.StartListening();
-    std::this_thread::sleep_until(std::chrono::system_clock::now() +
-    std::chrono::hours(std::numeric_limits<int>::max()));
+    if(s.StartListening()){
+        std::cout << "BACKGROUND SERVER STARTED" << std::endl;
+            std::this_thread::sleep_until(std::chrono::system_clock::now() +
+            std::chrono::hours(std::numeric_limits<int>::max()));
+    }
+    if(s.StopListening()){
+        std::cout << "BACKGROUND SERVER STOPPED" << std::endl;
+    }
 }
 
 void Mixer::StartRoundAsMixer(){
 
     //Start a server in the background
-    auto f = std::async(std::launch::async, StartServerInBackground);
-
+    thread t(StartServerInBackground);
     //Start a message listener in the background
-    auto fL = std::async(std::launch::async, ListenForMessages);
+    thread t1 (ListenForMessages);
+    t.join();
+    t1.join();
 
     while(true){
-        if(!ready){
+        if(!dowork.load()){
             std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
             s.msgs.clear();
             if(requests_tmp.size() != 0){
@@ -225,10 +235,9 @@ void Mixer::StartRoundAsMixer(){
                     senddata(nextmixer, conv);
                 }
             }
+            requests_tmp.clear();
+            dowork = true;
         }
-        requests_tmp.clear();
-        ready = true;
-        sleep(10);
     }
 }
 
@@ -297,10 +306,10 @@ void ListenForMessages(){
                     requests.push_back(msg);
                     char* ack = "MessageRecieved";
                     send(newsockfd, ack, sizeof(ack), 0);
-                     if(ready){
+                     if(dowork.load()){
                         std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
                         requests.clear();
-                        ready = false;
+                        dowork = false;
                     }
                 }
             } 
