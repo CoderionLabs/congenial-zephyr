@@ -226,9 +226,9 @@ void Mixer::StartRoundAsMixer(){
                 }
             }
         }
-        sleep(10);
         requests_tmp.clear();
         ready = true;
+        sleep(10);
     }
 }
 
