@@ -206,6 +206,7 @@ void Mixer::StartRoundAsMixer(){
 
     while(true){
         if(!dowork.load()){
+            std::cout << "THIS WORKS" << std::endl;
             std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
             s.msgs.clear();
             std::cout << "IM IN HERE " << requests_tmp.size() << std::endl;
@@ -308,7 +309,7 @@ void ListenForMessages(){
                     requests.push_back(msg);
                     char* ack = "MessageRecieved";
                     send(newsockfd, ack, sizeof(ack), 0);
-                     if(dowork.load()){
+                    if(dowork.load()){
                         std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
                         requests.clear();
                         dowork = false;
