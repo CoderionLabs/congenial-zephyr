@@ -315,7 +315,8 @@ void ListenForMessages(){
                         std::cout << dowork << std::endl;
                     }
                 }
-            } 
+            }
+            exit(0); 
          } else {
             close(newsockfd); //sock is closed BY PARENT
         }
