@@ -127,7 +127,6 @@ int main(){
 }
 
 std::string talktomixer(std::string ip, std::string msg){
-    std::vector<std::string> myvec;
     try
     {
         // The io_context is required for all I/O
@@ -169,6 +168,7 @@ std::string talktomixer(std::string ip, std::string msg){
         std::ostringstream os;
         os <<  beast::make_printable(buffer.data());
         std::string data = os.str();
+        buffer.consume(buffer.size());
         ws.close(websocket::close_code::normal);
         return data;
 

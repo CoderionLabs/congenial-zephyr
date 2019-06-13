@@ -32,6 +32,7 @@ std::atomic_bool dowork;
 std::vector<std::string> requests;
 std::vector<std::string> requests_tmp;
 std::string MIXERIP;
+
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
@@ -215,11 +216,13 @@ do_session(tcp::socket& socket)
             beast::flat_buffer buffer;
 
             //  Read the email
+            ws.text(false);
             ws.read(buffer);
             os << boost::beast::make_printable(buffer.data());
             std::string msg = os.str();
             os.str("");
             os.clear();
+            buffer.consume(buffer.size());
 
             if(msg == "publickeys"){
                 // Send the user all the public keys of the mixnodes
@@ -325,7 +328,7 @@ void senddata(std::string ip, std::string msg){
 int ListenForMessages(){
    try{
         // Check command line arguments.
-        //auto const address = net::ip::make_address(argv[1]);
+        auto const address = net::ip::make_address("172.18.0.2");
         auto const port = PORT;
 
 
@@ -333,7 +336,7 @@ int ListenForMessages(){
         net::io_context ioc{1};
 
         // The acceptor receives incoming connections
-        tcp::acceptor acceptor{ioc};
+        tcp::acceptor acceptor{ioc, {address, PORT}};
         for(;;)
         {
             // This will receive the new connection
