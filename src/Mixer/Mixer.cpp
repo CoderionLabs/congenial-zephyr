@@ -30,7 +30,6 @@ map<string,string> ipspub;
 
 std::atomic_bool dowork;
 std::vector<std::string> requests_tmp;
-std::vector<std::string> requests;
 
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
@@ -197,6 +196,7 @@ void StartServerInBackground(){
 
 void Mixer::StartRoundAsMixer(){
 
+    dowork = false;
     //Start a server in the background
     thread t(StartServerInBackground);
     //Start a message listener in the background
@@ -257,6 +257,7 @@ void senddata(std::string ip, std::string msg){
 void ListenForMessages(){
     int sockfd; //to create socket
     int newsockfd; //to accept connection
+    std::vector<std::string> requests;
     
     struct sockaddr_in serverAddress; //server receive on this address
     struct sockaddr_in clientAddress; //server sends to client on this address
