@@ -29,11 +29,20 @@ MixerServer s(httpserver,
 map<string,string> ipspub;
 
 std::atomic_bool dowork;
+std::vector<std::string> requests;
 std::vector<std::string> requests_tmp;
+std::string MIXERIP;
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
 
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
     dht::DhtRunner node;
+    MIXERIP = mixerip;
     auto mtx = std::make_shared<std::mutex>();
     auto cv = std::make_shared<std::condition_variable>();
     auto ready = std::make_shared<bool>(false);
@@ -179,8 +188,66 @@ Mixer::~Mixer(){
     //this->node.shutdown();
 }
 
-void setWork(std::atomic_bool& ab){
-    ab = true;
+void
+do_session(tcp::socket& socket)
+{
+    try
+    {
+        // Construct the stream by moving in the socket
+        websocket::stream<tcp::socket> ws{std::move(socket)};
+
+        // Set a decorator to change the Server of the handshake
+        ws.set_option(websocket::stream_base::decorator(
+            [](websocket::response_type& res)
+            {
+                res.set(http::field::server,
+                    std::string(BOOST_BEAST_VERSION_STRING) +
+                        " websocket-server-sync");
+            }));
+
+        // Accept the websocket handshake
+        ws.accept();
+
+        std::ostringstream os;
+        for(;;)
+        {
+            // This buffer will hold the incoming message
+            beast::flat_buffer buffer;
+
+            //  Read the email
+            ws.read(buffer);
+            os << boost::beast::make_printable(buffer.data());
+            std::string msg = os.str();
+            os.str("");
+            os.clear();
+
+            if(msg == "publickeys"){
+                // Send the user all the public keys of the mixnodes
+                std::string str = ConvertMapToString(ipspub);
+                ws.write(net::buffer(std::string(str)));
+            }else{
+                requests.push_back(msg);
+                char* ack = "MessageRecieved";
+                ws.write(net::buffer(std::string(ack)));
+                if(dowork.load()){
+                    std::cout << "COPYING MESSAGES" << std::endl;
+                    std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
+                        requests.clear();
+                    dowork = false;
+                }
+            }
+        }
+    }
+    catch(beast::system_error const& se)
+    {
+        // This indicates that the session was closed
+        if(se.code() != websocket::error::closed)
+            std::cerr << "Error: " << se.code().message() << std::endl;
+    }
+    catch(std::exception const& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
 }
 
 void StartServerInBackground(){
@@ -205,7 +272,7 @@ void Mixer::StartRoundAsMixer(){
     t1.detach();
 
     while(true){
-        if(!dowork.load(std::memory_order_acquire)){
+        if(!dowork.load()){
             std::cout << "THIS WORKS" << std::endl;
             std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
             s.msgs.clear();
@@ -238,7 +305,7 @@ void Mixer::StartRoundAsMixer(){
                 }
                 requests_tmp.clear();
             } 
-            dowork.store(true, std::memory_order_release);
+            dowork = true;
         }
     }
 }
@@ -255,73 +322,34 @@ void senddata(std::string ip, std::string msg){
     }
 }
 
-void ListenForMessages(){
-    int sockfd; //to create socket
-    int newsockfd; //to accept connection
-    std::vector<std::string> requests;
-    
-    struct sockaddr_in serverAddress; //server receive on this address
-    struct sockaddr_in clientAddress; //server sends to client on this address
+int ListenForMessages(){
+   try{
+        // Check command line arguments.
+        //auto const address = net::ip::make_address(argv[1]);
+        auto const port = PORT;
 
-    int n;
-    char msg[MAXSZ];
-    int clientAddressLength;
-    int pid;
 
-    //create socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    //initialize the socket addresses
-    memset(&serverAddress, 0, sizeof(serverAddress));
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddress.sin_port = htons(PORT);
+        // The io_context is required for all I/O
+        net::io_context ioc{1};
 
-    //bind the socket with the server address and port
-    bind(sockfd, (struct sockaddr * ) & serverAddress, sizeof(serverAddress));
-
-    //listen for connection from client
-    // allow 5 pending connetions
-    listen(sockfd, 5);
-
-    while (1) {
-        //parent process waiting to accept a new connection
-        printf("\n*****Waitng to accept a connection:*****\n");
-        clientAddressLength = sizeof(clientAddress);
-        newsockfd = accept(sockfd, (struct sockaddr * ) &clientAddress, (socklen_t*) &clientAddressLength);
-        printf("connected to client: %s\n", inet_ntoa(clientAddress.sin_addr));
-        
-        //child process is created for serving each new client
-        pid = fork();
-        if (pid == 0) //child process rec and send
+        // The acceptor receives incoming connections
+        tcp::acceptor acceptor{ioc};
+        for(;;)
         {
-            //rceive from client
-            while (1) {
-                n = recv(newsockfd, msg, MAXSZ, 0);
-                if (n == 0) {
-                    close(newsockfd);
-                    break;
-                }
-                if(msg == "publickeys"){
-                    // Send the user all the public keys of the mixnodes
-                    std::string str = ConvertMapToString(ipspub);
-                    send(newsockfd, str.c_str(), sizeof(str), 0);
-                }else{
-                    requests.push_back(msg);
-                    char* ack = "MessageRecieved";
-                    send(newsockfd, ack, sizeof(ack), 0);
-                    if(dowork.load(std::memory_order_acquire)){
-                        std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
-                        requests.clear();
-                        dowork.store(false, std::memory_order_release);
-                        std::cout << dowork << std::endl;
-                    }
-                }
-            }
-            exit(0); 
-         } else {
-            close(newsockfd); //sock is closed BY PARENT
-        }
+            // This will receive the new connection
+            tcp::socket socket{ioc};
 
+            // Block until we get a connection
+            acceptor.accept(socket);
+
+            // Launch the session, transferring ownership of the socket
+            std::thread{std::bind(
+                &do_session,
+                std::move(socket))}.detach();
+        }
+    }catch (const std::exception& e){
+        std::cerr << "Error: " << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
 }
 

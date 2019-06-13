@@ -63,6 +63,10 @@
 #include <jsonrpccpp/client/connectors/httpclient.h>
 #include <jsonrpccpp/server/connectors/httpserver.h>
 
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
 
 #define KEY_LENGTH  2048
 
@@ -97,7 +101,7 @@ void GiveMeDataForPublic(std::string pub, std::string ip);
 void senddata(std::string ip, std::string msg);
 void StartServerInBackground();
 void GetPrimaryIp(char* buffer, size_t buflen);
-void ListenForMessages();
+int ListenForMessages();
 
 // Basic conversion functions needed for sending public keys
 std::string ConvertMapToString(std::map<string,string> mymap);

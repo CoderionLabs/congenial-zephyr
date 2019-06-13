@@ -34,7 +34,7 @@ int main(){
     vector<string> mailboxes;
 
     int amt;
-    cout << "How many mixer do you have?" << endl;
+    cout << "How many mixers do you have?" << endl;
     cin >> amt;
     while(amt--){
         string ip;

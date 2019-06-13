@@ -32,6 +32,12 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sodium.h>
+
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
 extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
@@ -39,6 +45,11 @@ extern "C"{
 
 CONF_CTX *cnfctx;
 params_t params;
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 using namespace std;
 // Mixers, Mailboxes, PKGS
@@ -116,37 +127,55 @@ int main(){
 }
 
 std::string talktomixer(std::string ip, std::string msg){
-    struct sockaddr_in address; 
-    int sock = 0, valread; 
-    struct sockaddr_in serv_addr; 
+    std::vector<std::string> myvec;
+    try
+    {
+        // The io_context is required for all I/O
+        net::io_context ioc;
 
-    char buffer[1024];
-    bzero(buffer, sizeof(buffer));
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-    { 
-        printf("\n Socket creation error \n"); 
-        return "FAIL"; 
-    } 
-   
-    memset(&serv_addr, '0', sizeof(serv_addr)); 
-   
-    serv_addr.sin_family = AF_INET; 
-    serv_addr.sin_port = htons(8080); 
-       
-    // Convert IPv4 and IPv6 addresses from text to binary form 
-    if(inet_pton(AF_INET, ip.c_str(), &serv_addr.sin_addr)<=0)  
-    { 
-        printf("\nInvalid address/ Address not supported \n"); 
-        return "FAIL"; 
-    } 
-   
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) 
-    { 
-        printf("\nConnection Failed \n"); 
-        return "FAIL";  
-    } 
-    send(sock , msg.c_str() , msg.length() , 0 ); 
-    printf("Hello message sent\n"); 
-    valread = read( sock , buffer, 1024); 
-    return std::string(buffer);
+        // These objects perform our I/O
+        tcp::resolver resolver{ioc};
+        websocket::stream<tcp::socket> ws{ioc};
+
+        // Look up the domain name
+        auto const results = resolver.resolve(ip, to_string(8080));
+
+        // Make the connection on the IP address we get from a lookup
+        net::connect(ws.next_layer(), results.begin(), results.end());
+
+        // Set a decorator to change the User-Agent of the handshake
+        ws.set_option(websocket::stream_base::decorator(
+            [](websocket::request_type& req)
+            {
+                req.set(http::field::user_agent,
+                    std::string(BOOST_BEAST_VERSION_STRING) +
+                        " websocket-client-coro");
+            }));
+
+        // Perform the websocket handshake
+        ws.handshake(ip, "/");
+
+        // Send the message
+        ws.write(net::buffer(std::string(msg)));
+
+        beast::flat_buffer buffer;
+        ws.read(buffer);
+
+        // Close the WebSocket connection
+        //ws.close(websocket::close_code::normal);
+
+
+        // The make_printable() function helps print a ConstBufferSequence
+        std::ostringstream os;
+        os <<  beast::make_printable(buffer.data());
+        std::string data = os.str();
+        ws.close(websocket::close_code::normal);
+        return data;
+
+    }
+    catch(std::exception const& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return "FAILED";
+    }
 }
