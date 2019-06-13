@@ -205,7 +205,7 @@ void Mixer::StartRoundAsMixer(){
     t1.detach();
 
     while(true){
-        if(!dowork.load()){
+        if(!dowork.load(std::memory_order_acquire)){
             std::cout << "THIS WORKS" << std::endl;
             std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
             s.msgs.clear();
@@ -238,7 +238,7 @@ void Mixer::StartRoundAsMixer(){
                 }
                 requests_tmp.clear();
             } 
-            dowork = true;
+            dowork.store(true, std::memory_order_release);
         }
     }
 }
@@ -309,10 +309,10 @@ void ListenForMessages(){
                     requests.push_back(msg);
                     char* ack = "MessageRecieved";
                     send(newsockfd, ack, sizeof(ack), 0);
-                    if(dowork.load()){
+                    if(dowork.load(std::memory_order_acquire)){
                         std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
                         requests.clear();
-                        dowork = false;
+                        dowork.store(false, std::memory_order_release);
                         std::cout << dowork << std::endl;
                     }
                 }
