@@ -40,6 +40,83 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 
+class session
+    : public std::enable_shared_from_this < session > {
+        public: session(tcp::socket socket): socket_(std::move(socket)) {}
+
+        void start() {
+            do_read();
+        }
+
+        private: void do_read() {
+            auto self(shared_from_this());
+            socket_.async_read_some(boost::asio::buffer(data_, max_length),
+                [this, self](boost::system::error_code ec, std::size_t length) {
+                    if (!ec) {
+                        do_write(length);
+                    }
+                });
+        }
+
+        void do_write(std::size_t length) {
+            std::string request(data_);
+            auto self(shared_from_this());
+
+            if (request == "publickeys") {
+                // Send the user all the public keys of the mixnodes
+                std::string str = ConvertMapToString(ipspub);
+                boost::asio::async_write(socket_, boost::asio::buffer(str, length),
+                    [this, self](boost::system::error_code ec, std::size_t /*length*/ ) {
+                        if (!ec) {
+                            do_read();
+                        }
+                    });
+            } else {
+                requests.push_back(request);
+                char * ack = "MessageRecieved";
+                boost::asio::async_write(socket_, boost::asio::buffer(ack, length),
+                    [this, self](boost::system::error_code ec, std::size_t /*length*/ ) {
+                        if (!ec) {
+                            do_read();
+                        }
+                    });
+                if (dowork.load()) {
+                    std::cout << "COPYING MESSAGES" << std::endl;
+                    std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
+                    requests.clear();
+                    dowork = false;
+                }
+            }
+        }
+
+        tcp::socket socket_;
+        enum {
+            max_length = 1024
+        };
+        char data_[max_length];
+    };
+
+class server {
+    public:
+        server(boost::asio::io_context & io_context, short port): acceptor_(io_context, tcp::endpoint(tcp::v4(), port)) {
+            do_accept();
+        }
+
+    private:
+        void do_accept() {
+            acceptor_.async_accept(
+                [this](boost::system::error_code ec, tcp::socket socket) {
+                    if (!ec) {
+                        std::make_shared < session > (std::move(socket)) - > start();
+                    }
+
+                    do_accept();
+                });
+        }
+
+    tcp::acceptor acceptor_;
+};
+
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
 {
     dht::DhtRunner node;
@@ -189,70 +266,6 @@ Mixer::~Mixer(){
     //this->node.shutdown();
 }
 
-void
-do_session(tcp::socket& socket)
-{
-    try
-    {
-        // Construct the stream by moving in the socket
-        websocket::stream<tcp::socket> ws{std::move(socket)};
-
-        // Set a decorator to change the Server of the handshake
-        ws.set_option(websocket::stream_base::decorator(
-            [](websocket::response_type& res)
-            {
-                res.set(http::field::server,
-                    std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-server-sync");
-            }));
-
-        // Accept the websocket handshake
-        ws.accept();
-
-        std::ostringstream os;
-        for(;;)
-        {
-            // This buffer will hold the incoming message
-            beast::flat_buffer buffer;
-
-            //  Read the email
-            ws.text(false);
-            ws.read(buffer);
-            os << boost::beast::make_printable(buffer.data());
-            std::string msg = os.str();
-            os.str("");
-            os.clear();
-            buffer.consume(buffer.size());
-
-            if(msg == "publickeys"){
-                // Send the user all the public keys of the mixnodes
-                std::string str = ConvertMapToString(ipspub);
-                ws.write(net::buffer(std::string(str)));
-            }else{
-                requests.push_back(msg);
-                char* ack = "MessageRecieved";
-                ws.write(net::buffer(std::string(ack)));
-                if(dowork.load()){
-                    std::cout << "COPYING MESSAGES" << std::endl;
-                    std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
-                        requests.clear();
-                    dowork = false;
-                }
-            }
-        }
-    }
-    catch(beast::system_error const& se)
-    {
-        // This indicates that the session was closed
-        if(se.code() != websocket::error::closed)
-            std::cerr << "Error: " << se.code().message() << std::endl;
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-}
-
 void StartServerInBackground(){
     if(s.StartListening()){
         std::cout << "BACKGROUND SERVER STARTED" << std::endl;
@@ -326,33 +339,12 @@ void senddata(std::string ip, std::string msg){
 }
 
 int ListenForMessages(){
-   try{
-        // Check command line arguments.
-        auto const address = net::ip::make_address("172.18.0.2");
-        auto const port = PORT;
-
-
-        // The io_context is required for all I/O
-        net::io_context ioc{1};
-
-        // The acceptor receives incoming connections
-        tcp::acceptor acceptor{ioc, {address, PORT}};
-        for(;;)
-        {
-            // This will receive the new connection
-            tcp::socket socket{ioc};
-
-            // Block until we get a connection
-            acceptor.accept(socket);
-
-            // Launch the session, transferring ownership of the socket
-            std::thread{std::bind(
-                &do_session,
-                std::move(socket))}.detach();
-        }
-    }catch (const std::exception& e){
-        std::cerr << "Error: " << e.what() << std::endl;
-        return EXIT_FAILURE;
+    try {
+        boost::asio::io_context io_context;
+        server s(io_context, PORT);
+        io_context.run();
+    } catch (std::exception & e) {
+        std::cerr << "Exception: " << e.what() << "\n";
     }
 }
 

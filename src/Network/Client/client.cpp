@@ -37,6 +37,8 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
 
 extern "C"{
     #include <sibe/ibe.h>
@@ -50,6 +52,8 @@ namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+enum { max_length = 4096 };
+
 
 using namespace std;
 // Mixers, Mailboxes, PKGS
@@ -129,53 +133,21 @@ int main(){
 std::string talktomixer(std::string ip, std::string msg){
     try
     {
-        // The io_context is required for all I/O
-        net::io_context ioc;
+        boost::asio::io_context io_context;
 
-        // These objects perform our I/O
-        tcp::resolver resolver{ioc};
-        websocket::stream<tcp::socket> ws{ioc};
+        tcp::socket s(io_context);
+        tcp::resolver resolver(io_context);
+        boost::asio::connect(s, resolver.resolve(ip, "8080"));
 
-        // Look up the domain name
-        auto const results = resolver.resolve(ip, to_string(8080));
+        boost::asio::write(s, boost::asio::buffer(msg, msg.size()));
 
-        // Make the connection on the IP address we get from a lookup
-        net::connect(ws.next_layer(), results.begin(), results.end());
-
-        // Set a decorator to change the User-Agent of the handshake
-        ws.set_option(websocket::stream_base::decorator(
-            [](websocket::request_type& req)
-            {
-                req.set(http::field::user_agent,
-                    std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-client-coro");
-            }));
-
-        // Perform the websocket handshake
-        ws.handshake(ip, "/");
-
-        // Send the message
-        ws.write(net::buffer(std::string(msg)));
-
-        beast::flat_buffer buffer;
-        ws.read(buffer);
-
-        // Close the WebSocket connection
-        //ws.close(websocket::close_code::normal);
-
-
-        // The make_printable() function helps print a ConstBufferSequence
-        std::ostringstream os;
-        os <<  beast::make_printable(buffer.data());
-        std::string data = os.str();
-        buffer.consume(buffer.size());
-        ws.close(websocket::close_code::normal);
-        return data;
-
+        char reply[max_length];
+        size_t reply_length = boost::asio::read(s,
+            boost::asio::buffer(reply, max_length));
+        return std::string(reply);
     }
-    catch(std::exception const& e)
+    catch (std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return "FAILED";
+        std::cerr << "Exception: " << e.what() << "\n";
     }
 }
