@@ -166,7 +166,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     };
 
     string plugin; string r = "ready";
-    plugin = string(reinterpret_cast<char*>(this->public_key)) + "_____________________________________________" + mixer_ip;
+    plugin = string(reinterpret_cast<char*>(this->public_key)) + "_____________________________________________" + mixerip;
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
