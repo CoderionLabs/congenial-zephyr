@@ -111,7 +111,10 @@ int main(){
    
     string ip = vec[0][num];
     auto data = talktomixer(ip, "publickeys");
+    cout << "DATA START" << endl;
+    cout << data << endl << "DATA END" << endl;
     auto map = ConvertStringToMap(data);
+    cout << "I'M NOT HAVING TROUBLE!" << endl;
     auto mixenc = map[ip];
     
     cout << "START OF MIXENC" << endl;

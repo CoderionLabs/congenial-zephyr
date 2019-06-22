@@ -62,7 +62,7 @@ class session
             std::string request(data_);
             auto self(shared_from_this());
 
-            if (request == "publickeys") {
+            if (request.find("publickeys") != std::string::npos) {
                 // Send the user all the public keys of the mixnodes
                 std::string str = ConvertMapToString(ipspub);
                 boost::asio::async_write(socket_, boost::asio::buffer(str, length),
@@ -166,7 +166,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     };
 
     string plugin; string r = "ready";
-    plugin = string(reinterpret_cast<char*>(this->public_key)) + ":" + mixer_ip;
+    plugin = string(reinterpret_cast<char*>(this->public_key)) + "_____" + mixer_ip;
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
@@ -224,9 +224,9 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
                     
                     size_t pos = 0;
                     std::string token;
-                    pos = mydata.find(":");
+                    pos = mydata.find("_____");
                     string pub = mydata.substr(0,pos);
-                    string ip = mydata.erase(0, pos + string(":").length());
+                    string ip = mydata.erase(0, pos + string("_____").length());
                     GiveMeDataForPublic(pub, ip);
                 }
                 return true; // keep looking for values
@@ -237,6 +237,12 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             }
     );
     wait();
+
+    cout << "THESE ARE THE KEYS I HAVE START" << endl;
+    for(auto x : ipspub){
+        cout << x.first << " and " << x.second << endl;
+    }
+    cout << "THESE ARE THE KEYS I HAVE END" << endl;
 
     this->node.join();
 
