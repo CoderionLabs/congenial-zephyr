@@ -221,6 +221,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             [](const std::vector<std::shared_ptr<dht::Value>>& values) {
                 for (const auto& v : values){
                     std::string mydata {v->data.begin(), v->data.end()};
+                    cout << "FOUND: " << mydata << endl;
                     
                     size_t pos = 0;
                     string token = "_____________________________________________";
