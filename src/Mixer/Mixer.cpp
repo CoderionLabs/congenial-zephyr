@@ -74,7 +74,7 @@ class session
             } else {
                 requests.push_back(request);
                 char * ack = "MessageRecieved";
-                boost::asio::async_write(socket_, boost::asio::buffer(ack, ack.length()),
+                boost::asio::async_write(socket_, boost::asio::buffer(ack, strlen(ack)),
                     [this, self](boost::system::error_code ec, std::size_t /*length*/ ) {
                         if (!ec) {
                             do_read();
