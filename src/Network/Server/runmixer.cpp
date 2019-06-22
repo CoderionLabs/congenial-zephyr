@@ -44,6 +44,7 @@ int main(){
     }
 
     // Runs the mixer m
+    mixerip = mixers[0];
     Mixer m(mixerip,mixers,mailboxes);
     return 0;
 }

@@ -107,7 +107,7 @@ class server {
             acceptor_.async_accept(
                 [this](boost::system::error_code ec, tcp::socket socket) {
                     if (!ec) {
-                        std::make_shared < session > (std::move(socket)) - > start();
+                        std::make_shared<session>(std::move(socket))->start();
                     }
 
                     do_accept();
@@ -166,7 +166,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     };
 
     string plugin; string r = "ready";
-    plugin = string(reinterpret_cast<char*>(this->public_key)) + "_____" + mixer_ip;
+    plugin = string(reinterpret_cast<char*>(this->public_key)) + "_____________________________________________" + mixer_ip;
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
@@ -223,10 +223,14 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
                     std::string mydata {v->data.begin(), v->data.end()};
                     
                     size_t pos = 0;
-                    std::string token;
-                    pos = mydata.find("_____");
+                    string token = "_____________________________________________";
+                    pos = mydata.find(token);
+                    cout << pos << endl;
                     string pub = mydata.substr(0,pos);
-                    string ip = mydata.erase(0, pos + string("_____").length());
+                    cout << "PUBLIC KEY: " <<  pub << endl;
+                    string ip = mydata.erase(0, pos + token.length());
+                    cout << "IP: " << ip << endl;
+
                     GiveMeDataForPublic(pub, ip);
                 }
                 return true; // keep looking for values
