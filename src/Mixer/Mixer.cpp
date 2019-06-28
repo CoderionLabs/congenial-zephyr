@@ -371,36 +371,27 @@ int ListenForMessages(){
 }
 
 std::string ConvertMapToString(std::map<string,string> mymap){
-    std::string result;
-    for(auto const& x : mymap){
-        result += "{";
-        result += x.first;
-        result += ":";
-        result += x.second;
-        result += "}";
-        result += ",";
+    publickeymap present{mymap};
+    //Serialize
+    std::stringstream ss;
+    {
+        // Create an output archive
+        cereal::PortableBinaryOutputArchive oarchive(ss);
+
+        oarchive(present); // Write the data to the archive
     }
-    result.pop_back();
-    return result;
+    return ss.str();
 }
 
 std::map<string,string> ConvertStringToMap(std::string mapstring){
-    std::map<string, string> result;
-    while(!mapstring.empty()){
-        auto pos = mapstring.find("{");
-        auto pos1 = mapstring.find(":");
-        string x = mapstring.substr(pos +1, (pos1 - pos) -1);
-
-        auto pos2 = mapstring.find("}");
-        string y = mapstring.substr(pos1 +1, (pos2 - pos1) -1);
-        result[x] = y;
-        try{
-            mapstring.erase(pos,pos2 + 2);
-        }catch(std::exception e){
-            break;
-        }
+    std::stringstream ss;
+    ss.write(mapstring.c_str(), mapstring.size());
+    publickeymap c;
+    {
+        cereal::PortableBinaryInputArchive iarchive(ss);
+        iarchive(c); // Read the data from the archive
     }
-    return result;
+    return c.pmap;
 }
 
 // Returns hostname for the local computer 

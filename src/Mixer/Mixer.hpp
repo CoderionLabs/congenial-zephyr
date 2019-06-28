@@ -67,11 +67,27 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
+#include <cereal/types/map.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/archives/portable_binary.hpp>
+
 
 #define KEY_LENGTH  2048
-
 #define PORT 8080
 #define MAXSZ 4096
+
+
+struct publickeymap{
+    std::map<std::string,std::string> pmap;
+    
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(pmap);
+    }
+};
+
+typedef struct publickeymap publickeymap;
 
 class Mixer
 {

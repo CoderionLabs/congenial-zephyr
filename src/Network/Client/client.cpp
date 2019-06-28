@@ -110,7 +110,7 @@ int main(){
     }
    
     string ip = vec[0][num];
-    auto data = talktomixer(ip, "pudfsdfdsfsdfdsfsdflickeys");
+    auto data = talktomixer(ip, "publickeys");
     cout << "DATA START" << endl;
     //cout << data << endl << "DATA END" << endl;
     auto map = ConvertStringToMap(data);

@@ -2,7 +2,7 @@
 CC = g++
 
 CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM 
-LDFLAGS= -shared -L/usr/local/lib -lcrypto -lssl -lsodium -lpthread -ljsonrpccpp-server -lopendht -lgnutls -ljsoncpp -ljsonrpccpp-common -ljsonrpccpp-client
+LDFLAGS= -shared -L/usr/local/lib  -lcrypto -lssl -lsodium -lpthread -ljsonrpccpp-server -lopendht -lgnutls -ljsoncpp -ljsonrpccpp-common -ljsonrpccpp-client
 
 SOURCES = $(shell echo *.cpp)
 HEADERS = $(shell echo *.hpp)
