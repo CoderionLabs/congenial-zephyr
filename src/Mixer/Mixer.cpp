@@ -65,6 +65,7 @@ class session
             if (request.find("publickeys") != std::string::npos) {
                 // Send the user all the public keys of the mixnodes
                 std::string str = ConvertMapToString(ipspub);
+                std::cout << "LENGTH OF PUBLIC KEYS: " << str.length() << std::endl;
                 boost::asio::async_write(socket_, boost::asio::buffer(str, str.length()),
                     [this, self](boost::system::error_code ec, std::size_t /*length*/ ) {
                         if (!ec) {
@@ -221,16 +222,16 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             [](const std::vector<std::shared_ptr<dht::Value>>& values) {
                 for (const auto& v : values){
                     std::string mydata {v->data.begin(), v->data.end()};
-                    cout << "FOUND: " << mydata << endl;
+                    std::cout << "FOUND: " << mydata << std::endl;
                     
                     size_t pos = 0;
                     string token = "_____________________________________________";
                     pos = mydata.find(token);
-                    cout << pos << endl;
+                    std::cout << pos << std::endl;
                     string pub = mydata.substr(0,pos);
-                    cout << "PUBLIC KEY: " <<  pub << endl;
+                    std::cout << "PUBLIC KEY: " <<  pub << std::endl;
                     string ip = mydata.erase(0, pos + token.length());
-                    cout << "IP: " << ip << endl;
+                    std::cout << "IP: " << ip << std::endl;
 
                     GiveMeDataForPublic(pub, ip);
                 }
@@ -241,13 +242,23 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
                 done_cb(success);
             }
     );
+
+    auto mapstring = ConvertMapToString(ipspub);
+    std::cout << "MAPSTRING START" << std::endl;
+    std::cout << mapstring << std::endl;
+    std::cout << "MAPSTRING END" << std::endl;
+
+    auto mymap = ConvertStringToMap(mapstring);
+    if(mymap == ipspub){
+        std::cout << "WORKS MAPS ARE EQUAL" <<  std::endl;
+    }
     wait();
 
-    cout << "THESE ARE THE KEYS I HAVE START" << endl;
+    std::cout << "THESE ARE THE KEYS I HAVE START" <<  std::endl;
     for(auto x : ipspub){
-        cout << x.first << " and " << x.second << endl;
+         std::cout << x.first << " and " << x.second <<  std::endl;
     }
-    cout << "THESE ARE THE KEYS I HAVE END" << endl;
+    std::cout << "THESE ARE THE KEYS I HAVE END" <<  std::endl;
 
     this->node.join();
 
