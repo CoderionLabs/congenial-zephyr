@@ -251,6 +251,8 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     auto mymap = ConvertStringToMap(mapstring);
     if(mymap == ipspub){
         std::cout << "WORKS MAPS ARE EQUAL" <<  std::endl;
+    }else{
+        std::cerr << "FAILED" << std::endl;
     }
     wait();
 
