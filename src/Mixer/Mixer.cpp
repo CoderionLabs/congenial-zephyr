@@ -243,7 +243,17 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             }
     );
 
-    auto mapstring = ConvertMapToString(ipspub);
+    wait();
+
+    std::cout << "THESE ARE THE KEYS I HAVE START" <<  std::endl;
+    for(auto x : ipspub){
+         std::cout << x.first << " and " << x.second <<  std::endl;
+    }
+    std::cout << "THESE ARE THE KEYS I HAVE END" <<  std::endl;
+
+    this->node.join();
+
+     auto mapstring = ConvertMapToString(ipspub);
     std::cout << "MAPSTRING START" << std::endl;
     std::cout << mapstring << std::endl;
     std::cout << "MAPSTRING END" << std::endl;
@@ -261,15 +271,6 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
             std::cout << x.first << " " << x.second << std::endl;
     }
     std::cout << "TEST MAP END" << std::endl;
-    wait();
-
-    std::cout << "THESE ARE THE KEYS I HAVE START" <<  std::endl;
-    for(auto x : ipspub){
-         std::cout << x.first << " and " << x.second <<  std::endl;
-    }
-    std::cout << "THESE ARE THE KEYS I HAVE END" <<  std::endl;
-
-    this->node.join();
 
     
     this->StartRoundAsMixer();
