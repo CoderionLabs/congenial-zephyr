@@ -252,12 +252,15 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     auto mymap = ConvertStringToMap(mapstring);
     if(mymap == ipspub){
         std::cout << "WORKS MAPS ARE EQUAL" <<  std::endl;
-        for(auto x : mymap){
-            std::cout << x.first << " " << x.second << std::endl;
-        }
     }else{
         std::cerr << "FAILED" << std::endl;
     }
+
+    std::cout << "TEST MAP START" << std::endl;
+    for(auto x : mymap){
+            std::cout << x.first << " " << x.second << std::endl;
+    }
+    std::cout << "TEST MAP END" << std::endl;
     wait();
 
     std::cout << "THESE ARE THE KEYS I HAVE START" <<  std::endl;
