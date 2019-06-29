@@ -52,7 +52,7 @@ namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-enum { max_length = 9999999999 };
+enum { max_length = 4096 };
 
 
 using namespace std;
@@ -110,6 +110,7 @@ int main(){
     }
    
     string ip = vec[0][num];
+    cout << "Talking to " << ip << endl;
     auto data = talktomixer(ip, "publickeys");
     cout << "DATA START" << endl;
     //cout << data << endl << "DATA END" << endl;

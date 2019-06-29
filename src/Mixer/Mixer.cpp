@@ -196,7 +196,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
                     std::string power {v->data.begin(), v->data.end()};
                     std::cout << "Found value: " << power << std::endl;
                 }
-                return true; // keep looking for values
+             return true; // keep looking for values
             },
             [=](bool success) {
                 std::cout << "That's all I found" << std::endl;
@@ -248,9 +248,13 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     std::cout << mapstring << std::endl;
     std::cout << "MAPSTRING END" << std::endl;
 
+
     auto mymap = ConvertStringToMap(mapstring);
     if(mymap == ipspub){
         std::cout << "WORKS MAPS ARE EQUAL" <<  std::endl;
+        for(auto x : mymap){
+            std::cout << x.first << " " << x.second << std::endl;
+        }
     }else{
         std::cerr << "FAILED" << std::endl;
     }
