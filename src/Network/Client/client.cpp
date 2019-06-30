@@ -145,10 +145,13 @@ std::string talktomixer(std::string ip, std::string msg){
 
         boost::asio::write(s, boost::asio::buffer(msg, msg.size()));
 
-        char reply[max_length];
-        size_t reply_length = boost::asio::read(s,
-            boost::asio::buffer(reply, max_length));
-        return std::string(reply);
+        boost::asio::streambuf buffer;
+        size_t reply_length = boost::asio::read(s,buffer);
+        std::ostringstream out;
+        
+        out << beast::make_printable(buffer.data());
+        std::string key = out.str();
+        return std::string(key);
     }
     catch (std::exception& e)
     {

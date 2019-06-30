@@ -66,7 +66,7 @@ class session
                 // Send the user all the public keys of the mixnodes
                 std::string str = ConvertMapToString(ipspub);
                 std::cout << "LENGTH OF PUBLIC KEYS: " << str.length() << std::endl;
-                boost::asio::write(socket_,boost::asio::buffer(str, max_length));
+                boost::asio::write(socket_,boost::asio::buffer(str, str.size()));
 
             } else {
                 requests.push_back(request);
