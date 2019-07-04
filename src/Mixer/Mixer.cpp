@@ -67,7 +67,6 @@ class session
                 std::string str = ConvertMapToString(ipspub);
                 std::cout << "LENGTH OF PUBLIC KEYS: " << str.length() << std::endl;
                 boost::asio::write(socket_,boost::asio::buffer(str, str.size()));
-
             } else {
                 requests.push_back(request);
                 char * ack = "MessageRecieved";

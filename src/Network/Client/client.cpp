@@ -144,6 +144,7 @@ std::string talktomixer(std::string ip, std::string msg){
         boost::asio::connect(s, resolver.resolve(ip, "8080"));
 
         boost::asio::write(s, boost::asio::buffer(msg, msg.size()));
+        sleep(10);
 
         boost::asio::streambuf buffer;
         size_t reply_length = boost::asio::read(s,buffer);
