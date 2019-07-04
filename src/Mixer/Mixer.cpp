@@ -65,11 +65,19 @@ class session
             if (request.find("publickeys") != std::string::npos) {
                 // Send the user all the public keys of the mixnodes
                 std::string str = ConvertMapToString(ipspub);
+                length = str.length();
                 std::cout << "LENGTH OF PUBLIC KEYS: " << str.length() << std::endl;
-                boost::asio::write(socket_,boost::asio::buffer(str, str.size()));
+                auto self(shared_from_this());
+                boost::asio::async_write(socket_, boost::asio::buffer(str, length),
+                    [this, self](std::error_code ec, std::size_t /*length*/) {
+                        if (!ec) {
+                            do_read();
+                         }
+                });
             } else {
                 requests.push_back(request);
                 char * ack = "MessageRecieved";
+                length = strlen(ack);
                 boost::asio::async_write(socket_, boost::asio::buffer(ack, strlen(ack)),
                     [this, self](boost::system::error_code ec, std::size_t length ) {
                         if (!ec) {
