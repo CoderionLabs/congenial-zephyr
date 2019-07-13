@@ -10,8 +10,8 @@
 std::string ipspubstr;
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-std::atomic_bool imFirst = false;
-std::atomic_bool havedata = false;
+std::atomic_bool imFirst{false};
+std::atomic_bool havedata{false};
 
 // If the infonode has been selected it will be the first
 // node to upload the data into the DHT. Otherwise it will
