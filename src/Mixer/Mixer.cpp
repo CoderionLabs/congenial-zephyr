@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2019 Doku Enterprise
  * Author: Friedrich Doku
- * -----
- * Last Modified: Saturday April 13th 2019 8:41:54 am
- * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; either version 3 of the License, or
@@ -28,10 +25,10 @@ MixerServer s(httpserver,
             JSONRPC_SERVER_V1V2);
 map<string,string> ipspub;
 
-std::atomic_bool dowork;
 std::vector<std::string> requests;
 std::vector<std::string> requests_tmp;
 std::string MIXERIP;
+bool chooseinfo = false;
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -39,90 +36,13 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-
-class session
-    : public std::enable_shared_from_this < session > {
-        public: session(tcp::socket socket): socket_(std::move(socket)) {}
-
-        void start() {
-            do_read();
-        }
-
-        private: void do_read() {
-            auto self(shared_from_this());
-            socket_.async_read_some(boost::asio::buffer(data_, max_length),
-                [this, self](boost::system::error_code ec, std::size_t length) {
-                    if (!ec) {
-                        do_write(length);
-                    }
-                });
-        }
-
-        void do_write(std::size_t length) {
-            std::string request(data_);
-            auto self(shared_from_this());
-
-            if (request.find("publickeys") != std::string::npos) {
-                // Send the user all the public keys of the mixnodes
-                std::string str = ConvertMapToString(ipspub);
-                length = str.length();
-                std::cout << "LENGTH OF PUBLIC KEYS: " << str.length() << std::endl;
-                auto self(shared_from_this());
-                boost::asio::async_write(socket_, boost::asio::buffer(str, length),
-                    [this, self](std::error_code ec, std::size_t /*length*/) {
-                        if (!ec) {
-                            do_read();
-                         }
-                });
-            } else {
-                requests.push_back(request);
-                char * ack = "MessageRecieved";
-                length = strlen(ack);
-                boost::asio::async_write(socket_, boost::asio::buffer(ack, strlen(ack)),
-                    [this, self](boost::system::error_code ec, std::size_t length ) {
-                        if (!ec) {
-                            do_read();
-                        }
-                    });
-                if (dowork.load()) {
-                    std::cout << "COPYING MESSAGES" << std::endl;
-                    std::copy(requests.begin(), requests.end(), std::back_inserter(requests_tmp));
-                    requests.clear();
-                    dowork = false;
-                }
-            }
-        }
-
-        tcp::socket socket_;
-        enum {
-            max_length = 1024
-        };
-        char data_[max_length];
-    };
-
-class server {
-    public:
-        server(boost::asio::io_context & io_context, short port): acceptor_(io_context, tcp::endpoint(tcp::v4(), port)) {
-            do_accept();
-        }
-
-    private:
-        void do_accept() {
-            acceptor_.async_accept(
-                [this](boost::system::error_code ec, tcp::socket socket) {
-                    if (!ec) {
-                        std::make_shared<session>(std::move(socket))->start();
-                    }
-
-                    do_accept();
-                });
-        }
-
-    tcp::acceptor acceptor_;
-};
-
-Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes)
+Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
+ std::vector<std::string> mailboxes, std::string configpath)
 {
+    auto config = get_config_info(configpath);
+    if(config[0][0] == mixer_ip){
+        chooseinfo = true;
+    }
     dht::DhtRunner node;
     MIXERIP = mixerip;
     auto mtx = std::make_shared<std::mutex>();
@@ -256,7 +176,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
 
     this->node.join();
 
-     auto mapstring = ConvertMapToString(ipspub);
+    auto mapstring = ConvertMapToString(ipspub);
     std::cout << "MAPSTRING START" << std::endl;
     std::cout << mapstring << std::endl;
     std::cout << "MAPSTRING END" << std::endl;
@@ -275,7 +195,14 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<s
     }
     std::cout << "TEST MAP END" << std::endl;
 
-    
+    vector<vector<std::string>> vec;
+    vec = get_config_info(configpath);
+
+    // Give pulickeys to the random infonode
+    // the infonode will then distribute
+    // the message to all other infonodes
+    int num = rand() % config[3].size() -1;
+    talktonode(config[3][num],"8080", mapstring);
     this->StartRoundAsMixer();
 }
 
@@ -313,17 +240,13 @@ void StartServerInBackground(){
 }
 
 void Mixer::StartRoundAsMixer(){
-
-    dowork = false;
     //Start a server in the background
     thread t(StartServerInBackground);
-    //Start a message listener in the background
-    thread t1 (ListenForMessages);
+
     t.detach();
-    t1.detach();
 
     while(true){
-        if(!dowork.load()){
+        if(!s.msgs.empty()){
             std::cout << "THIS WORKS" << std::endl;
             std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
             s.msgs.clear();
@@ -356,7 +279,6 @@ void Mixer::StartRoundAsMixer(){
                 }
                 requests_tmp.clear();
             } 
-            dowork = true;
         }
     }
 }
@@ -371,40 +293,6 @@ void senddata(std::string ip, std::string msg){
     } catch (JsonRpcException &e) {
         cerr << e.what() << endl;
     }
-}
-
-int ListenForMessages(){
-    try {
-        boost::asio::io_context io_context;
-        server s(io_context, PORT);
-        io_context.run();
-    } catch (std::exception & e) {
-        std::cerr << "Exception: " << e.what() << "\n";
-    }
-}
-
-std::string ConvertMapToString(std::map<string,string> mymap){
-    publickeymap present{mymap};
-    //Serialize
-    std::stringstream ss;
-    {
-        // Create an output archive
-        cereal::PortableBinaryOutputArchive oarchive(ss);
-
-        oarchive(present); // Write the data to the archive
-    }
-    return ss.str();
-}
-
-std::map<string,string> ConvertStringToMap(std::string mapstring){
-    std::stringstream ss;
-    ss.write(mapstring.c_str(), mapstring.size());
-    publickeymap c;
-    {
-        cereal::PortableBinaryInputArchive iarchive(ss);
-        iarchive(c); // Read the data from the archive
-    }
-    return c.pmap;
 }
 
 // Returns hostname for the local computer 
