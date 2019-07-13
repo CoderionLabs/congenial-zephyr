@@ -1,0 +1,1 @@
+g++ -std=c++11 infonode.cpp -lpthread -lopendht -lboost_system -o infonode
