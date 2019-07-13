@@ -3,3 +3,5 @@
 *.ipch
 PKG/compile_commands.json
 Network/Client/params.txt
+Info/infonode
+Network/Server/mixserver

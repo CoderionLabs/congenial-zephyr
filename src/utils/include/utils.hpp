@@ -137,18 +137,4 @@ inline std::vector<std::vector<std::string>> get_config_info(std::string filenam
     return myvec;
 }
 //EXAMPLE FILE
-//MIXERS
-//1.0.012
-//10.0.0.12
-//127.0.0.1
-//MAILBOXES
-//IP
-//IP
-//IP
-//PKGS
-//IP
-//IP
-//IP
-//INFO
-//IP
-//IP
+// 172.18.
