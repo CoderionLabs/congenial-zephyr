@@ -132,7 +132,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
         if(this->readymixers == mixers.size()){
             break;
         }else{
-            std::cout << "Not everyone is ready yet sleeping" << std::endl;
+            std::cout << "Not everyone is ready yet sleeping " << mixers.size() << " needed" << std::endl;
             std::cout << this->readymixers << std::endl;
             sleep(10);
             this->readymixers = 0;
