@@ -25,7 +25,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]){
-    if (argc != 2){
+    if (argc != 3){
         std::cerr << "Usage: mixserver MYIPV4ADDRESS CONFIG_FLIE_PATH\n";
         return 1;
     }
