@@ -111,6 +111,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
     // Wait for all the other nodes to be ready
     std::cout << "Waiting for other nodes" << std::endl;
     while(true){
+        auto nodestats = this->node.getNodesStats(AF_INET).toString();
         this->node.get(
             "ready",
             [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
@@ -123,6 +124,7 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
             },
             [=](bool success) {
                 std::cout << "That's all I found" << std::endl;
+                std::cout << nodestats << std::endl;
                 std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
                 done_cb(success);
             }
