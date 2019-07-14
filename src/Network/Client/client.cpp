@@ -88,10 +88,6 @@ int main(){
     cout << "MADE IT HERE FINISHED" << endl;
     // Select random mixer and send data to it
     int num = rand() % vec[3].size() -1;
-    if(num == 0){
-        num++;
-    }
-   
     string ip = vec[3][num];
     cout << "Talking to " << ip << endl;
     auto data = talktonode(ip, "8080","");

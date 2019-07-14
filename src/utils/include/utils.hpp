@@ -131,7 +131,9 @@ inline std::vector<std::vector<std::string>> get_config_info(std::string filenam
         if(tmp != -1){
             arr = tmp;
         }
-        myvec[arr].push_back(data);
+        if ((data.find("S") == std::string::npos) ||  (data.find("O") == std::string::npos)) {
+            myvec[arr].push_back(data);
+        }
     }
     std::cout << "DONE" << std::endl;
     return myvec;
