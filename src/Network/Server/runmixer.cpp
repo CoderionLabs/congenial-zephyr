@@ -40,9 +40,6 @@ int main(int argc, char* argv[]){
         return 1;
     }
     auto config = get_config_info(argv[2]);
-
-    m.Start(argv[1],config[0],config[1], argv[2]);
-
     //Testing 
     // 127.0.0.1, 172.17.0.2, 172.17.0.3, 172.17.0.4
     // Runs the mixer m
@@ -54,7 +51,8 @@ int main(int argc, char* argv[]){
     sigIntHandler.sa_flags = 0;
 
     sigaction(SIGINT, &sigIntHandler, NULL);
-    m.Start();
+
+    m.Start(argv[1],config[0],config[1], argv[2]);
     
     return 0;
 }
