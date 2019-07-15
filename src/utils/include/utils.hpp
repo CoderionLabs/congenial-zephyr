@@ -18,6 +18,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <algorithm>
 #include <cereal/types/map.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/archives/portable_binary.hpp>
@@ -131,7 +132,7 @@ inline std::vector<std::vector<std::string>> get_config_info(std::string filenam
         if(tmp != -1){
             arr = tmp;
         }
-        if ((data.find("S") == std::string::npos) ||  (data.find("O") == std::string::npos)) {
+        if (std::any_of(data.begin(), data.end(), ::isdigit)) {
             myvec[arr].push_back(data);
         }
     }

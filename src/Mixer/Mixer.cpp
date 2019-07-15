@@ -127,6 +127,7 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
 
     // block to see the result of the put
     wait();
+    //this->node.getPeerDiscovery();
 
     // Wait for all the other nodes to be ready
     std::cout << "Waiting for other nodes" << std::endl;
