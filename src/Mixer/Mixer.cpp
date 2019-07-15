@@ -225,8 +225,11 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     // Give pulickeys to the random infonode
     // the infonode will then distribute
     // the message to all other infonodes
-    int num = rand() % config[3].size() -1;
-    talktonode(config[3][num],"8080", mapstring);
+
+    if(chooseinfo){
+        int num = rand() % config[3].size() -1;
+        talktonode(config[3][num],"8080", mapstring);
+    }
     this->StartRoundAsMixer();
 }
 

@@ -55,6 +55,7 @@ class session
             } else {
                ipspubstr = request;
                imFirst = true;
+               std::cout << "GOT DATA FROM MIXER" << std::endl;
             }
         }
 
