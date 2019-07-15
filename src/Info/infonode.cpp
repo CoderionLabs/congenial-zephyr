@@ -128,28 +128,34 @@ void dhtstart()
         cv->notify_one();
     };
 
-    if(imFirst.load()){
-        // Put the map data into the DHT
-        // since we are first this time.
-        node.put("mapdata", dht::Value((const uint8_t *)ipspubstr.data(), ipspubstr.size()), [=](bool success) {
-            std::cout << "Put: ";
-            done_cb(success);
-        });
-
-        // blocking to see the result of put
-        wait();
-        havedata = true;
-    }
-
     // Otherwise we keep looking for the mapdata
     while(!havedata){
         // get data from the dht
+
+        if(imFirst.load()){
+            // Put the map data into the DHT
+            // since we are first this time.
+            node.put("mapdata", dht::Value((const uint8_t *)ipspubstr.data(), ipspubstr.size()), [=](bool success) {
+                std::cout << "Put: ";
+                done_cb(success);
+            });
+            // blocking to see the result of put
+            wait();
+            havedata = true;
+            break;
+        }
+
         node.get("mapdata",
              [](const std::vector<std::shared_ptr<dht::Value>> &values) {
                  // Callback called whsen values are found
                  for (const auto &value : values){
                      std::string mapdata{value->data.begin(), value->data.end()};
                      std::cout << "Found value: " << mapdata << std::endl;
+                     if(mapdata.size() > 5){
+                         ipspubstr = mapdata;
+                         havedata = true;
+                         break;
+                     }
                      
                  }
                  return true; // return false to stop the search
@@ -157,7 +163,6 @@ void dhtstart()
              [=](bool success) {
                  std::cout << "Get: ";
                  done_cb(success);
-                 havedata = true;
              });
         wait();
     }
