@@ -26,7 +26,10 @@
 
 using namespace std;
 
-Mixer m(mixerip,config[0],config[1],argv[2]);
+std::vector<std::vector<std::string>> config;
+std::string mixerip;
+std::string configpath;
+Mixer m(mixerip,config[0],config[1], configpath);
 
 void handler(int s){
     printf("Caught signal %d\n",s);
@@ -39,8 +42,9 @@ int main(int argc, char* argv[]){
         std::cerr << "Usage: mixserver MYIPV4ADDRESS CONFIG_FLIE_PATH\n";
         return 1;
     }
-    auto config = get_config_info(argv[2]);
-    std::string mixerip = argv[1];
+    config = get_config_info(argv[2]);
+    mixerip = argv[1];
+    configpath = argv[2];
 
     //Testing 
     // 127.0.0.1, 172.17.0.2, 172.17.0.3, 172.17.0.4
