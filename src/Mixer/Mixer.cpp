@@ -39,12 +39,37 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
  std::vector<std::string> mailboxes, std::string configpath)
 {
-    auto config = get_config_info(configpath);
-    if(config[0][0] == mixer_ip){
+    this->mixerip = mixerip;
+    this->mailboxes = mailboxes;
+    this->mixers = mixers;
+    this->configpath = configpath;
+}
+
+void Mixer::CleanUp(){
+
+    std::condition_variable cv;
+    std::mutex m;
+    bool done {false};
+
+    this->node.shutdown([&]()
+    {
+        std::lock_guard<std::mutex> lk(m);
+        done = true;
+        cv.notify_all();
+    });
+
+    // wait for shutdown
+    std::unique_lock<std::mutex> lk(m);
+    cv.wait(lk);
+}
+
+void Mixer::Start(){
+    auto config = get_config_info(this->configpath);
+    if(config[0][0] == this->mixerip){
         chooseinfo = true;
     }
-    dht::DhtRunner node;
-    MIXERIP = mixerip;
+    //dht::DhtRunner node;
+    MIXERIP = this->mixerip;
     auto mtx = std::make_shared<std::mutex>();
     auto cv = std::make_shared<std::condition_variable>();
     auto ready = std::make_shared<bool>(false);
@@ -56,10 +81,6 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
     
     memcpy(this->id, tmpid, sizeof(tmpid));    
 
-    auto x = this->node.getPublicAddressStr();
-    for(std::string w : x){
-        this->myip.push_back(w);
-    }
     // listen on port 4222.
     std::cout << "Starting DHT this->node..." << std::endl;
     this->node.run(4222, dht::crypto::generateIdentity(), true);
@@ -111,7 +132,6 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
     // Wait for all the other nodes to be ready
     std::cout << "Waiting for other nodes" << std::endl;
     while(true){
-        auto nodestats = this->node.getNodesStats(AF_INET).toString();
         this->node.get(
             "ready",
             [&](const std::vector<std::shared_ptr<dht::Value>>& values) {
@@ -124,7 +144,6 @@ Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
             },
             [=](bool success) {
                 std::cout << "That's all I found" << std::endl;
-                std::cout << nodestats << std::endl;
                 std::cout << "Getting mixers ready: " << (success ? "success" : "failure") << std::endl;
                 done_cb(success);
             }

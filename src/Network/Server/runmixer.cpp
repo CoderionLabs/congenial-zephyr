@@ -20,9 +20,19 @@
 #include <zephyr/Mixer.hpp>
 #include <zephyr/utils.hpp>
 #include <vector>
+#include <signal.h>
+#include <stdio.h>
 #include <string>
 
 using namespace std;
+
+Mixer m(mixerip,config[0],config[1],argv[2]);
+
+void handler(int s){
+    printf("Caught signal %d\n",s);
+    m.CleanUp();
+    exit(1); 
+}
 
 int main(int argc, char* argv[]){
     if (argc != 3){
@@ -35,6 +45,15 @@ int main(int argc, char* argv[]){
     //Testing 
     // 127.0.0.1, 172.17.0.2, 172.17.0.3, 172.17.0.4
     // Runs the mixer m
-    Mixer m(mixerip,config[0],config[1],argv[2]);
+
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &sigIntHandler, NULL);
+    m.Start();
+    
     return 0;
 }

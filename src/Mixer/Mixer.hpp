@@ -80,12 +80,12 @@ class Mixer
 {
 private:
     dht::DhtRunner node;
-    std::vector<std::string> myip;
     std::vector<std::string> mixers;
     std::vector<std::string> mailboxes;
     //std::vector<std::string> messages;
     std::map<std::string, std::string> whos;
-    std::string mixer_ip;
+    std::string mixerip;
+    std::string configpath;
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
     char id[20];
@@ -95,6 +95,8 @@ private:
     
 public:
     Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes, std::string configpath);
+    void Start();
+    void CleanUp();
     //void ListenForMessages();
     void StartRoundAsMixer();
     ~Mixer();
