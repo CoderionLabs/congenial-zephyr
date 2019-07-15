@@ -56,12 +56,15 @@ class session
                ipspubstr = request;
                imFirst = true;
                std::cout << "GOT DATA FROM MIXER" << std::endl;
+               std::cout << "DATA START" << std::endl;
+               std::cout << ipspubstr << std::endl;
+               std::cout << "DATA END" << std::endl;
             }
         }
 
         tcp::socket socket_;
         enum {
-            max_length = 1024
+            max_length = 4096
         };
         char data_[max_length];
     };
