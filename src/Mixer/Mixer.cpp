@@ -36,15 +36,6 @@ namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-Mixer::Mixer(std::string mixerip, std::vector<std::string> mixers,
- std::vector<std::string> mailboxes, std::string configpath)
-{
-    this->mixerip = mixerip;
-    this->mailboxes = mailboxes;
-    this->mixers = mixers;
-    this->configpath = configpath;
-}
-
 void Mixer::CleanUp(){
 
     std::condition_variable cv;
@@ -63,7 +54,15 @@ void Mixer::CleanUp(){
     cv.wait(lk);
 }
 
-void Mixer::Start(){
+void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
+ std::vector<std::string> mailboxes, std::string configpath){
+
+     // Initilize variables
+    this->mixerip = mixerip;
+    this->mailboxes = mailboxes;
+    this->mixers = mixers;
+    this->configpath = configpath;
+
     auto config = get_config_info(this->configpath);
     if(config[0][0] == this->mixerip){
         chooseinfo = true;
@@ -249,7 +248,7 @@ Mixer::~Mixer(){
         }
     });
     // Shutdown the DHT node
-    //this->node.shutdown();
+    this->CleanUp();
 }
 
 void StartServerInBackground(){

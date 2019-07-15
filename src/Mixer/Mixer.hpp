@@ -94,8 +94,7 @@ private:
     bool is_the_first = false;
     
 public:
-    Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes, std::string configpath);
-    void Start();
+    void Start(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes, std::string configpath);
     void CleanUp();
     //void ListenForMessages();
     void StartRoundAsMixer();
