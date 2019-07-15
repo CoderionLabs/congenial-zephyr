@@ -258,12 +258,13 @@ Mixer::~Mixer(){
 void StartServerInBackground(){
     if(s.StartListening()){
         std::cout << "BACKGROUND SERVER STARTED" << std::endl;
-            std::this_thread::sleep_until(std::chrono::system_clock::now() +
-            std::chrono::hours(std::numeric_limits<int>::max()));
     }
-    if(s.StopListening()){
-        std::cout << "BACKGROUND SERVER STOPPED" << std::endl;
+    while(true){
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+    // if(s.StopListening()){
+    //     std::cout << "BACKGROUND SERVER STOPPED" << std::endl;
+    // }
 }
 
 void Mixer::StartRoundAsMixer(){
