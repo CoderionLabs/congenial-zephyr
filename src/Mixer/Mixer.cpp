@@ -198,7 +198,7 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     }
     std::cout << "THESE ARE THE KEYS I HAVE END" <<  std::endl;
 
-    this->node.join();
+    //this->node.join();
 
     auto mapstring = ConvertMapToString(ipspub);
     std::cout << "MAPSTRING START" << std::endl;
