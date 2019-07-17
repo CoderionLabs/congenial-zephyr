@@ -22,7 +22,7 @@
 #include <cereal/types/map.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/archives/portable_binary.hpp>
-#include <cereal/archives/xml.hpp>
+#include <cereal/archives/json.hpp>
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -68,7 +68,7 @@ inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
     std::stringstream ss;
     {
         // Create an output archive
-        cereal::XMLOutputArchive oarchive(ss);
+        cereal::JSONOutputArchive oarchive(ss);
 
         oarchive(present); // Write the data to the archive
     }
@@ -80,7 +80,7 @@ inline std::map<std::string,std::string> ConvertStringToMap(std::string mapstrin
     ss.write(mapstring.c_str(), mapstring.size());
     publickeymap c;
     {
-        cereal::XMLInputArchive iarchive(ss);
+        cereal::JSONInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
     }
     return c.pmap;
