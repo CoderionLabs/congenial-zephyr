@@ -86,30 +86,44 @@ int main(){
     cout << "MADE IT HERE 2" << endl;
     std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
     cout << "MADE IT HERE FINISHED" << endl;
-    // Select random mixer and send data to it
+
+    // Get mixer data from information node
     int num = rand() % vec[3].size() -1;
-    string ip = vec[3][num];
-    cout << "Talking to " << ip << endl;
-    auto data = talktonode(ip, "8080","");
-    cout << "DATA START" << endl;
-    //cout << data << endl << "DATA END" << endl;
-    auto map = ConvertStringToMap(data);
-    cout << "I'M NOT HAVING TROUBLE!" << endl;
-    auto mixenc = map[ip];
+    auto recv = talktonode(vec[3][num],"8080","");
+    auto mixerKeys = ConvertStringToMap(recv);
+    std::vector<std::string> mixers;
+    std::copy(vec[0].begin(), vec[0].end(), std::back_inserter(mixers));
+
+    // Select Mixer encrption order
+    std::mt19937 rng;
+    rng.seed(std::random_device()());
+    std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
+    auto seed = dist6(rng);
+
+    Shuffle<std::string> shu(mixers, (int) seed);
+    mixers.clear();
+    mixers = std::move(shu.vec);
+    std::string mailboxaddress = "NULL";
+
+    std::string enctmp = encdata;
+    for(int i = 0; i < mixers.size(); i++){
+        // Seal with crypto sercret box also append destination address to it data:ip
+        if(i == 0){
+            enctmp += mailboxaddress;
+            enctmp += std::to_string(mailboxaddress.size());
+        }
+        enctmp += mixers[i-1];
+        enctmp += std::to_string(mixers[i-1].size());
+        int CIPHERTEXT_LEN = crypto_box_SEALBYTES + enctmp.length();
+        unsigned char ciphertext[CIPHERTEXT_LEN];
+        std::string key = mixerKeys[mixers[i]];
+        crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&enctmp[0]), enctmp.length(),
+        reinterpret_cast<unsigned char*>(&key[0]));
+        enctmp = reinterpret_cast<char*>(ciphertext);
+    }
     
-    cout << "START OF MIXENC" << endl;
-    cout << mixenc << endl;
-    cout << "END OF MIXENC" << endl;
+    
 
-    cout << "Talking to " << ip << endl;
-    // Seal with crypto sercret box also append destination address to it data:ip
-     // Send it back to the mixer
-
-    // int CIPHERTEXT_LEN = crypto_box_SEALBYTES + msg.length();
-    // unsigned char ciphertext[CIPHERTEXT_LEN];
-    // crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&msg[0]), msg.length(),
-    //   reinterpret_cast<unsigned char*>(&mixenc[0]));
-    // auto gotbuf = talktonode(ip, reinterpret_cast<char*>(ciphertext));
-    // cout << gotbuf << endl;
+   
     return 0;
 }

@@ -28,6 +28,8 @@
 #include <iostream>
 #include <map>
 
+#include <cstdlib>
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
@@ -54,6 +56,52 @@ struct publickeymap{
 };
 
 typedef struct publickeymap publickeymap;
+
+
+template <class T>
+class Shuffle
+{
+public:
+    void UnShuffle();
+    Shuffle(std::vector<T> input, int seed);
+    std::vector<T> vec;
+private:
+    int seed;
+    int size;
+};
+
+// Fisher Yates Shuffle
+template <class T>
+Shuffle<T>::Shuffle(std::vector<T> input, int seed){
+    std::copy(input.begin(), input.end(), std::back_inserter(this->vec));
+    this->seed = seed;
+    this->size = input.size();
+    int random; srand(this->seed);
+
+    for(int i = this->size -1; i > 0; i--){
+        int index = rand() % (i + 1);
+        std::swap(this->vec[index], this->vec[i]);
+    }
+}
+
+// Fisher Yates De-shuffle
+template <class T>
+void Shuffle<T>::UnShuffle(){
+    srand(this->seed);
+    std::vector<T> randoms(this->size);
+    int j = 0;
+    for (int i = this->size - 1; i > 0; i--) {
+        randoms[j++] = rand() % (i + 1);
+    }
+
+    //deShuffling
+    for (int i = 1; i < this->size; i++) {
+        //use the random values backwards
+        int index = randoms[this->size - i - 1];
+        // simple swap
+        std::swap(this->vec[index], this->vec[i]);
+    }
+}
 
 // Basic conversion functions needed for sending public keys
 std::string ConvertMapToString(std::map<std::string,std::string> mymap);

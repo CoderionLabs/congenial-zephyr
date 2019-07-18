@@ -42,7 +42,6 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <cstdlib>
-#include "shuffle.hpp"
 #include <zephyr/utils.hpp>
 #include <unistd.h>
 
