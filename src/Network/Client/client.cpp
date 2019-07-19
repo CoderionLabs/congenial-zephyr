@@ -47,6 +47,7 @@ void error(const char *msg)
     exit(0);
 }
 
+
 std::string attachtomixer(std::string ip, std::string port, std::string msg);
 
 int main(){
@@ -63,8 +64,8 @@ int main(){
     vector<vector<std::string>> vec;
     vec = get_config_info(filepath);
     cout << "PASSED HERE" << endl;
-    cout << "Asking " << vec[2][1] << " for data" << endl;
-    auto x = getkeysfrompkg(vec[2][1], to_string(8080), email);
+    cout << "Asking " << vec[2][0] << " for data" << endl;
+    auto x = getkeysfrompkg(vec[2][0], to_string(8080), email);
     cout << "GOT IT" << endl;
     // Get your private key
     byte_string_t keyb;
@@ -90,40 +91,43 @@ int main(){
 
     // Get mixer data from information node
     int num = rand() % vec[3].size() -1;
-    auto recv = talktonode(vec[3][num],"8080","");
+    auto recv = talktonode(vec[3][num],"8080","NEED");
     auto mixerKeys = ConvertStringToMap(recv);
     std::vector<std::string> mixers;
     std::copy(vec[0].begin(), vec[0].end(), std::back_inserter(mixers));
+    for(auto x : mixers){
+        cout << x << endl;
+    }
 
     // Select Mixer encrption order
-    std::mt19937 rng;
-    rng.seed(std::random_device()());
-    std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
-    auto seed = dist6(rng);
+    // std::mt19937 rng;
+    // rng.seed(std::random_device()());
+    // std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
+    // auto seed = dist6(rng);
 
-    Shuffle<std::string> shu(mixers, (int) seed);
-    mixers.clear();
-    mixers = std::move(shu.vec);
-    std::string mailboxaddress = "NULL";
+    // Shuffle<std::string> shu(mixers, (int) seed);
+    // mixers.clear();
+    // mixers = std::move(shu.vec);
+    // std::string mailboxaddress = "NULL";
 
-    std::string enctmp = encdata;
-    for(int i = 0; i < mixers.size(); i++){
-        // Seal with crypto sercret box also append destination address to it data:ip
-        if(i == 0){
-            enctmp += mailboxaddress;
-            enctmp += std::to_string(mailboxaddress.size());
-        }
-        enctmp += mixers[i-1];
-        enctmp += std::to_string(mixers[i-1].size());
-        int CIPHERTEXT_LEN = crypto_box_SEALBYTES + enctmp.length();
-        unsigned char ciphertext[CIPHERTEXT_LEN];
-        std::string key = mixerKeys[mixers[i]];
-        crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&enctmp[0]), enctmp.length(),
-        reinterpret_cast<unsigned char*>(&key[0]));
-        enctmp = reinterpret_cast<char*>(ciphertext);
-    }
+    // std::string enctmp = encdata;
+    // for(int i = 0; i < mixers.size(); i++){
+    //     // Seal with crypto sercret box also append destination address to it data:ip
+    //     if(i == 0){
+    //         enctmp += mailboxaddress;
+    //         enctmp += std::to_string(mailboxaddress.size());
+    //     }
+    //     enctmp += mixers[i-1];
+    //     enctmp += std::to_string(mixers[i-1].size());
+    //     int CIPHERTEXT_LEN = crypto_box_SEALBYTES + enctmp.length();
+    //     unsigned char ciphertext[CIPHERTEXT_LEN];
+    //     std::string key = mixerKeys[mixers[i]];
+    //     crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&enctmp[0]), enctmp.length(),
+    //     reinterpret_cast<unsigned char*>(&key[0]));
+    //     enctmp = reinterpret_cast<char*>(ciphertext);
+    // }
     
-    attachtomixer(mixers[mixers.size()-1], "8000", enctmp);
+    // attachtomixer(mixers[mixers.size()-1], "8000", enctmp);
    
     return 0;
 }

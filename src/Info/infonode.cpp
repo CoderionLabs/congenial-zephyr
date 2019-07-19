@@ -41,7 +41,7 @@ class session
             std::string request(data_);
             auto self(shared_from_this());
 
-            if (request == "" && havedata.load()) {
+            if (request == "NEED" /*&& havedata.load() */) {
                 // Send the user all the public keys of the mixnodes
                 std::string str = ipspubstr;
                 length = str.length();
