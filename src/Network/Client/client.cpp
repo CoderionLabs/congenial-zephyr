@@ -46,7 +46,8 @@ void error(const char *msg)
     perror(msg);
     exit(0);
 }
-std::string talktonode(std::string ip, std::string msg);
+
+std::string attachtomixer(std::string ip, std::string port, std::string msg);
 
 int main(){
     string msg,email,key, params, filepath;
@@ -122,8 +123,19 @@ int main(){
         enctmp = reinterpret_cast<char*>(ciphertext);
     }
     
-    
-
+    attachtomixer(mixers[mixers.size()-1], "8000", enctmp);
    
     return 0;
 }
+
+std::string attachtomixer(std::string ip, std::string port, std::string msg){
+    HttpClient httpclient("http://" + ip + ":8000");
+    MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+
+    try {
+        c.getMessage(msg);
+    } catch (JsonRpcException &e) {
+        cerr << e.what() << endl;
+    }
+}
+

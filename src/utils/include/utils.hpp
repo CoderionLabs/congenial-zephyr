@@ -160,7 +160,6 @@ inline std::string talktonode(std::string ip, std::string port, std::string msg)
     }
 }
 
-
 inline std::vector<std::vector<std::string>> get_config_info(std::string filename){
     std::ifstream in;
     in.open(filename);

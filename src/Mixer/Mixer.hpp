@@ -45,6 +45,7 @@
 #include <zephyr/utils.hpp>
 #include <unistd.h>
 
+#include <stack>
 #include <future>
 #include <ctime>
 

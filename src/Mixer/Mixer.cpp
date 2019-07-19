@@ -301,9 +301,24 @@ void Mixer::StartRoundAsMixer(){
 
                     std::string conv = reinterpret_cast<char*>(decrypted);
                     std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;
-                    auto pos = conv.find(":");
-                    std::string nextmixer = conv.substr(0, pos);
-                    conv.erase(0, pos + 1);
+                    auto toremove = conv[conv.size()-1];
+                    auto stop = (conv.size()-1) - toremove;
+                    conv.pop_back();
+
+                    std::stack<char> ipstack;
+                    for(int i = conv.size()-1; i >= stop; i--){
+                        ipstack.push(conv[i]);
+                    }
+                    // std::string nextmixer = conv.substr(0, pos);
+                    // conv.erase(0, pos + 1);
+                    
+                    std::string nextmixer;
+                    while(!ipstack.empty()){
+                        nextmixer+=ipstack.top();
+                        ipstack.pop();
+                    }
+
+                    std::cout << "THE NEXT MIXER WILL BE " <<  nextmixer << std::endl;
 
                     senddata(nextmixer, conv);
                 }
