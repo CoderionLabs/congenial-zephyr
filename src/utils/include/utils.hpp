@@ -147,6 +147,7 @@ inline std::string talktonode(std::string ip, std::string port, std::string msg)
         sleep(10);
 
         boost::asio::streambuf buffer;
+        
         size_t reply_length = boost::asio::read(s,buffer);
         std::ostringstream out;
         

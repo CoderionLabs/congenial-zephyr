@@ -83,7 +83,7 @@ int main(){
     params_out(filePointer, paramsb);
     fclose(filePointer);
 
-    cout <<  "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
+    cout << "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
     std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
