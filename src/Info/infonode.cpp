@@ -59,6 +59,13 @@ class session
                std::cout << "DATA START" << std::endl;
                std::cout << ipspubstr << std::endl;
                std::cout << "DATA END" << std::endl;
+               std::string str("SUCSESS");
+               boost::asio::async_write(socket_, boost::asio::buffer(str, length),
+                    [this, self](std::error_code ec, std::size_t /*length*/) {
+                        if (!ec) {
+                            do_read();
+                        }
+                });
             }
         }
 
