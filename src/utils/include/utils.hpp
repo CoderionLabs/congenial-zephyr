@@ -144,12 +144,11 @@ inline std::string talktonode(std::string ip, std::string port, std::string msg,
         boost::asio::connect(s, resolver.resolve(ip, port));
 
         boost::asio::write(s, boost::asio::buffer(msg, msg.size()));
-        sleep(10);
-
+        //sleep(10);
         if(recv){
             boost::asio::streambuf buffer;
         
-            size_t reply_length = boost::asio::read(s,buffer);
+            size_t reply_length = s.read_some(buffer);
             std::ostringstream out;
         
             out << beast::make_printable(buffer.data());
