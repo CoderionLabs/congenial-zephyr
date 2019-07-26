@@ -70,6 +70,8 @@ class session
                         }
                 });
             }
+            bzero(data_,sizeof(data_));
+            request.clear();
         }
 
         tcp::socket socket_;
