@@ -88,7 +88,7 @@ int main(){
     cout << "MADE IT HERE 2" << endl;
     std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
     cout << "MADE IT HERE FINISHED" << endl;
-
+    
     // Get mixer data from information node
     int num = rand() % vec[3].size() -1;
     auto recv = talktonode(vec[3][num],"8080","NEED", true);
@@ -98,7 +98,6 @@ int main(){
     for(auto x : mixers){
         cout << x << endl;
     }
-
     // Select Mixer encrption order
     // std::mt19937 rng;
     // rng.seed(std::random_device()());
