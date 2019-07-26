@@ -91,7 +91,7 @@ int main(){
 
     // Get mixer data from information node
     int num = rand() % vec[3].size() -1;
-    auto recv = talktonode(vec[3][num],"8080","NEED");
+    auto recv = talktonode(vec[3][num],"8080","NEED", true);
     auto mixerKeys = ConvertStringToMap(recv);
     std::vector<std::string> mixers;
     std::copy(vec[0].begin(), vec[0].end(), std::back_inserter(mixers));

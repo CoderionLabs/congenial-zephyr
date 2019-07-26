@@ -107,7 +107,7 @@ void Shuffle<T>::UnShuffle(){
 std::string ConvertMapToString(std::map<std::string,std::string> mymap);
 std::map<std::string,std::string> ConvertStringToMap(std::string mapstring);
 std::vector<std::vector<std::string>> get_config_info(std::string filename);
-std::string talktonode(std::string ip, std::string port, std::string msg);
+std::string talktonode(std::string ip, std::string port, std::string msg, bool recv);
 
 
 inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
@@ -134,7 +134,7 @@ inline std::map<std::string,std::string> ConvertStringToMap(std::string mapstrin
     return c.pmap;
 }
 
-inline std::string talktonode(std::string ip, std::string port, std::string msg){
+inline std::string talktonode(std::string ip, std::string port, std::string msg, bool recv){
     try
     {
         boost::asio::io_context io_context;
@@ -146,14 +146,17 @@ inline std::string talktonode(std::string ip, std::string port, std::string msg)
         boost::asio::write(s, boost::asio::buffer(msg, msg.size()));
         sleep(10);
 
-        boost::asio::streambuf buffer;
+        if(recv){
+            boost::asio::streambuf buffer;
         
-        size_t reply_length = boost::asio::read(s,buffer);
-        std::ostringstream out;
+            size_t reply_length = boost::asio::read(s,buffer);
+            std::ostringstream out;
         
-        out << beast::make_printable(buffer.data());
-        std::string key = out.str();
-        return std::string(key);
+            out << beast::make_printable(buffer.data());
+            std::string key = out.str();
+            return std::string(key);
+        }
+        return "";
     }
     catch (std::exception& e)
     {

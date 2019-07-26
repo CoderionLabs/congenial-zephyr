@@ -230,7 +230,7 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
         int num = rand() % config[3].size() -1;
         auto x = config[3][num];
         std::cout << "Talking to " << x << std::endl;
-        auto recv = talktonode(config[3][num],"8080", mapstring);
+        auto recv = talktonode(config[3][num],"8080", mapstring, false);
         std::cout << recv << std::endl;
     }
     this->StartRoundAsMixer();
