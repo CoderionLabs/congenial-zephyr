@@ -292,39 +292,29 @@ void Mixer::StartRoundAsMixer(){
                 std::cout << requests_tmp[0] << std::endl;
 
                 Shuffle<std::string> shu(requests_tmp, (int) x);
+                requests_tmp.clear();
+                requests_tmp = std::move(shu.vec);
 
                 // Strip off a layer of encryption and send to the next
                 // mixer.
-                for(auto x : shu.vec){
-                    unsigned char* decrypted;
-                    crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
-                    x.length(), this->public_key, this->private_key);
+                for(auto x : requests_tmp){
+
+                    auto p = parseciphertext(x);
+                    unsigned char decrypted[1000];
+                    std::string ip = p.first;
+                    std::string msg = p.second;
+                    crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(msg.c_str()),
+                    msg.length(), this->public_key, this->private_key);
 
                     std::string conv = reinterpret_cast<char*>(decrypted);
-                    std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;
-                    auto toremove = conv[conv.size()-1];
-                    auto stop = (conv.size()-1) - toremove;
-                    conv.pop_back();
+                    std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;               
 
-                    std::stack<char> ipstack;
-                    for(int i = conv.size()-1; i >= stop; i--){
-                        ipstack.push(conv[i]);
-                    }
-                    // std::string nextmixer = conv.substr(0, pos);
-                    // conv.erase(0, pos + 1);
-                    
-                    std::string nextmixer;
-                    while(!ipstack.empty()){
-                        nextmixer+=ipstack.top();
-                        ipstack.pop();
-                    }
+                    std::cout << "THE NEXT MIXER WILL BE " <<  ip << std::endl;
 
-                    std::cout << "THE NEXT MIXER WILL BE " <<  nextmixer << std::endl;
-
-                    senddata(nextmixer, conv);
+                    senddata(ip, conv);
                 }
                 requests_tmp.clear();
-            } 
+            }
         }
     }
 }

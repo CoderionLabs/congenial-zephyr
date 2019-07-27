@@ -26,6 +26,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <utility>
 #include <map>
 
 #include <cstdlib>
@@ -108,6 +109,7 @@ std::string ConvertMapToString(std::map<std::string,std::string> mymap);
 std::map<std::string,std::string> ConvertStringToMap(std::string mapstring);
 std::vector<std::vector<std::string>> get_config_info(std::string filename);
 std::string talktonode(std::string ip, std::string port, std::string msg, bool recv);
+std::pair<std::string, std::string> parseciphertext(std::string msg);
 
 
 inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
@@ -121,6 +123,34 @@ inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
         oarchive(present); // Write the data to the archive
     }
     return ss.str();
+}
+
+inline std::pair<std::string, std::string> parseciphertext(std::string msg){
+    std::string cut("CUTHERE");
+    size_t found = msg.find("CUTHERE");
+    if(found == std::string::npos){
+        std::cerr << "Failed to parse argument" << std::endl;
+        exit(1);
+    }
+    // cout << msg << endl;
+    // cout << "Works 4" << endl;
+    // cout << "FOUND " << found << endl;
+    auto toread = msg.substr(found + cut.size());
+    msg.erase(msg.begin() + found, msg.end());
+    //toread.erase(toread.begin());
+
+    // cout << toread << endl;
+    // cout << msg << endl;
+    // cout << "Works 5" << endl;
+
+    int toread_start;
+    std::istringstream iss (toread);
+    iss >> toread_start;
+    auto ip = msg.substr(msg.size() - toread_start);
+    // cout << toread_start << endl;
+    // cout << ip << endl;
+    msg.erase(msg.end() - toread_start - toread.size(), msg.end());
+    return std::make_pair(ip, msg);
 }
 
 inline std::map<std::string,std::string> ConvertStringToMap(std::string mapstring){

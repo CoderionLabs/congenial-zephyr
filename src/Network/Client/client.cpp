@@ -48,7 +48,8 @@ void error(const char *msg)
 }
 
 
-std::string attachtomixer(std::string ip, std::string port, std::string msg);
+std::string attachtomixer(std::string msg);
+int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg);
 
 int main(){
     string msg,email,key, params, filepath;
@@ -92,46 +93,91 @@ int main(){
     // Get mixer data from information node
     int num = rand() % vec[3].size() -1;
     auto recv = talktonode(vec[3][num],"8080","NEED", true);
+    cout << recv << endl;
     auto mixerKeys = ConvertStringToMap(recv);
-    std::vector<std::string> mixers;
-    std::copy(vec[0].begin(), vec[0].end(), std::back_inserter(mixers));
-    for(auto x : mixers){
-        cout << x << endl;
-    }
-    // Select Mixer encrption order
-    // std::mt19937 rng;
-    // rng.seed(std::random_device()());
-    // std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
-    // auto seed = dist6(rng);
+    cout << "CONVERTED !!!" << endl;
+    createciphertext(mixerKeys, encdata);
 
-    // Shuffle<std::string> shu(mixers, (int) seed);
-    // mixers.clear();
-    // mixers = std::move(shu.vec);
-    // std::string mailboxaddress = "NULL";
-
-    // std::string enctmp = encdata;
-    // for(int i = 0; i < mixers.size(); i++){
-    //     // Seal with crypto sercret box also append destination address to it data:ip
-    //     if(i == 0){
-    //         enctmp += mailboxaddress;
-    //         enctmp += std::to_string(mailboxaddress.size());
-    //     }
-    //     enctmp += mixers[i-1];
-    //     enctmp += std::to_string(mixers[i-1].size());
-    //     int CIPHERTEXT_LEN = crypto_box_SEALBYTES + enctmp.length();
-    //     unsigned char ciphertext[CIPHERTEXT_LEN];
-    //     std::string key = mixerKeys[mixers[i]];
-    //     crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&enctmp[0]), enctmp.length(),
-    //     reinterpret_cast<unsigned char*>(&key[0]));
-    //     enctmp = reinterpret_cast<char*>(ciphertext);
-    // }
-    
-    // attachtomixer(mixers[mixers.size()-1], "8000", enctmp);
-   
     return 0;
 }
 
-std::string attachtomixer(std::string ip, std::string port, std::string msg){
+int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg){
+
+    std::vector<std::string> mixers;
+    for(auto x : mixerKeys){
+        mixers.push_back(x.first);
+        // cout << x.first << endl;
+        // cout << x.second << endl;
+    }
+    cout << "Works 1" << endl;
+
+    std::mt19937 rng;
+    rng.seed(std::random_device()());
+    std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
+    auto seed = dist6(rng);
+
+    Shuffle<std::string> shu(mixers, (int) seed);
+    mixers.clear();
+    mixers = std::move(shu.vec);
+    cout << "Works 2" << endl;
+
+    //TODO: Create mailbox code and fix addresses
+    std::string mailboxaddress = "NULL";
+
+    std::string enctmp = encmsg;
+    enctmp += mailboxaddress;
+    enctmp += std::to_string(mailboxaddress.size());
+
+    cout << "Works 3" << endl;
+    for(int i = 0; i < mixers.size(); i++){
+        // Seal with crypto sercret box also append destination address to it data:ip
+        int CIPHERTEXT_LEN = crypto_box_SEALBYTES + enctmp.length();
+        unsigned char ciphertext[CIPHERTEXT_LEN];
+        std::string key = mixerKeys[mixers[i]];
+        crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&enctmp[0]), enctmp.length(),
+        reinterpret_cast<unsigned char*>(&key[0]));
+        cout << "Works MIXER LOOP" << endl;
+        enctmp = reinterpret_cast<char*>(ciphertext);
+        bzero(ciphertext, sizeof(ciphertext));
+        enctmp += mixers[i];
+        enctmp += "CUTHERE";
+        enctmp += to_string(mixers[i].size());
+    }
+
+
+    attachtomixer(enctmp);
+    return 0;
+}
+
+std::string attachtomixer(std::string msg){
+    string cut("CUTHERE");
+    size_t found = msg.find("CUTHERE");
+    if(found == std::string::npos){
+        cout << "Failed to parse argument" << endl;
+        exit(1);
+    }
+    // cout << msg << endl;
+    // cout << "Works 4" << endl;
+    // cout << "FOUND " << found << endl;
+    auto toread = msg.substr(found + cut.size());
+    msg.erase(msg.begin() + found, msg.end());
+    //toread.erase(toread.begin());
+
+    // cout << toread << endl;
+    // cout << msg << endl;
+    // cout << "Works 5" << endl;
+
+    int toread_start;
+    std::istringstream iss (toread);
+    iss >> toread_start;
+    auto ip = msg.substr(msg.size() - toread_start);
+    // cout << toread_start << endl;
+    // cout << ip << endl;
+    msg.erase(msg.end() - toread_start - toread.size(), msg.end());
+    // cout << msg << endl;
+    // cout << "Works 6" << endl; 
+    
+
     HttpClient httpclient("http://" + ip + ":8000");
     MixerClient c(httpclient, JSONRPC_CLIENT_V2);
 
@@ -140,5 +186,7 @@ std::string attachtomixer(std::string ip, std::string port, std::string msg){
     } catch (JsonRpcException &e) {
         cerr << e.what() << endl;
     }
+
+    return "";
 }
 
