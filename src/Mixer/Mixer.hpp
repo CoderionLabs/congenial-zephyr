@@ -47,6 +47,7 @@
 
 #include <stack>
 #include <future>
+#include <memory>
 #include <ctime>
 
 #include <stdio.h>
@@ -59,8 +60,8 @@
 
 #include "mixerclient.hpp"
 #include "mixerserver.hpp"
-#include <jsonrpccpp/client/connectors/httpclient.h>
-#include <jsonrpccpp/server/connectors/httpserver.h>
+#include <jsonrpccpp/client/connectors/tcpsocketclient.h>
+#include <jsonrpccpp/server/connectors/tcpsocketserver.h>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>

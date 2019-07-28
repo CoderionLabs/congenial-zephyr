@@ -1,7 +1,7 @@
 # g++ main.cpp `pkg-config --cflags glib-2.0` -lzephyr
 CC = g++
 
-CPPFLAGS= -std=c++11 -fomit-frame-pointer -fPIC -DQHASM 
+CPPFLAGS= -std=c++14 -fomit-frame-pointer -fPIC -DQHASM 
 LDFLAGS= -shared -L/usr/local/lib  -lcrypto -lssl -lsodium -lpthread -ljsonrpccpp-server -lopendht -lgnutls -ljsoncpp -ljsonrpccpp-common -ljsonrpccpp-client
 
 SOURCES = $(shell echo *.cpp)

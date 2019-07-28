@@ -178,8 +178,8 @@ std::string attachtomixer(std::string msg){
     // cout << "Works 6" << endl; 
     
 
-    HttpClient httpclient("http://" + ip + ":8000");
-    MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+    TcpSocketClient tcpclient("http://" + ip + ":8000");
+    MixerClient c(tcpclient, JSONRPC_CLIENT_V2);
 
     try {
         c.getMessage(msg);

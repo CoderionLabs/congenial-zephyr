@@ -20,14 +20,13 @@ using namespace jsonrpc;
 
 
 //GLOBALS...
-HttpServer httpserver(8000);
-MixerServer s(httpserver,
-            JSONRPC_SERVER_V1V2);
+std::string MIXERIP;
 map<string,string> ipspub;
+std::unique_ptr<MixerServer> s;
+
 
 std::vector<std::string> requests;
 std::vector<std::string> requests_tmp;
-std::string MIXERIP;
 bool chooseinfo = false;
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -259,7 +258,10 @@ Mixer::~Mixer(){
 }
 
 void StartServerInBackground(){
-    if(s.StartListening()){
+    TcpSocketServer server(MIXERIP,8000);
+    s = std::make_unique<MixerServer>(server,JSONRPC_SERVER_V1V2);
+
+    if(s->StartListening()){
         std::cout << "BACKGROUND SERVER STARTED" << std::endl;
     }
     while(true){
@@ -277,10 +279,10 @@ void Mixer::StartRoundAsMixer(){
     t.detach();
 
     while(true){
-        if(!s.msgs.empty()){
+        if(!s->msgs.empty()){
             std::cout << "THIS WORKS" << std::endl;
-            std::copy(s.msgs.begin(), s.msgs.end(), std::back_inserter(requests_tmp));
-            s.msgs.clear();
+            std::copy(s->msgs.begin(), s->msgs.end(), std::back_inserter(requests_tmp));
+            s->msgs.clear();
             std::cout << "IM IN HERE " << requests_tmp.size() << std::endl;
             if(requests_tmp.size() != 0){
                 std::mt19937 rng;
@@ -321,8 +323,8 @@ void Mixer::StartRoundAsMixer(){
 
 // Send data to the next node
 void senddata(std::string ip, std::string msg){
-    HttpClient httpclient("http://" + ip + ":8000");
-    MixerClient c(httpclient, JSONRPC_CLIENT_V2);
+    TcpSocketClient tcpclient(ip,8000);
+    MixerClient c(tcpclient, JSONRPC_CLIENT_V2);
 
     try {
         c.getMessage(msg);
