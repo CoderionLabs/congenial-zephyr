@@ -1,1 +1,1 @@
-g++ client.cpp -ljsoncpp -lcurl -ljsonrpccpp-common -ljsonrpccpp-client -lzephyr -lpkg -lsibe -lsodium -lpthread 
+g++ client.cpp  -lcurl -ljsonrpccpp-common -ljsonrpccpp-client -lzephyr -lpkg -lsibe -lsodium -lpthread 

@@ -17,7 +17,6 @@
 #pragma once
 #define MAX_BOOTSTRAP_NODES 20
 
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -50,6 +49,9 @@
 #include <memory>
 #include <ctime>
 
+#include "nodeserver.hpp"
+#include "nodeclient.hpp"
+
 #include <stdio.h>
 #include <map>
 #include <sys/types.h>//socket
@@ -57,11 +59,6 @@
 #include <string.h>//memset
 #include <stdlib.h>//sizeof
 #include <netinet/in.h>//INADDR_ANY
-
-#include "mixerclient.hpp"
-#include "mixerserver.hpp"
-#include <jsonrpccpp/client/connectors/tcpsocketclient.h>
-#include <jsonrpccpp/server/connectors/tcpsocketserver.h>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -93,7 +90,6 @@ private:
     int deadline;
     int readymixers = 0;
     bool is_the_first = false;
-    
 public:
     void Start(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes, std::string configpath);
     void CleanUp();

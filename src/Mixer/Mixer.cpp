@@ -16,17 +16,13 @@
 
 #include "Mixer.hpp"
 
-using namespace jsonrpc;
-
-
+using namespace std;
+using namespace node;
 //GLOBALS...
 std::string MIXERIP;
-map<string,string> ipspub;
-std::unique_ptr<MixerServer> s;
-
-
-std::vector<std::string> requests;
-std::vector<std::string> requests_tmp;
+std::map<std::string, std::string> ipspub;
+std::shared_ptr<strvec> req(msgtmp);
+std::vector<std::string> reqtmp;
 bool chooseinfo = false;
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
@@ -257,49 +253,48 @@ Mixer::~Mixer(){
     this->CleanUp();
 }
 
-void StartServerInBackground(){
-    TcpSocketServer server(MIXERIP,8000);
-    s = std::make_unique<MixerServer>(server,JSONRPC_SERVER_V1V2);
+void RunServerInBackground(){
+    std::string server_address(this->mixerip + ":50051");
+    NodeImpl service;
 
-    if(s->StartListening()){
-        std::cout << "BACKGROUND SERVER STARTED" << std::endl;
-    }
-    while(true){
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
-    // if(s.StopListening()){
-    //     std::cout << "BACKGROUND SERVER STOPPED" << std::endl;
-    // }
+    ServerBuilder builder;
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    rpcserver = std::move(server);
+    std::cout << "Server listening on " << server_address << std::endl;
+    rpcserver->Wait();
 }
+
 
 void Mixer::StartRoundAsMixer(){
     //Start a server in the background
-    thread t(StartServerInBackground);
+    std::thread runserver(RunServerInBackground);
+    runserver.detach();
 
-    t.detach();
 
     while(true){
-        if(!s->msgs.empty()){
+        if(!req->empty()){
             std::cout << "THIS WORKS" << std::endl;
-            std::copy(s->msgs.begin(), s->msgs.end(), std::back_inserter(requests_tmp));
+            std::copy(req->begin(), req->end(), std::back_inserter(reqtmp));
             s->msgs.clear();
-            std::cout << "IM IN HERE " << requests_tmp.size() << std::endl;
-            if(requests_tmp.size() != 0){
+            std::cout << "IM IN HERE " << reqtmp.size() << std::endl;
+            if(reqtmp.size() != 0){
                 std::mt19937 rng;
                 rng.seed(std::random_device()());
                 std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
 
                 auto x = dist6(rng);
                 std::cout << "THIS IS IT" << std::endl;
-                std::cout << requests_tmp[0] << std::endl;
+                std::cout << reqtmp[0] << std::endl;
 
-                Shuffle<std::string> shu(requests_tmp, (int) x);
-                requests_tmp.clear();
-                requests_tmp = std::move(shu.vec);
+                Shuffle<std::string> shu(reqtmp, (int) x);
+                reqtmp.clear();
+                reqtmp = std::move(shu.vec);
 
                 // Strip off a layer of encryption and send to the next
                 // mixer.
-                for(auto x : requests_tmp){
+                for(auto x : reqtmp){
 
                     auto p = parseciphertext(x);
                     unsigned char decrypted[1000];
@@ -315,7 +310,7 @@ void Mixer::StartRoundAsMixer(){
 
                     senddata(ip, conv);
                 }
-                requests_tmp.clear();
+                reqtmp.clear();
             }
         }
     }
@@ -323,14 +318,15 @@ void Mixer::StartRoundAsMixer(){
 
 // Send data to the next node
 void senddata(std::string ip, std::string msg){
-    TcpSocketClient tcpclient(ip,8000);
-    MixerClient c(tcpclient, JSONRPC_CLIENT_V2);
+   NodeClient guide(
+      grpc::CreateChannel(ip + ":50051",
+                          grpc::InsecureChannelCredentials()));
 
-    try {
-        c.getMessage(msg);
-    } catch (JsonRpcException &e) {
-        cerr << e.what() << endl;
-    }
+  std::cout << "-------------- GetMessages --------------" << std::endl;
+  Msg x;
+  x.set_data(msg);
+  guide.data.push_back(x);
+  guide.PutMessages();
 }
 
 // Returns hostname for the local computer 

@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2019 Doku Enterprise
  * Author: Friedrich Doku
- * -----
- * Last Modified: Saturday March 30th 2019 5:44:39 pm
- * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; either version 3 of the License, or
@@ -16,26 +13,37 @@
  *   along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 #pragma once
 
+#include <rpc/server.h>
+#include <string>
 #include <iostream>
 #include <vector>
-#include "abstractmixerserver.hpp"
 
-using namespace jsonrpc;
-using namespace std;
-
-class MixerServer : public AbstractMixerServer
+class RpcServer
 {
 private:
-    bool ismailman = false;
-    bool nextnode = true;
+    std::vector<std::string> messages;
 public:
-    std::vector<string> msgs;
-    MixerServer(AbstractServerConnector &conn, serverVersion_t type);
-
-    virtual bool getMessage(const std::string& param1) override;
-    virtual bool ping() override;
-    virtual std::string request(const std::string& param1) override;
+    void start();
+    std::vector<std::string> getmessages();
 };
+
+std::string ping(){
+    return "OKAY";
+}
+
+void RpcServer::start(){
+    rpc::server srv(8000);
+
+    srv.bind("ping", &ping);
+    srv.bind("putmsg", [&](std::string msg){this->messages.push_back(msg); return "WORKS";});
+    //srv.suppress_exceptions(true);
+    srv.run();
+}
+
+std::vector<std::string> RpcServer::getmessages(){
+    auto x = this->messages;
+    this->messages.clear();
+    return x;
+}

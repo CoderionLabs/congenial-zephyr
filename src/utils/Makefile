@@ -1,7 +1,28 @@
-# g++ main.cpp `pkg-config --cflags glib-2.0` -lzepher
-ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-HEADERS = $(ROOT_DIR)/include/utils.hpp 
+LDFLAGS = -L/usr/local/lib -Wl,--no-as-needed -lgrpc++_reflection -lgrpc++ \
+           -Wl,--as-needed -lprotobuf -lpthread -ldl -lcurl
 
-install:
-	mkdir -p /usr/local/include/zephyr
-	cp $(HEADERS) /usr/local/include/zephyr
+CXX = g++
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+CPPFLAGS += `pkg-config --cflags protobuf grpc`
+CXXFLAGS += -std=c++11
+
+GRPC_CPP_PLUGIN = grpc_cpp_plugin
+GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
+
+all: client server
+
+client: node.pb.o node.grpc.pb.o client.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+server: node.pb.o node.grpc.pb.o server.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+%.grpc.pb.cc: %.proto
+	protoc --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $<
+
+%.pb.cc: %.proto
+	protoc --cpp_out=. $<
+
+clean:
+	rm -f *.o *.pb.cc *.pb.h client server
