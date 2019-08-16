@@ -1,7 +1,9 @@
 LDFLAGS = -L/usr/local/lib -Wl,--no-as-needed -lgrpc++_reflection -lgrpc++ \
            -Wl,--as-needed -lprotobuf -lpthread -ldl -lcurl
 
-CXX = g++
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+CXX = g++  -fomit-frame-pointer -fPIC
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 CPPFLAGS += `pkg-config --cflags protobuf grpc`

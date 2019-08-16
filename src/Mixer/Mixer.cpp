@@ -254,16 +254,15 @@ Mixer::~Mixer(){
 }
 
 void RunServerInBackground(){
-    std::string server_address(this->mixerip + ":50051");
+    std::string server_address(MIXERIP + ":50051");
     NodeImpl service;
 
     ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     std::unique_ptr<Server> server(builder.BuildAndStart());
-    rpcserver = std::move(server);
     std::cout << "Server listening on " << server_address << std::endl;
-    rpcserver->Wait();
+    server->Wait();
 }
 
 
@@ -277,7 +276,7 @@ void Mixer::StartRoundAsMixer(){
         if(!req->empty()){
             std::cout << "THIS WORKS" << std::endl;
             std::copy(req->begin(), req->end(), std::back_inserter(reqtmp));
-            s->msgs.clear();
+            req->clear();
             std::cout << "IM IN HERE " << reqtmp.size() << std::endl;
             if(reqtmp.size() != 0){
                 std::mt19937 rng;

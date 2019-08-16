@@ -31,7 +31,7 @@ cd boost_1_70_0/
 cd ../
 
 # Install boost beast
-#git clone https://github.com/DokuEnterprise/boost boostdems
+#git clone https://github.com/mutexunlocked/boost boostdems
 #cd boostdems && cd include && cd boost
 #mkdir -p $PREFIX/include/boost
 #rm -R $PREFIX/include/boost/beast
@@ -66,13 +66,30 @@ make -j4
 make install
 cd ../../
 
-git clone https://github.com/DokuEnterprise/crypto
+git clone https://github.com/mutexunlocked/crypto
 cd crypto
 cd stanfordibe
 cp /app/congenial-zephyr/src/Network/Server/docker/libssl.so.1.0.0 .
 make
 make install
 cd ../../
+
+git clone https://github.com/mutexunlocked/protobuf
+cd protobuf
+git submodule update --init --recursive
+./autogen.sh
+./configure
+make
+make check
+make install
+ldconfig # refresh shared library cache.
+cd ../
+
+git clone https://github.com/mutexunlocked/grpc
+cd grpc
+make
+make install
+cd ../
 
 wget http://www.openssl.org/source/openssl-1.0.0a.tar.gz
 tar -xf openssl-1.0.0a.tar.gz

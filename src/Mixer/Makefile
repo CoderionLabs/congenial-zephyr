@@ -1,8 +1,11 @@
 # g++ main.cpp `pkg-config --cflags glib-2.0` -lzephyr
 CC = g++
 
-CPPFLAGS= -std=c++14 -fomit-frame-pointer -fPIC -DQHASM -lrpc
-LDFLAGS= -shared -L/usr/local/lib  -lcrypto -lssl -lsodium -lpthread -ljsonrpccpp-server -lopendht -lgnutls -ljsoncpp -ljsonrpccpp-common -ljsonrpccpp-client
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+ 
+#-ljsoncpp -ljsonrpccpp-common -ljsonrpccpp-client
+CPPFLAGS= -std=c++14 -I$(ROOT_DIR)/../utils -fomit-frame-pointer -fPIC -DQHASM -lrpc
+LDFLAGS= -shared -L/usr/local/lib  -lsodium  -lcrypto -lssl -lpthread -ljsonrpccpp-server -lopendht -lgnutls 
 
 SOURCES = $(shell echo *.cpp)
 HEADERS = $(shell echo *.hpp)
