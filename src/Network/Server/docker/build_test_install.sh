@@ -80,7 +80,6 @@ git submodule update --init --recursive
 ./autogen.sh
 ./configure
 make
-make check
 make install
 ldconfig # refresh shared library cache.
 cd ../
