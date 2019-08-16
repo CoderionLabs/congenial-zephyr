@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package node;
+
+// Interface exported by the server.
+service Node {
+  // A simple RPC.
+  //
+  // Restarts all services and generates new keys for a new round
+  rpc NewRound(MsgReq) returns (MsgReq) {}
+
+  // A server-to-client streaming RPC.
+  //
+  // Obtains the Messages available.  Results are
+  // streamed rather than returned at once
+  rpc DumpMessages(MsgReq) returns (stream Msg) {}
+
+  // A client-to-server streaming RPC.
+  //
+  // Send messages to the client
+  rpc PutMessages(stream Msg) returns (MsgReq) {}
+}
+
+message Msg {
+    string data = 1;
+}
+
+message MsgReq{
+    bool yes = 1;
+}
+

@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2019 Doku Enterprise
  * Author: Friedrich Doku
- * -----
- * Last Modified: Sunday April 21st 2019 1:31:53 pm
- * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; either version 3 of the License, or
@@ -17,10 +14,11 @@
  */
 
 
-#include <zephyr/scan.hpp>
+#include <zephyr/utils.hpp>
 #include <zephyr/pkgc.hpp>
 #include <zephyr/pkg.hpp>
 #include <zephyr/Mixer.hpp>
+#include <zephyr/utils.hpp>
 #include <iostream>
 #include <vector>
 #include <stdio.h>
@@ -30,16 +28,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <jsonrpccpp/client.h>
+#include <jsonrpccpp/client/connectors/tcpsocketclient.h>
 #include <netdb.h>
 #include <sodium.h>
-
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/array.hpp>
-#include <boost/asio.hpp>
-
 extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
@@ -47,15 +39,9 @@ extern "C"{
 
 CONF_CTX *cnfctx;
 params_t params;
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-enum { max_length = 9999999999 };
-
 
 using namespace std;
+
 // Mixers, Mailboxes, PKGS
 
 void error(const char *msg)
@@ -63,7 +49,10 @@ void error(const char *msg)
     perror(msg);
     exit(0);
 }
-std::string talktomixer(std::string ip, std::string msg);
+
+
+std::string attachtomixer(std::string msg);
+int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg);
 
 int main(){
     string msg,email,key, params, filepath;
@@ -79,8 +68,8 @@ int main(){
     vector<vector<std::string>> vec;
     vec = get_config_info(filepath);
     cout << "PASSED HERE" << endl;
-    cout << "Asking " << vec[2][1] << " for data" << endl;
-    auto x = getkeysfrompkg(vec[2][1], to_string(8080), email);
+    cout << "Asking " << vec[2][0] << " for data" << endl;
+    auto x = getkeysfrompkg(vec[2][0], to_string(8080), email);
     cout << "GOT IT" << endl;
     // Get your private key
     byte_string_t keyb;
@@ -98,59 +87,112 @@ int main(){
     params_out(filePointer, paramsb);
     fclose(filePointer);
 
-    cout <<  "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
+    cout << "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
     std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
     cout << "MADE IT HERE FINISHED" << endl;
-    // Select random mixer and send data to it
-    int num = rand() % vec[0].size() -1;
-    if(num == 0){
-        num++;
-    }
-   
-    string ip = vec[0][num];
-    auto data = talktomixer(ip, "publickeys");
-    cout << "DATA START" << endl;
-    //cout << data << endl << "DATA END" << endl;
-    auto map = ConvertStringToMap(data);
-    cout << "I'M NOT HAVING TROUBLE!" << endl;
-    auto mixenc = map[ip];
     
-    cout << "START OF MIXENC" << endl;
-    cout << mixenc << endl;
-    cout << "END OF MIXENC" << endl;
+    // Get mixer data from information node
+    int num = rand() % vec[3].size() -1;
+    auto recv = talktonode(vec[3][num],"8080","NEED", true);
+    cout << recv << endl;
+    auto mixerKeys = ConvertStringToMap(recv);
+    cout << "CONVERTED !!!" << endl;
+    createciphertext(mixerKeys, encdata);
 
-    cout << "Talking to " << ip << endl;
-    // Seal with crypto sercret box also append destination address to it data:ip
-    int CIPHERTEXT_LEN = crypto_box_SEALBYTES + msg.length();
-    unsigned char ciphertext[CIPHERTEXT_LEN];
-    crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&msg[0]), msg.length(),
-      reinterpret_cast<unsigned char*>(&mixenc[0]));
-    // Send it back to the mixer
-    auto gotbuf = talktomixer(ip, reinterpret_cast<char*>(ciphertext));
-    cout << gotbuf << endl;
     return 0;
 }
 
-std::string talktomixer(std::string ip, std::string msg){
-    try
-    {
-        boost::asio::io_context io_context;
+int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg){
 
-        tcp::socket s(io_context);
-        tcp::resolver resolver(io_context);
-        boost::asio::connect(s, resolver.resolve(ip, "8080"));
-
-        boost::asio::write(s, boost::asio::buffer(msg, msg.size()));
-
-        char reply[max_length];
-        size_t reply_length = boost::asio::read(s,
-            boost::asio::buffer(reply, max_length));
-        return std::string(reply);
+    std::vector<std::string> mixers;
+    for(auto x : mixerKeys){
+        mixers.push_back(x.first);
+        // cout << x.first << endl;
+        // cout << x.second << endl;
     }
-    catch (std::exception& e)
-    {
-        std::cerr << "Exception: " << e.what() << "\n";
+    cout << "Works 1" << endl;
+
+    std::mt19937 rng;
+    rng.seed(std::random_device()());
+    std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
+    auto seed = dist6(rng);
+
+    Shuffle<std::string> shu(mixers, (int) seed);
+    mixers.clear();
+    mixers = std::move(shu.vec);
+    cout << "Works 2" << endl;
+
+    //TODO: Create mailbox code and fix addresses
+    std::string mailboxaddress = "NULL";
+
+    std::string enctmp = encmsg;
+    enctmp += mailboxaddress;
+    enctmp += std::to_string(mailboxaddress.size());
+
+    cout << "Works 3" << endl;
+    for(int i = 0; i < mixers.size(); i++){
+        // Seal with crypto sercret box also append destination address to it data:ip
+        int CIPHERTEXT_LEN = crypto_box_SEALBYTES + enctmp.length();
+        unsigned char ciphertext[CIPHERTEXT_LEN];
+        std::string key = mixerKeys[mixers[i]];
+        crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&enctmp[0]), enctmp.length(),
+        reinterpret_cast<unsigned char*>(&key[0]));
+        cout << "Works MIXER LOOP" << endl;
+        enctmp = reinterpret_cast<char*>(ciphertext);
+        bzero(ciphertext, sizeof(ciphertext));
+        enctmp += mixers[i];
+        enctmp += "CUTHERE";
+        enctmp += to_string(mixers[i].size());
     }
+
+
+    attachtomixer(enctmp);
+    return 0;
 }
+
+std::string attachtomixer(std::string msg){
+
+    using namespace jsonrpc;
+
+    string cut("CUTHERE");
+    size_t found = msg.find("CUTHERE");
+    if(found == std::string::npos){
+        cout << "Failed to parse argument" << endl;
+        exit(1);
+    }
+    // cout << msg << endl;
+    // cout << "Works 4" << endl;
+    // cout << "FOUND " << found << endl;
+    auto toread = msg.substr(found + cut.size());
+    msg.erase(msg.begin() + found, msg.end());
+    //toread.erase(toread.begin());
+
+    // cout << toread << endl;
+    // cout << msg << endl;
+    // cout << "Works 5" << endl;
+
+    int toread_start;
+    std::istringstream iss (toread);
+    iss >> toread_start;
+    auto ip = msg.substr(msg.size() - toread_start);
+    // cout << toread_start << endl;
+    // cout << ip << endl;
+    msg.erase(msg.end() - toread_start - toread.size(), msg.end());
+    // cout << msg << endl;
+    // cout << "Works 6" << endl; 
+    
+
+    TcpSocketClient tcpclient(ip,8000);
+    // MixerClient c(tcpclient);
+
+    // try {
+    //     c.getMessage(msg);
+    // } catch (JsonRpcException &e) {
+    //     cerr << e.what() << endl;
+    // }
+
+    return "";
+}
+

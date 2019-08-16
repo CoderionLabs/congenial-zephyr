@@ -18,33 +18,41 @@
 
 
 #include <zephyr/Mixer.hpp>
+#include <zephyr/utils.hpp>
 #include <vector>
+#include <signal.h>
+#include <stdio.h>
 #include <string>
 
 using namespace std;
 
-int main(){
+Mixer m;
 
-    
+void handler(int s){
+    printf("Caught signal %d\n",s);
+    m.CleanUp();
+    exit(1); 
+}
+
+int main(int argc, char* argv[]){
+    if (argc != 3){
+        std::cerr << "Usage: mixserver MYIPV4ADDRESS CONFIG_FLIE_PATH\n";
+        return 1;
+    }
+    auto config = get_config_info(argv[2]);
     //Testing 
     // 127.0.0.1, 172.17.0.2, 172.17.0.3, 172.17.0.4
-    
-    string mixerip;
-    vector<string> mixers; 
-    vector<string> mailboxes;
-
-    int amt;
-    cout << "How many mixers do you have?" << endl;
-    cin >> amt;
-    while(amt--){
-        string ip;
-        cout << "Enter ip address" << endl;
-        cin >> ip;
-        mixers.push_back(ip);
-    }
-
     // Runs the mixer m
-    mixerip = mixers[0];
-    Mixer m(mixerip,mixers,mailboxes);
+
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &sigIntHandler, NULL);
+
+    m.Start(argv[1],config[0],config[1], argv[2]);
+    
     return 0;
 }

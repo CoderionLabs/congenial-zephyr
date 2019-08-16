@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2019 Doku Enterprise
  * Author: Friedrich Doku
- * -----
- * Last Modified: Friday April 5th 2019 10:10:36 am
- * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; either version 3 of the License, or
@@ -20,7 +17,6 @@
 #pragma once
 #define MAX_BOOTSTRAP_NODES 20
 
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -33,6 +29,7 @@
 #include <atomic>
 #include <random>
 #include <mutex>
+#include <csignal>
 #include <memory>
 #include <fstream>
 #include <thread>
@@ -44,11 +41,16 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <cstdlib>
-#include "shuffle.hpp"
+#include <zephyr/utils.hpp>
 #include <unistd.h>
 
+#include <stack>
 #include <future>
+#include <memory>
 #include <ctime>
+
+#include "nodeserver.hpp"
+#include "nodeclient.hpp"
 
 #include <stdio.h>
 #include <map>
@@ -57,11 +59,6 @@
 #include <string.h>//memset
 #include <stdlib.h>//sizeof
 #include <netinet/in.h>//INADDR_ANY
-
-#include "mixerclient.hpp"
-#include "mixerserver.hpp"
-#include <jsonrpccpp/client/connectors/httpclient.h>
-#include <jsonrpccpp/server/connectors/httpserver.h>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -72,42 +69,30 @@
 #include <cereal/archives/portable_binary.hpp>
 
 
-#define KEY_LENGTH  2048
+#define KEY_LENGTH 2048
 #define PORT 8080
 #define MAXSZ 4096
 
-
-struct publickeymap{
-    std::map<std::string,std::string> pmap;
-    
-    template<class Archive>
-    void serialize(Archive & archive)
-    {
-        archive(pmap);
-    }
-};
-
-typedef struct publickeymap publickeymap;
 
 class Mixer
 {
 private:
     dht::DhtRunner node;
-    std::vector<std::string> myip;
     std::vector<std::string> mixers;
     std::vector<std::string> mailboxes;
     //std::vector<std::string> messages;
     std::map<std::string, std::string> whos;
-    std::string mixer_ip;
+    std::string mixerip;
+    std::string configpath;
     unsigned char public_key[crypto_box_PUBLICKEYBYTES];
     unsigned char private_key[crypto_box_SECRETKEYBYTES];
     char id[20];
     int deadline;
     int readymixers = 0;
     bool is_the_first = false;
-    
 public:
-    Mixer(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes);
+    void Start(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes, std::string configpath);
+    void CleanUp();
     //void ListenForMessages();
     void StartRoundAsMixer();
     ~Mixer();
@@ -117,11 +102,7 @@ void GiveMeDataForPublic(std::string pub, std::string ip);
 void senddata(std::string ip, std::string msg);
 void StartServerInBackground();
 void GetPrimaryIp(char* buffer, size_t buflen);
-int ListenForMessages();
-
-// Basic conversion functions needed for sending public keys
-std::string ConvertMapToString(std::map<string,string> mymap);
-std::map<string,string> ConvertStringToMap(std::string mapstring);
+int ListenForMessages();;
 
 // Returns hostname for the local computer 
 void checkHostName(int hostname);
