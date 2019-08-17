@@ -86,6 +86,7 @@ cd ../
 
 git clone https://github.com/mutexunlocked/grpc
 cd grpc
+git submodule update --init
 make
 make install
 cd ../
