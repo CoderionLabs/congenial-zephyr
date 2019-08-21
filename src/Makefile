@@ -25,8 +25,8 @@ $(TARGET) : $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 
 ready:
-	cd Mixer && $(MAKE)
 	cd utils && $(MAKE)
+	cd Mixer && $(MAKE)
 	cd PKG && $(MAKE) && $(MAKE) install
 
 install:
