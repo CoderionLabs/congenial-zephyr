@@ -104,13 +104,4 @@ cd congenial-zephyr
 git checkout nightly
 cd src
 
-cd Mixer
 make
-make install
-cd ../
-cd utils
-make install
-cd ../
-cd PKG
-make
-make install

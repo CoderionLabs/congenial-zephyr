@@ -8,7 +8,6 @@ SOURCES = $(shell echo *.cpp)
 OBJECTS=$(shell echo Mixer/*.o && echo "utils/node.pb.o utils/node.grpc.pb.o ") 
 
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-UTILHEADERS = $(shell echo utils/*.hpp)
 HEADERS = $(shell echo Mixer/*.hpp)
 
 
@@ -25,12 +24,11 @@ $(TARGET) : $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 
 ready:
+	cd utils && $(MAKE) && $(MAKE) install
 	cd Mixer && $(MAKE)
-	cd utils && $(MAKE)
 	cd PKG && $(MAKE) && $(MAKE) install
 
 install:
 	mkdir -p /usr/local/include/zephyr
-	cp $(UTILHEADERS) /usr/local/include/zephyr
 	cp $(HEADERS) /usr/local/include/zephyr
 	cp libzephyr.so /usr/local/lib
