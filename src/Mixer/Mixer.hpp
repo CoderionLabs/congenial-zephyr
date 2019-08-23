@@ -49,8 +49,8 @@
 #include <memory>
 #include <ctime>
 
-#include "nodeserver.hpp"
-#include "nodeclient.hpp"
+#include <zephyr/nodeserver.hpp>
+#include <zephyr/nodeclient.hpp>
 
 #include <stdio.h>
 #include <map>
