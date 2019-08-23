@@ -29,4 +29,4 @@ server: node.pb.o node.grpc.pb.o server.o
 clean:
 	rm -f *.o *.pb.cc *.pb.h client server
 install:
-	cp include/utils.hpp /usr/local/include/zephyr
+	cp include/utils.hpp nodeserver.hpp nodeclient.hpp /usr/local/include/zephyr
