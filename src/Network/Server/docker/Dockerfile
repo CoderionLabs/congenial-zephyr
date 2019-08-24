@@ -57,7 +57,10 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir /app
 RUN git clone https://github.com/DokuEnterprise/congenial-zephyr /app/congenial-zephyr
 RUN cd /app/congenial-zephyr/src
-RUN cp /app/congenial-zephyr/src/Network/Server/docker/build_test_install.sh /app
-RUN chmod a+x /app/build_test_install.sh
-RUN cd /app && ./build_test_install.sh
+RUN cp /app/congenial-zephyr/src/Network/Server/docker/deps.sh /app
+RUN cp /app/congenial-zephyr/src/Network/Server/docker/zephyr.sh /app
+RUN chmod a+x /app/deps.sh
+RUN chmod a+x /app/zephyr.sh
+RUN cd /app && ./deps.sh
+RUN cd /app && ./zephyr.sh
 RUN export LD_LIBRARY_PATH=/usr/local/lib
