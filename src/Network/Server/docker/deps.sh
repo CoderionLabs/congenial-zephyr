@@ -90,18 +90,3 @@ git submodule update --init
 make
 make install
 cd ../
-
-wget http://www.openssl.org/source/openssl-1.0.0a.tar.gz
-tar -xf openssl-1.0.0a.tar.gz
-cd openssl-1.0.0a
-./config --prefix=/usr/local/openssl-1.0
-make
-make install_sw
-ls
-cd ../
-ls
-cd congenial-zephyr
-git checkout nightly
-cd src
-
-make
