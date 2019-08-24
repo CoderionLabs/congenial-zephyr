@@ -17,7 +17,8 @@
 #include <zephyr/utils.hpp>
 #include <zephyr/pkgc.hpp>
 #include <zephyr/pkg.hpp>
-#include <zephyr/Mixer.hpp>
+#include <zephyr/nodeclient.hpp>
+#include <zephyr/node.grpc.pb.h>
 #include <zephyr/utils.hpp>
 #include <iostream>
 #include <vector>
@@ -28,8 +29,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <jsonrpccpp/client.h>
-#include <jsonrpccpp/client/connectors/tcpsocketclient.h>
 #include <netdb.h>
 #include <sodium.h>
 extern "C"{
@@ -41,6 +40,8 @@ CONF_CTX *cnfctx;
 params_t params;
 
 using namespace std;
+using namespace node;
+
 
 // Mixers, Mailboxes, PKGS
 
@@ -154,8 +155,6 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
 
 std::string attachtomixer(std::string msg){
 
-    using namespace jsonrpc;
-
     string cut("CUTHERE");
     size_t found = msg.find("CUTHERE");
     if(found == std::string::npos){
@@ -184,14 +183,15 @@ std::string attachtomixer(std::string msg){
     // cout << "Works 6" << endl; 
     
 
-    TcpSocketClient tcpclient(ip,8000);
-    // MixerClient c(tcpclient);
+    NodeClient mixreq(
+    grpc::CreateChannel(ip + ":50051",
+                          grpc::InsecureChannelCredentials()));
 
-    // try {
-    //     c.getMessage(msg);
-    // } catch (JsonRpcException &e) {
-    //     cerr << e.what() << endl;
-    // }
+    std::cout << "-------------- GetMessages --------------" << std::endl;
+    node::Msg tosend;
+    tosend.set_data(msg);
+    mixreq.data.push_back(tosend);
+    mixreq.PutMessages();
 
     return "";
 }
