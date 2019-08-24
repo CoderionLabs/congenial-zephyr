@@ -16,7 +16,7 @@ export CURRENT_PATH=.
 wget http://www.openssl.org/source/openssl-1.0.0a.tar.gz
 tar -xf openssl-1.0.0a.tar.gz
 cd openssl-1.0.0a
-./config --prefix=/usr/local/openssl-1.0
+./config --prefix=/usr/local/openssl-1.0 shared
 make
 make install_sw
 ls
@@ -26,3 +26,4 @@ cd congenial-zephyr
 git checkout nightly
 cd src
 make
+make install
