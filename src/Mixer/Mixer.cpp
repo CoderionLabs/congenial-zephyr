@@ -21,7 +21,6 @@ using namespace node;
 //GLOBALS...
 std::string MIXERIP;
 std::map<std::string, std::string> ipspub;
-std::shared_ptr<strvec> req(msgtmp);
 std::vector<std::string> reqtmp;
 bool chooseinfo = false;
 
@@ -273,10 +272,10 @@ void Mixer::StartRoundAsMixer(){
 
 
     while(true){
-        if(!req->empty()){
+        if(!msgtmp.empty()){
             std::cout << "THIS WORKS" << std::endl;
-            std::copy(req->begin(), req->end(), std::back_inserter(reqtmp));
-            req->clear();
+            std::copy(msgtmp.begin(), msgtmp.end(), std::back_inserter(reqtmp));
+            msgtmp.clear();
             std::cout << "IM IN HERE " << reqtmp.size() << std::endl;
             if(reqtmp.size() != 0){
                 std::mt19937 rng;

@@ -39,7 +39,7 @@ using std::chrono::system_clock;
 using namespace node;
 
 typedef std::vector<std::string> strvec;
-std::shared_ptr<strvec> msgtmp (new strvec);
+extern strvec msgtmp;
 
 class NodeImpl final : public Node::Service {
  public:
@@ -66,13 +66,13 @@ Status NodeImpl::NewRound(ServerContext* context, const node::MsgReq* req,
 Status NodeImpl::DumpMessages(ServerContext* context, const node::MsgReq* req, ServerWriter<node::Msg>* writer) {
     node::Msg g;
     g.set_data("apple");
-    msgtmp->push_back(g.data());
-    msgtmp->push_back(g.data());
-    msgtmp->push_back(g.data());
-    while(!msgtmp->empty()){
-        g.set_data(msgtmp->back());
+    msgtmp.push_back(g.data());
+    msgtmp.push_back(g.data());
+    msgtmp.push_back(g.data());
+    while(!msgtmp.empty()){
+        g.set_data(msgtmp.back());
         writer->Write(g);
-        msgtmp->pop_back();
+        msgtmp.pop_back();
     }
     return Status::OK;
 }
@@ -82,7 +82,7 @@ Status NodeImpl::PutMessages(ServerContext* context, ServerReader<node::Msg>* re
 
     system_clock::time_point start_time = system_clock::now();
     while (reader->Read(&m)) {
-        msgtmp->push_back(m.data());
+        msgtmp.push_back(m.data());
     }
     system_clock::time_point end_time = system_clock::now();
     response->set_yes(true);
