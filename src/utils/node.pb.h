@@ -161,7 +161,7 @@ class Msg final :
 
   // accessors -------------------------------------------------------
 
-  // string data = 1;
+  // bytes data = 1;
   void clear_data();
   static const int kDataFieldNumber = 1;
   const ::std::string& data() const;
@@ -170,7 +170,7 @@ class Msg final :
   void set_data(::std::string&& value);
   #endif
   void set_data(const char* value);
-  void set_data(const char* value, size_t size);
+  void set_data(const void* value, size_t size);
   ::std::string* mutable_data();
   ::std::string* release_data();
   void set_allocated_data(::std::string* data);
@@ -307,7 +307,7 @@ class MsgReq final :
 #endif  // __GNUC__
 // Msg
 
-// string data = 1;
+// bytes data = 1;
 inline void Msg::clear_data() {
   data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -334,7 +334,7 @@ inline void Msg::set_data(const char* value) {
   data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:node.Msg.data)
 }
-inline void Msg::set_data(const char* value, size_t size) {
+inline void Msg::set_data(const void* value, size_t size) {
   
   data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));

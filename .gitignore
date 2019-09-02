@@ -32,3 +32,6 @@
 *.app
 src/crypto
 src/utils/client
+src/utils/client
+src/utils/server
+src/crypto
