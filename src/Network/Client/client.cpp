@@ -14,7 +14,6 @@
  */
 
 
-#include <zephyr/utils.hpp>
 #include <zephyr/pkgc.hpp>
 #include <zephyr/pkg.hpp>
 #include <zephyr/nodeclient.hpp>
@@ -83,14 +82,15 @@ int main(){
     deserialize_bytestring(key_serial_tmp, keyb);
     deserialize_params(param_serial_tmp, paramsb);
 
-    FILE * filePointer; 
-    filePointer = fopen("params.txt","w+");
-    params_out(filePointer, paramsb);
-    fclose(filePointer);
+    // FILE * filePointer; 
+    // filePointer = fopen("params.txt","w+");
+    // params_out(filePointer, paramsb);
+    // fclose(filePointer);
 
     cout << "SIZE OF FULL DATA IS " << sizeof(keyb) + sizeof(paramsb) << endl;
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
+
     std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
     cout << "MADE IT HERE FINISHED" << endl;
     

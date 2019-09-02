@@ -31,3 +31,4 @@
 *.out
 *.app
 src/crypto
+src/utils/client
