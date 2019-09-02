@@ -39,6 +39,7 @@ int main(int argc, char* argv[]){
         std::cerr << "Usage: mixserver MYIPV4ADDRESS CONFIG_FLIE_PATH\n";
         return 1;
     }
+    strvec msgtmp;
     auto config = get_config_info(argv[2]);
     //Testing 
     // 127.0.0.1, 172.17.0.2, 172.17.0.3, 172.17.0.4
