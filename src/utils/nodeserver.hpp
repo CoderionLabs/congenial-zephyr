@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <vector>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -38,8 +39,7 @@ using node::Node;
 using std::chrono::system_clock;
 using namespace node;
 
-typedef std::vector<std::string> strvec;
-extern strvec msgtmp;
+extern std::vector<std::string> msgtmp;
 
 class NodeImpl final : public Node::Service {
  public:

@@ -73,7 +73,7 @@
 #define PORT 8080
 #define MAXSZ 4096
 
-
+std::vector<std::string> msgtmp;
 class Mixer
 {
 private:
