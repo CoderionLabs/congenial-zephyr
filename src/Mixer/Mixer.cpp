@@ -293,20 +293,19 @@ void Mixer::StartRoundAsMixer(){
                 // Strip off a layer of encryption and send to the next
                 // mixer.
                 for(auto x : reqtmp){
-
-                    auto p = parseciphertext(x);
                     unsigned char decrypted[1000];
-                    std::string ip = p.first;
-                    std::string msg = p.second;
-                    crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(msg.c_str()),
-                    msg.length(), this->public_key, this->private_key);
+                 
+                    crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
+                    x.length(), this->public_key, this->private_key);
 
                     std::string conv = reinterpret_cast<char*>(decrypted);
                     std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;               
 
+                    auto p = parseciphertext(conv);
+                    std::string ip = p.first;
+                    std::string msg = p.second;
                     std::cout << "THE NEXT MIXER WILL BE " <<  ip << std::endl;
-
-                    senddata(ip, conv);
+                    senddata(ip, msg);
                 }
                 reqtmp.clear();
             }
