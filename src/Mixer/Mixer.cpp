@@ -298,6 +298,7 @@ void Mixer::StartRoundAsMixer(){
                     crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
                     x.length(), this->public_key, this->private_key);
 
+                    //FIXME: Fix this
                     std::string conv = reinterpret_cast<char*>(decrypted);
                     std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;               
 

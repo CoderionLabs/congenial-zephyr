@@ -99,6 +99,9 @@ int main(){
     auto recv = talktonode(vec[3][num],"8080","NEED", true);
     cout << recv << endl;
     auto mixerKeys = ConvertStringToMap(recv);
+    for(auto x : mixerKeys){
+        cout << x.second.size() << endl;
+    }
     cout << "CONVERTED !!!" << endl;
     createciphertext(mixerKeys, encdata);
 
