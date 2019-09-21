@@ -2,13 +2,14 @@
 #include <vector>
 #include <cstring>
 #include <string>
+#include <memory>
 #include <array>
 #include <stdio.h> 
-#include <sodium.h>
+#include <sodiumpp/common.h>
+#include <sodiumpp/helpers.h>
+#include <sodiumpp/secretbox.h>
 
 #define siz(a) strlen((char *) a)
-
-// #define msg  (const unsigned char *) "ignoring return value of ‘int crypto_box_seal_open(unsigned char*, const unsigned char*, long long unsigned int, const unsigned char*, const unsigned char*)’, declared with attribute warn"
 
 using namespace std;
 typedef unsigned char cryptoT;
@@ -17,7 +18,8 @@ typedef unsigned char cryptoT;
 // the problem is the cryptolenghts were wrong
 // also string conversion is wacky
 
-unsigned char* string_to_unsigned_char(std::string s){
+unsigned char* 
+string_to_unsigned_char(std::string s){
     auto x = s.c_str();
     unsigned char tmp[s.length()];
     std::copy(x,x + sizeof(x), tmp);
@@ -26,58 +28,77 @@ unsigned char* string_to_unsigned_char(std::string s){
 }
 
 // Create an onion layer
-cryptoT* encryptN(cryptoT *ciphertext, cryptoT pub_keys[][32],
-    int num, int i, std::vector<int>& decsizes){
-    if(i == num){
-        cout << "WORKS" << endl;
-        return ciphertext;
+cryptoT* 
+encryptN(cryptoT *msg, cryptoT pub_keys[][32], int size, vector<int> &decsizes){
+    cryptoT *tmpmsg = (cryptoT*) malloc(siz(msg));
+    memcpy(tmpmsg,msg,siz(msg));
+
+    cout << "ME" << tmpmsg << endl;
+
+    for(int i = 0; i < size; i++){
+        cout << i << endl;
+        int CIPHERTEXT_LEN = siz(tmpmsg) + crypto_box_SEALBYTES;
+        decsizes.push_back(siz(tmpmsg));
+        cryptoT ciphertext[CIPHERTEXT_LEN];
+        crypto_box_seal(ciphertext, tmpmsg, siz(tmpmsg),pub_keys[i]);
+        //free(tmpmsg);
+        tmpmsg = (cryptoT*) malloc(sizeof(ciphertext));
+        memcpy(tmpmsg,ciphertext, sizeof(ciphertext));
+        cout << "ENC" << tmpmsg << endl;
     }
-    cout << ciphertext << endl;
-    cout << siz(ciphertext) << endl;
-    decsizes.push_back(siz(ciphertext));
-    int CIPHTERTEXT_LEN = siz(ciphertext) + crypto_box_SEALBYTES;
-    // cout << siz(ciphertext) << endl;
-    cryptoT encmsg[CIPHTERTEXT_LEN];
-    cout << i << endl;
-    crypto_box_seal(encmsg, ciphertext, siz(ciphertext), pub_keys[0]);
-    cout << encmsg << "CAKE" << endl;
-    encryptN(encmsg,pub_keys, num, ++i, decsizes);
+    cout << "WORKS" << endl;
+    return tmpmsg;
 }
 
 // decrypt an onion layer
 // num should be equal to i + 1
-cryptoT* decryptN(cryptoT *ciphertext, cryptoT pub_keys[][32],
-    cryptoT pri_keys[][32], int i, std::vector<int> decsizes){
-    if(i == -1){return ciphertext;}
-    cryptoT decrypted[1000];
-    // cout << decsizes[i] << endl;
-    auto size = siz(ciphertext);
-    if(crypto_box_seal_open(decrypted, ciphertext, size,
-    pub_keys[i], pri_keys[i]) !=0){
-        cerr << "Failed" << endl;
-        return nullptr;
+cryptoT* 
+decryptN(cryptoT *ciphertext, cryptoT pub_keys[][32], cryptoT pri_keys[][32],
+         int size, vector<int> decsizes){
+    int j = decsizes.size() -1;
+    cryptoT *cipher = (cryptoT*) malloc(siz(ciphertext));
+    memcpy(cipher,ciphertext, siz(ciphertext));
+
+    int g = 0;
+    for(int i = size-1; i > -1; i--){
+        int DECRYPTLEN = decsizes[j - g];
+        cryptoT decrypted[DECRYPTLEN];
+        cout << "LEN " << DECRYPTLEN << endl;
+        //FIXME: Crypto box not working
+        crypto_box_seal_open(decrypted, cipher, siz(cipher), pub_keys[i], pri_keys[i]);
+        cout << "Works" << endl;
+        free(cipher);
+        cipher = (cryptoT*) malloc(sizeof(decrypted));
+        
+        memcpy(cipher, decrypted, sizeof(decrypted));
+        cout << "I GOT " << decrypted << endl;
+        cout << i << endl;
+        if(i == 0){
+            return decrypted;
+        }
+        g++;
     }
-    cout << pub_keys[i] << "CAKEEND"<< endl;
-    decryptN(decrypted, pub_keys, pri_keys,--i, decsizes);
+    
+    return ciphertext;
 }
 
-int main(){
+int 
+main(){
     //TODO: Enc and Dec test
-    int N = 5;
+    int N = 2;
     int M = 32;
 
     // TODO: Fix this
     string tmp;
     cout << "Enter Text" << endl;
     cin >> tmp;
-    unsigned char msg[tmp.length()];
-    cout << "Can you enter it again it must be the exact same." << endl;
-    scanf("%s", msg);
-    // Initilize rows
-    cryptoT public_keys[1][32];
-    cryptoT private_keys[1][32];
 
-    for(int i = 0; i < 1; i++){
+    sodium::bytes msg{tmp.cbegin(),tmp.cend()};
+    // Initilize rows
+    cryptoT public_keys[2][32];
+    cryptoT private_keys[2][32];
+
+    for(int i = 0; i < 2; i++){
         cryptoT recipient_pk[crypto_box_PUBLICKEYBYTES];
         cryptoT recipient_sk[crypto_box_SECRETKEYBYTES];
         crypto_box_keypair(recipient_pk, recipient_sk);
@@ -86,35 +107,11 @@ int main(){
     }
 
     std::vector<int> decsizes;
-    auto x = encryptN(msg, public_keys, 1, 0, decsizes);
-    auto y = decryptN(x, public_keys, private_keys, 1, 0, decsizes);
-    cout << y << endl;
-   
-    // // Encrypt the messages
-    // int size1 = 192;
-    // int CIPHERTEXT_LEN = size1 + crypto_box_SEALBYTES;
-    // cryptoT ciphertext[CIPHERTEXT_LEN];
-    // crypto_box_seal(ciphertext, msg,
-    // size1, public_keys[0]);
+    cryptoT* x = encryptN(&msg[0], public_keys, 2, decsizes);
+    cout << x << endl;
+    cryptoT* y = decryptN(x, public_keys, private_keys, 2, decsizes);
+    std::vector<int> v(y, y + sizeof(y) / sizeof(y[0]));
+    cout << sodium::bin2hex(v) << endl;
 
-    // int size2 = CIPHERTEXT_LEN;
-    // int CIPHERTEXT_LEN2 = size2 + crypto_box_SEALBYTES;
-    // cryptoT ciphertext2[CIPHERTEXT_LEN2];
-    // crypto_box_seal(ciphertext2, ciphertext,
-    // size2, public_keys[1]);
-
-
-
-    // // Decrypt the messages
-    // cryptoT decrypted[size2];
-    // crypto_box_seal_open(decrypted, ciphertext2, CIPHERTEXT_LEN2,
-    // public_keys[1], private_keys[1]);
-
-    // cryptoT decrypted2[size1];
-    // crypto_box_seal_open(decrypted2, decrypted, CIPHERTEXT_LEN,
-    // public_keys[0], private_keys[0]);
-    
-    // cout << decrypted2 << endl;
-    // // crypto_box_seal(ciphertext, MESSAGE, MESSAGE_LEN, recipient_pk);
 	return 0;
 }
