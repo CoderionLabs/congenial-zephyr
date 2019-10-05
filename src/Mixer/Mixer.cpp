@@ -18,10 +18,10 @@
 
 using namespace std;
 using namespace node;
+using namespace sodium;
 //GLOBALS...
 std::string MIXERIP;
 std::map<std::string, std::string> ipspub;
-std::shared_ptr<strvec> req(msgtmp);
 std::vector<std::string> reqtmp;
 bool chooseinfo = false;
 
@@ -52,6 +52,8 @@ void Mixer::CleanUp(){
 void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
  std::vector<std::string> mailboxes, std::string configpath){
 
+
+     sodium_init();
      // Initilize variables
     this->mixerip = mixerip;
     this->mailboxes = mailboxes;
@@ -69,7 +71,9 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     auto ready = std::make_shared<bool>(false);
 
     std::cout << "Creating Keys..." << std::endl;
-    crypto_box_keypair(this->public_key, this->private_key);
+    sodium::keypair<> mix{};
+
+
     auto tmpid = this->node.getNodeId().to_c_str();
     std::cout << "DONE" << std::endl;
     
@@ -105,7 +109,9 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     };
 
     string plugin; string r = "ready";
-    plugin = string(reinterpret_cast<char*>(this->public_key)) + "_____________________________________________" + mixerip;
+    auto tmpstrkey = this->mix.public_key();
+    string keystring{tmpstrkey.cbegin(), tmpstrkey.cend()};
+    plugin = string(keystring + "_____________________________________________" + mixerip);
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
@@ -273,10 +279,10 @@ void Mixer::StartRoundAsMixer(){
 
 
     while(true){
-        if(!req->empty()){
+        if(!msgtmp.empty()){
             std::cout << "THIS WORKS" << std::endl;
-            std::copy(req->begin(), req->end(), std::back_inserter(reqtmp));
-            req->clear();
+            std::copy(msgtmp.begin(), msgtmp.end(), std::back_inserter(reqtmp));
+            msgtmp.clear();
             std::cout << "IM IN HERE " << reqtmp.size() << std::endl;
             if(reqtmp.size() != 0){
                 std::mt19937 rng;
@@ -294,20 +300,22 @@ void Mixer::StartRoundAsMixer(){
                 // Strip off a layer of encryption and send to the next
                 // mixer.
                 for(auto x : reqtmp){
+                    //unsigned char decrypted[1000];
+                    box_seal<> sb{};
+                    bytes enc{ x.cbegin(), x.cend() };
+                    auto decrypted = sb.decrypt(enc, this->mix.private_key(), this->mix.public_key());
+                    // crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
+                    // x.length(), this->public_key, this->private_key);
 
-                    auto p = parseciphertext(x);
-                    unsigned char decrypted[1000];
-                    std::string ip = p.first;
-                    std::string msg = p.second;
-                    crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(msg.c_str()),
-                    msg.length(), this->public_key, this->private_key);
-
-                    std::string conv = reinterpret_cast<char*>(decrypted);
+                    //FIXME: Fix this
+                    std::string conv{decrypted.cbegin(), decrypted.cend()};
                     std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;               
 
+                    auto p = parseciphertext(conv);
+                    std::string ip = p.first;
+                    std::string msg = p.second;
                     std::cout << "THE NEXT MIXER WILL BE " <<  ip << std::endl;
-
-                    senddata(ip, conv);
+                    senddata(ip, msg);
                 }
                 reqtmp.clear();
             }

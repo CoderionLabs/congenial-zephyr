@@ -33,5 +33,5 @@ install:
 	cp libpkg.so /usr/local/lib
 
 testfile:
-	$(CC) -std=c++11 test/test.cpp -lpkg -o tester
+	$(CC) -std=c++11 test/test.cpp -lpkg -lsibe -o tester
 	./tester

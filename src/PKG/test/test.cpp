@@ -37,6 +37,7 @@ int main(){
 
     PKG p;
     p.setup("dokuenterprise");
+    IBE_init();
     byte_string_t key, ad_key;
     auto str = pkg_encrypt("fried", p.params,"Everyone still has a ways to go.");
     p.extract("fried", key);
@@ -58,8 +59,7 @@ int main(){
 
     auto str2 = pkg_encrypt("fried", paramtmp,"msg");
 
-    auto j3 = pkg_decrypt(str2, keytmp, paramtmp);
     auto j = pkg_decrypt(str, keytmp, paramtmp);
     auto j2 = pkg_decrypt(str, ad_key, p.params);
-    
+    auto j3 = pkg_decrypt(str2, keytmp, paramtmp);
 }
