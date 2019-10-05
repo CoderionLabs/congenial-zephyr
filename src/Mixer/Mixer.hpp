@@ -70,6 +70,11 @@
 #include <cereal/archives/portable_binary.hpp>
 
 
+#include <sodiumwrap/sodiumtester.h>
+#include <sodiumwrap/box_seal.h>
+#include <sodiumwrap/keypair.h>
+#include <sodiumwrap/allocator.h>
+
 #define KEY_LENGTH 2048
 #define PORT 8080
 #define MAXSZ 4096
@@ -85,8 +90,7 @@ private:
     std::map<std::string, std::string> whos;
     std::string mixerip;
     std::string configpath;
-    unsigned char public_key[crypto_box_PUBLICKEYBYTES];
-    unsigned char private_key[crypto_box_SECRETKEYBYTES];
+    sodium::keypair<> mix{};
     char id[20];
     int deadline;
     int readymixers = 0;

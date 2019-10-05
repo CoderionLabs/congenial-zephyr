@@ -30,6 +30,10 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sodium.h>
+#include <sodiumwrap/sodiumtester.h>
+#include <sodiumwrap/box_seal.h>
+#include <sodiumwrap/keypair.h>
+#include <sodiumwrap/allocator.h>
 extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
@@ -40,6 +44,7 @@ params_t params;
 
 using namespace std;
 using namespace node;
+using namespace sodium;
 
 
 // Mixers, Mailboxes, PKGS
@@ -55,6 +60,9 @@ std::string attachtomixer(std::string msg);
 int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg);
 
 int main(){
+
+    sodium_init();
+    
     string msg,email,key, params, filepath;
     cout << "Enter message" << endl;
     cin >> msg;
@@ -112,6 +120,7 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
 
     std::vector<std::string> mixers;
     for(auto x : mixerKeys){
+        // Push all the IPs to a vector
         mixers.push_back(x.first);
         // cout << x.first << endl;
         // cout << x.second << endl;
@@ -128,6 +137,19 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
     mixers = std::move(shu.vec);
     cout << "Works 2" << endl;
 
+    int N = mixers.size();
+
+    box_seal<> sb{};
+    std::vector<sodium::keypair<>> boxes;
+    for(int i = 0; i < N; i++){
+        std::string mixkeystr = mixerKeys[mixers[i]];
+        bytes mixkey{mixkeystr.cbegin(), mixkeystr.cend()};
+        sodium::keypair<> mix{};
+        mix.public_key_ = mixkey;
+
+        boxes.push_back(mix);
+    }
+    
     //TODO: Create mailbox code and fix addresses
     std::string mailboxaddress = "NULL";
 
@@ -135,22 +157,18 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
     enctmp += mailboxaddress;
     enctmp += std::to_string(mailboxaddress.size());
 
-    cout << "Works 3" << endl;
-    for(int i = 0; i < mixers.size(); i++){
-        // Seal with crypto sercret box also append destination address to it data:ip
-        int CIPHERTEXT_LEN = crypto_box_SEALBYTES + enctmp.length();
-        unsigned char ciphertext[CIPHERTEXT_LEN];
-        std::string key = mixerKeys[mixers[i]];
-        crypto_box_seal(ciphertext, reinterpret_cast<unsigned char*>(&enctmp[0]), enctmp.length(),
-        reinterpret_cast<unsigned char*>(&key[0]));
-        cout << "Works MIXER LOOP" << endl;
-        enctmp = reinterpret_cast<char*>(ciphertext);
-        bzero(ciphertext, sizeof(ciphertext));
-        enctmp += mixers[i];
-        enctmp += "CUTHERE";
-        enctmp += to_string(mixers[i].size());
-    }
+    cout << "Done Setting getting mixer keys and adding mailbox." << endl;
+    
+    bytes tmpenc{enctmp.cbegin(), enctmp.cend()};
+    int i = 0;
+    for(auto x : boxes){
+        tmpenc =  sb.encrypt(tmpenc, x.public_key());
 
+        enctmp += mixers[i];   // Address
+        enctmp += "CUTHERE";
+        enctmp += to_string(mixers[i].size()); // Size of ip address
+        i++;
+    }
 
     attachtomixer(enctmp);
     return 0;

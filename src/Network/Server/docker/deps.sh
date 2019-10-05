@@ -74,6 +74,13 @@ make
 make install
 cd ../../
 
+git clone https://github.com/friedrich12/sodium-wrapper
+cd sodium-wrapper
+cd include
+mkdir -p /usr/local/include/sodiumwrap
+cp -R * /usr/local/include/sodiumwrap
+cd ../../
+
 git clone https://github.com/mutexunlocked/protobuf
 cd protobuf
 git submodule update --init --recursive

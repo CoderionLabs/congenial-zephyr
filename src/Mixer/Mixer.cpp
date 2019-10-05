@@ -18,6 +18,7 @@
 
 using namespace std;
 using namespace node;
+using namespace sodium;
 //GLOBALS...
 std::string MIXERIP;
 std::map<std::string, std::string> ipspub;
@@ -51,6 +52,8 @@ void Mixer::CleanUp(){
 void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
  std::vector<std::string> mailboxes, std::string configpath){
 
+
+     sodium_init();
      // Initilize variables
     this->mixerip = mixerip;
     this->mailboxes = mailboxes;
@@ -68,7 +71,9 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     auto ready = std::make_shared<bool>(false);
 
     std::cout << "Creating Keys..." << std::endl;
-    crypto_box_keypair(this->public_key, this->private_key);
+    sodium::keypair<> mix{};
+
+
     auto tmpid = this->node.getNodeId().to_c_str();
     std::cout << "DONE" << std::endl;
     
@@ -104,7 +109,9 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     };
 
     string plugin; string r = "ready";
-    plugin = string(reinterpret_cast<char*>(this->public_key)) + "_____________________________________________" + mixerip;
+    auto tmpstrkey = this->mix.public_key();
+    string keystring{tmpstrkey.cbegin(), tmpstrkey.cend()};
+    plugin = string(keystring + "_____________________________________________" + mixerip);
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
@@ -293,13 +300,15 @@ void Mixer::StartRoundAsMixer(){
                 // Strip off a layer of encryption and send to the next
                 // mixer.
                 for(auto x : reqtmp){
-                    unsigned char decrypted[1000];
-                 
-                    crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
-                    x.length(), this->public_key, this->private_key);
+                    //unsigned char decrypted[1000];
+                    box_seal<> sb{};
+                    bytes enc{ x.cbegin(), x.cend() };
+                    auto decrypted = sb.decrypt(enc, this->mix.private_key(), this->mix.public_key());
+                    // crypto_box_seal_open(decrypted, reinterpret_cast<const unsigned char*>(x.c_str()),
+                    // x.length(), this->public_key, this->private_key);
 
                     //FIXME: Fix this
-                    std::string conv = reinterpret_cast<char*>(decrypted);
+                    std::string conv{decrypted.cbegin(), decrypted.cend()};
                     std::cout << "THIS IS THE MESSAGE I GOT " << conv << std::endl;               
 
                     auto p = parseciphertext(conv);
