@@ -15,6 +15,7 @@ export CURRENT_PATH=.
 mkdir $CPLUS_INCLUDE_PATH/zephyr
 mkdir $CPLUS_INCLUDE_PATH/sibe
 
+apt-get update
 # Install OpenDHT dependencies
 apt-get -y install libncurses5-dev libreadline-dev libjsoncpp-dev nettle-dev libgnutls-dev libjsoncpp-dev
 
