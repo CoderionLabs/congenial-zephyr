@@ -16,8 +16,8 @@ export CURRENT_PATH=.
 git clone https://github.com/friedrich12/sodium-wrapper
 cd sodium-wrapper
 cd include
-mkdir -p /usr/local/include/sodiumwrap
-cp -R * /usr/local/include/sodiumwrap
+mkdir -p /usr/include/sodiumwrap
+cp -R *.h /usr/include/sodiumwrap
 cd ../../
 
 wget http://www.openssl.org/source/openssl-1.0.0a.tar.gz
@@ -31,6 +31,3 @@ cd ../
 ls
 cd congenial-zephyr
 git checkout nightly
-cd src
-make
-make install
