@@ -49,11 +49,13 @@ void Mixer::CleanUp(){
     cv.wait(lk);
 }
 
+Mixer::Mixer(){
+    sodium_init();
+}
+
 void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
  std::vector<std::string> mailboxes, std::string configpath){
 
-
-     sodium_init();
      // Initilize variables
     this->mixerip = mixerip;
     this->mailboxes = mailboxes;
