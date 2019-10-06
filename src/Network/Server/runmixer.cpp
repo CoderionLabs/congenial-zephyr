@@ -26,13 +26,11 @@
 
 using namespace std;
 
-Mixer m;
-
-void handler(int s){
-    printf("Caught signal %d\n",s);
-    m.CleanUp();
-    exit(1); 
-}
+// void handler(int s){
+//     printf("Caught signal %d\n",s);
+//     m.CleanUp();
+//     exit(1); 
+// }
 
 int main(int argc, char* argv[]){
     if (argc != 3){
@@ -44,14 +42,15 @@ int main(int argc, char* argv[]){
     // 127.0.0.1, 172.17.0.2, 172.17.0.3, 172.17.0.4
     // Runs the mixer m
 
-    struct sigaction sigIntHandler;
+    // struct sigaction sigIntHandler;
 
-    sigIntHandler.sa_handler = handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
+    // sigIntHandler.sa_handler = handler;
+    // sigemptyset(&sigIntHandler.sa_mask);
+    // sigIntHandler.sa_flags = 0;
 
-    sigaction(SIGINT, &sigIntHandler, NULL);
-
+    // sigaction(SIGINT, &sigIntHandler, NULL);
+    sodium_init();
+    Mixer m;
     m.Start(argv[1],config[0],config[1], argv[2]);
     
     return 0;

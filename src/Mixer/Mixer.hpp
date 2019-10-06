@@ -96,7 +96,6 @@ private:
     int readymixers = 0;
     bool is_the_first = false;
 public:
-    Mixer();
     void Start(std::string mixerip, std::vector<std::string> mixers, std::vector<std::string> mailboxes, std::string configpath);
     void CleanUp();
     //void ListenForMessages();
