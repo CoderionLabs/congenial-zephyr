@@ -109,7 +109,7 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
 
     string plugin; string r = "ready";
     auto tmpstrkey = this->mix.public_key();
-    string keystring{tmpstrkey.cbegin(), tmpstrkey.cend()};
+    string keystring = reinterpret_cast<char*>(tmpstrkey.data());
     plugin = string(keystring + "_____________________________________________" + mixerip);
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {

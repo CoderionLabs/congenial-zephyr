@@ -164,13 +164,22 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
     for(auto x : boxes){
         tmpenc =  sb.encrypt(tmpenc, x.public_key());
 
-        enctmp += mixers[i];   // Address
-        enctmp += "CUTHERE";
-        enctmp += to_string(mixers[i].size()); // Size of ip address
+        std::string cutgo;
+        cutgo += mixers[i];   // Address
+        cutgo += "CUTHERE";
+        cutgo += to_string(mixers[i].size()); // Size of ip address
+
+        std::string tt{tmpenc.cbegin(), tmpenc.cend()};
+        tt +=cutgo;
+
+        bytes tempenctmp{tt.cbegin(), tt.cend()};
+        tmpenc = tempenctmp;
         i++;
     }
 
-    attachtomixer(enctmp);
+    std::string exitenc{tmpenc.cbegin(), tmpenc.cend()};
+
+    attachtomixer(exitenc);
     return 0;
 }
 
@@ -182,26 +191,26 @@ std::string attachtomixer(std::string msg){
         cout << "Failed to parse argument" << endl;
         exit(1);
     }
-    // cout << msg << endl;
-    // cout << "Works 4" << endl;
-    // cout << "FOUND " << found << endl;
+    cout << msg << endl;
+    cout << "Works 4" << endl;
+    cout << "FOUND " << found << endl;
     auto toread = msg.substr(found + cut.size());
     msg.erase(msg.begin() + found, msg.end());
     //toread.erase(toread.begin());
 
-    // cout << toread << endl;
-    // cout << msg << endl;
-    // cout << "Works 5" << endl;
+    cout << toread << endl;
+    cout << msg << endl;
+    cout << "Works 5" << endl;
 
     int toread_start;
     std::istringstream iss (toread);
     iss >> toread_start;
     auto ip = msg.substr(msg.size() - toread_start);
-    // cout << toread_start << endl;
-    // cout << ip << endl;
+    cout << toread_start << endl;
+    cout << ip << endl;
     msg.erase(msg.end() - toread_start - toread.size(), msg.end());
-    // cout << msg << endl;
-    // cout << "Works 6" << endl; 
+    cout << msg << endl;
+    cout << "Works 6" << endl; 
     
 
     NodeClient mixreq(
