@@ -157,10 +157,11 @@ int main(int argc, char* argv[]){
     std::thread t1(dhtstart);
     t1.detach();
 
-    if (argc != 1){
+    if (argc != 2){
         std::cerr << "Usage: infonode INFONODEIP\n";
         return 1;
     }
     INFONODEIP = argv[1];
+    std::cout << "RUNNING ON " << INFONODEIP << std::endl;
     RunServerInBackground();
 }
