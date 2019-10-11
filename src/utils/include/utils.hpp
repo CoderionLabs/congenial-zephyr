@@ -131,6 +131,23 @@ std::string talktonode(std::string ip, std::string port, std::string msg, bool r
 std::pair<std::string, std::string> parseciphertext(std::string msg);
 std::string serial_box_key(bytes k);
 bytes deserial_box_key(std::string k);
+std::pair<std::string,bytes> getkeyfromtxt(std::string k);
+std::string setupkey(bytes k, std::string ip);
+
+inline std::string setupkey(bytes k, std::string ip){
+    return serial_box_key(k) + "_____________________________________________" + ip;
+}
+
+inline std::pair<std::string,bytes> getkeyfromtxt(std::string k){
+    size_t pos = 0;
+    std::string token = "_____________________________________________";
+    pos = k.find(token);
+    //std::cout << pos << std::endl;
+    std::string pub = k.substr(0,pos);
+    std::string ip = k.erase(0, pos + token.length());
+    auto p = std::make_pair(ip, deserial_box_key(pub));
+    return p;
+}
 
 inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
     publickeymap present{mymap};

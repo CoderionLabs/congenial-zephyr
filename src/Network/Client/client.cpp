@@ -17,6 +17,7 @@
 #include <zephyr/pkgc.hpp>
 #include <zephyr/pkg.hpp>
 #include <zephyr/nodeclient.hpp>
+#include <zephyr/nodeserver.hpp>
 #include <zephyr/node.grpc.pb.h>
 #include <zephyr/utils.hpp>
 #include <iostream>
@@ -28,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <thread>
 #include <netdb.h>
 #include <sodium.h>
 #include <sodiumwrap/sodiumtester.h>
@@ -41,6 +43,8 @@ extern "C"{
 
 CONF_CTX *cnfctx;
 params_t params;
+vector<vector<std::string>> config;
+std::vector<std::string> msgtmp;
 
 using namespace std;
 using namespace node;
@@ -55,13 +59,17 @@ void error(const char *msg)
     exit(0);
 }
 
-
+void RunServerInBackground();
+std::vector<std::string> getkeysfrominfo();
 std::string attachtomixer(std::string msg);
 int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg);
 
 int main(){
 
     sodium_init();
+
+    std::thread t1(RunServerInBackground);
+    t1.detach();
     
     string msg,email,key, params, filepath;
     cout << "Enter message" << endl;
@@ -75,6 +83,7 @@ int main(){
     //string filepath = "";
     vector<vector<std::string>> vec;
     vec = get_config_info(filepath);
+    config = vec;
     cout << "PASSED HERE" << endl;
     cout << "Asking " << vec[2][0] << " for data" << endl;
     auto x = getkeysfrompkg(vec[2][0], to_string(8080), email);
@@ -103,15 +112,12 @@ int main(){
     cout << "MADE IT HERE FINISHED" << endl;
     
     // Get mixer data from information node
-    int num = rand() % vec[3].size() -1;
-    auto recv = talktonode(vec[3][num],"8080","NEED", true);
-    cout << recv << endl;
-    auto mixerKeys = ConvertStringToMap(recv);
-    for(auto x : mixerKeys){
-        cout << x.second.size() << endl;
+    getkeysfrominfo();
+    for(auto x : msgtmp){
+        cout << x << endl;
     }
-    cout << "CONVERTED !!!" << endl;
-    createciphertext(mixerKeys, encdata);
+    // cout << "CONVERTED !!!" << endl;
+    // createciphertext(mixerKeys, encdata);
 
     return 0;
 }
@@ -226,3 +232,31 @@ std::string attachtomixer(std::string msg){
     return "";
 }
 
+void getkeysfrominfo(){
+
+    int num = rand() % config[3].size() -1;
+    auto x = config[3][num];
+    std::cout << "Getting keys from " << x << std::endl;
+
+    NodeClient mixreq(
+    grpc::CreateChannel(config[3][num] + ":50051",
+                          grpc::InsecureChannelCredentials()));
+
+    std::cout << "-------------- GetMessages --------------" << std::endl;
+    node::Msg tosend;
+    tosend.set_data("NEED127.0.0.1");
+    mixreq.data.push_back(tosend);
+    mixreq.PutMessages();
+}
+
+void RunServerInBackground(){
+    std::string server_address(INFONODEIP + ":50051");
+    NodeImpl service;
+
+    ServerBuilder builder;
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    std::cout << "Server listening on " << server_address << std::endl;
+    server->Wait();
+}

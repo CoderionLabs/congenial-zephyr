@@ -17,10 +17,9 @@ bytes test(std::string& x, int N){
     for(int i = 0; i < N; i++){
         sodium::keypair<> mix{};
         std::cout << "WORKS" << std::endl;
-
-        auto tmpstrkey = serial_box_key(mix.public_key());
+        
+        auto tmpstrkey = setupkey(mix.public_key(),"apple");
         keys.push_back(tmpstrkey);
-
         mixers.push_back(mix);
     }
 
@@ -29,7 +28,8 @@ bytes test(std::string& x, int N){
     int i = 0;
     for(auto &x : mixers){
         auto t = keys[i];
-        x.public_key_ = deserial_box_key(t);
+        auto pair = getkeyfromtxt(t);
+        x.public_key_ = pair.second;
         tmpenc =  sb.encrypt(tmpenc, x.public_key());
         i++;
     }

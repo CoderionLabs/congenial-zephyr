@@ -7,11 +7,18 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <zephyr/utils.hpp>
 
-std::string ipspubstr;
+#include <zephyr/nodeserver.hpp>
+#include <zephyr/nodeclient.hpp>
+
+
+std::vector<std::string> msgtmp;
+std::vector<std::string> needrequests;
+std::vector<std::string> keys;
+std::string INFONODEIP;
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-std::atomic_bool imFirst{false};
-std::atomic_bool havedata{false};
+bool havedata = false;
+bool pushed = false;
 
 // If the infonode has been selected it will be the first
 // node to upload the data into the DHT. Otherwise it will
@@ -19,97 +26,34 @@ std::atomic_bool havedata{false};
 // the data. A random mixer will be chosen every round to select
 // a random infonode.
 
-class session
-    : public std::enable_shared_from_this <session> {
-        public: session(tcp::socket socket): socket_(std::move(socket)) {}
+void RunServerInBackground(){
+    std::string server_address(INFONODEIP + ":50051");
+    NodeImpl service;
 
-        void start() {
-            do_read();
+    ServerBuilder builder;
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    std::cout << "Server listening on " << server_address << std::endl;
+    server->Wait();
+}
+
+void sendkeys(std::vector<std::string> needreq){
+    for(auto ipaddr : needreq){
+        NodeClient inforeq(
+        grpc::CreateChannel(ipaddr + ":50051",
+                          grpc::InsecureChannelCredentials()));
+
+        std::cout << "-------------- GetMessages --------------" << std::endl;
+        for(auto k : keys){
+            node::Msg tosend;
+            tosend.set_data(k);
+            inforeq.data.push_back(tosend);
         }
-
-        private: void do_read() {
-            auto self(shared_from_this());
-            socket_.async_read_some(boost::asio::buffer(data_, max_length),
-                [this, self](boost::system::error_code ec, std::size_t length) {
-                    if (!ec) {
-                        do_write(length);
-                    }
-                });
-        }
-
-        void do_write(std::size_t length) {
-            
-            auto self(shared_from_this());
-
-            std::cout << "MESSAGE RECV" << std::endl;
-            std::cout << data_ << std::endl;
-            std::cout << "MESSAGE END" << std::endl;
-            std::string request(reinterpret_cast<char*>(data_));
-            if (request == "NEED" /*&& havedata.load() */) {
-                // Send the user all the public keys of the mixnodes
-                std::string str = ipspubstr;
-                length = str.length();
-                std::cout << "LENGTH OF PUBLIC KEYS: " << str.length() << std::endl;
-                boost::asio::async_write(socket_, boost::asio::buffer(str, length),
-                    [this, self](std::error_code ec, std::size_t /*length*/) {
-                        if (!ec) {
-                            do_read();
-                        }
-                });
-            } else {
-               ipspubstr = request;
-               imFirst = true;
-               std::cout << "GOT DATA FROM MIXER" << std::endl;
-               std::cout << "DATA START" << std::endl;
-               std::cout << ipspubstr << std::endl;
-               std::cout << "DATA END" << std::endl;
-               std::string str("SUCSESS");
-               boost::asio::async_write(socket_, boost::asio::buffer(str, length),
-                    [this, self](std::error_code ec, std::size_t /*length*/) {
-                        if (!ec) {
-                            do_read();
-                        }
-                });
-            }
-            bzero(data_,sizeof(data_));
-            request.clear();
-        }
-
-        tcp::socket socket_;
-        enum {
-            max_length = 4096
-        };
-        unsigned char data_[max_length];
-    };
-
-class server
-{
-public:
-  server(boost::asio::io_context& io_context, short port)
-    : acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
-      socket_(io_context)
-  {
-    do_accept();
-  }
-
-private:
-  void do_accept()
-  {
-    acceptor_.async_accept(socket_,
-        [this](std::error_code ec)
-        {
-          if (!ec)
-          {
-            std::make_shared<session>(std::move(socket_))->start();
-          }
-
-          do_accept();
-        });
-  }
-
-  tcp::acceptor acceptor_;
-  tcp::socket socket_;
-};
+       
+        inforeq.PutMessages();
+    }
+}
 
 void dhtstart()
 {
@@ -145,30 +89,49 @@ void dhtstart()
     };
 
     // Otherwise we keep looking for the mapdata
-    while(!havedata){
+    while(true){
         // get data from the dht
+        if(!msgtmp.empty()){
+            for(auto x : msgtmp){
+                if(x.find("NEED") != std::string::npos){
+                    // REMOVE NEED AND SEND TO IP
+                    std::string tmp = x;
+                    auto pos = tmp.find("NEED");
+                    tmp = tmp.substr(pos + 4);
+                    needrequests.push_back(tmp);
+                }else{
+                    keys.push_back(x);
+                    havedata = true;
+                }
+            }
+        }
 
-        if(imFirst.load()){
+        if(!needrequests.empty()){
+            sendkeys(needrequests)
+            needrequests.clear();
+        }
+
+        if(havedata && (pushed == false)){
             // Put the map data into the DHT
             // since we are first this time.
-            node.put("mapdata", dht::Value((const uint8_t *)ipspubstr.data(), ipspubstr.size()), [=](bool success) {
+            node.put("keys", dht::Value((const uint8_t *)keys.data(), keys.size()), [=](bool success) {
                 std::cout << "Put: ";
                 done_cb(success);
             });
             // blocking to see the result of put
             wait();
-            havedata = true;
-            break;
+            pushed = true;
         }
 
-        node.get("mapdata",
+        if(!havedata){
+            node.get("keys",
              [](const std::vector<std::shared_ptr<dht::Value>> &values) {
                  // Callback called whsen values are found
                  for (const auto &value : values){
-                     std::string mapdata{value->data.begin(), value->data.end()};
-                     std::cout << "Found value: " << mapdata << std::endl;
-                     if(mapdata.size() > 5){
-                         ipspubstr = mapdata;
+                     std::vector<std::string> datakeys{value->data.begin(), value->data.end()};
+                     std::cout << "Found keys: not printing" << std::endl;
+                     if(datakeys.size() > 0){
+                         keys = datakeys;
                          havedata = true;
                          break;
                      }
@@ -180,7 +143,8 @@ void dhtstart()
                  std::cout << "Get: ";
                  done_cb(success);
              });
-        wait();
+            wait();
+        }
     }
     
     // wait for dht threads to end
@@ -190,18 +154,11 @@ void dhtstart()
 int main(int argc, char* argv[]){
     std::thread t1(dhtstart);
     t1.detach();
-    try
-    {
-        if (argc != 2)
-        {
-            std::cerr << "Usage: infonode <port>\n";
-            return 1;
-        }
-        
-        boost::asio::io_context io_context;
-        server s(io_context, std::atoi(argv[1]));
-        io_context.run();
-    }catch (std::exception& e){
-        std::cerr << "Exception: " << e.what() << "\n";
+
+    if (argc != 2){
+        std::cerr << "Usage: infonode INFONODEIP\n";
+        return 1;
     }
+    INFONODEIP = argv[1];
+    RunServerInBackground();
 }
