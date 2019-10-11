@@ -157,7 +157,7 @@ int main(int argc, char* argv[]){
     std::thread t1(dhtstart);
     t1.detach();
 
-    if (argc != 2){
+    if (argc != 1){
         std::cerr << "Usage: infonode INFONODEIP\n";
         return 1;
     }
