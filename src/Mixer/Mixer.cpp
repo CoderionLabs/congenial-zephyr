@@ -21,7 +21,7 @@ using namespace node;
 using namespace sodium;
 //GLOBALS...
 std::string MIXERIP;
-std::vecotr<std::string> ipspub;
+std::vector<std::string> ipspub;
 std::vector<std::string> reqtmp;
 bool chooseinfo = false;
 
