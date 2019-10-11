@@ -38,12 +38,13 @@ class session
         }
 
         void do_write(std::size_t length) {
-            std::string request(data_);
+            
             auto self(shared_from_this());
 
             std::cout << "MESSAGE RECV" << std::endl;
-            std::cout << request << std::endl;
+            std::cout << data_ << std::endl;
             std::cout << "MESSAGE END" << std::endl;
+            std::string request(reinterpret_cast<char*>(data_));
             if (request == "NEED" /*&& havedata.load() */) {
                 // Send the user all the public keys of the mixnodes
                 std::string str = ipspubstr;
@@ -78,7 +79,7 @@ class session
         enum {
             max_length = 4096
         };
-        char data_[max_length];
+        unsigned char data_[max_length];
     };
 
 class server
