@@ -107,20 +107,23 @@ void dhtstart()
         }
 
         if(!needrequests.empty()){
-            sendkeys(needrequests)
+            sendkeys(needrequests);
             needrequests.clear();
         }
 
         if(havedata && (pushed == false)){
             // Put the map data into the DHT
             // since we are first this time.
-            node.put("keys", dht::Value((const uint8_t *)keys.data(), keys.size()), [=](bool success) {
+            for(auto k : keys){
+                 node.put("keys", dht::Value((const uint8_t *)k.data(), k.size()), [=](bool success) {
                 std::cout << "Put: ";
                 done_cb(success);
             });
             // blocking to see the result of put
             wait();
             pushed = true;
+            }
+           
         }
 
         if(!havedata){
@@ -128,12 +131,11 @@ void dhtstart()
              [](const std::vector<std::shared_ptr<dht::Value>> &values) {
                  // Callback called whsen values are found
                  for (const auto &value : values){
-                     std::vector<std::string> datakeys{value->data.begin(), value->data.end()};
+                     std::string datakey{value->data.begin(), value->data.end()};
                      std::cout << "Found keys: not printing" << std::endl;
-                     if(datakeys.size() > 0){
-                         keys = datakeys;
+                     if(datakey.size() > 0){
+                         keys.push_back(datakey);
                          havedata = true;
-                         break;
                      }
                      
                  }
