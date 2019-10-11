@@ -142,7 +142,8 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
     box_seal<> sb{};
     std::vector<sodium::keypair<>> boxes;
     for(int i = 0; i < N; i++){
-        bytes mixkey = deserial_box_key(mixerKeys[mixers[i]]);
+        auto str = mixerKeys[mixers[i]];
+        bytes mixkey = deserial_box_key(str);
         sodium::keypair<> mix{};
         mix.public_key_ = mixkey;
 

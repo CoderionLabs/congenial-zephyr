@@ -138,7 +138,7 @@ inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
     std::stringstream ss;
     {
         // Create an output archive
-        cereal::JSONOutputArchive oarchive(ss);
+        cereal::PortableBinaryOutputArchive oarchive(ss);
 
         oarchive(present); // Write the data to the archive
     }
@@ -178,7 +178,7 @@ inline std::map<std::string,std::string> ConvertStringToMap(std::string mapstrin
     ss.write(mapstring.c_str(), mapstring.size());
     publickeymap c;
     {
-        cereal::JSONInputArchive iarchive(ss);
+        cereal::PortableBinaryInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
     }
     return c.pmap;
