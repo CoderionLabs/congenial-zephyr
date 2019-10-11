@@ -31,10 +31,22 @@ bytes test(std::string& x, int N){
         auto pair = getkeyfromtxt(t);
         x.public_key_ = pair.second;
         tmpenc =  sb.encrypt(tmpenc, x.public_key());
+
+
+        std::string tt{tmpenc.cbegin(), tmpenc.cend()};
+        tt +="poop";
+
+        bytes tempenctmp{tt.cbegin(), tt.cend()};
+        tmpenc = tempenctmp;
+
         i++;
     }
 
     for(int i = (N-1); i > -1; i--){
+        tmpenc.pop_back();
+        tmpenc.pop_back();
+        tmpenc.pop_back();
+        tmpenc.pop_back();
         tmpenc = sb.decrypt(tmpenc, mixers[i].private_key(), mixers[i].public_key());
     }
     return tmpenc;

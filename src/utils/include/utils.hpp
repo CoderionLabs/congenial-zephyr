@@ -163,6 +163,8 @@ inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
 }
 
 inline std::pair<std::string, std::string> parseciphertext(std::string msg){
+    bytes power{msg.cbegin(), msg.cend()};
+
     std::string cut("CUTHERE");
     size_t found = msg.find("CUTHERE");
     if(found == std::string::npos){
@@ -187,7 +189,14 @@ inline std::pair<std::string, std::string> parseciphertext(std::string msg){
     // cout << toread_start << endl;
     // cout << ip << endl;
     msg.erase(msg.end() - toread_start - toread.size(), msg.end());
-    return std::make_pair(ip, msg);
+
+    int toerase = cut.size() + toread.size() + ip.size();
+    for(int i = 0; i < toerase; i++){
+        power.pop_back();
+    }
+
+    std::string res{power.cbegin(), power.cend()};
+    return std::make_pair(ip, res);
 }
 
 inline std::map<std::string,std::string> ConvertStringToMap(std::string mapstring){

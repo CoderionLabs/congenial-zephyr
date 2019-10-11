@@ -43,12 +43,13 @@ extern "C"{
 
 CONF_CTX *cnfctx;
 params_t params;
-vector<vector<std::string>> config;
+std::vector<std::vector<std::string>> config;
 std::vector<std::string> msgtmp;
 
 using namespace std;
 using namespace node;
 using namespace sodium;
+using bytes = sodium::bytes;
 
 
 // Mixers, Mailboxes, PKGS
@@ -60,9 +61,9 @@ void error(const char *msg)
 }
 
 void RunServerInBackground();
-std::vector<std::string> getkeysfrominfo();
+void getkeysfrominfo();
 std::string attachtomixer(std::string msg);
-int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg);
+int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg);
 
 int main(){
 
@@ -113,24 +114,26 @@ int main(){
     
     // Get mixer data from information node
     getkeysfrominfo();
-    for(auto x : msgtmp){
-        cout << x << endl;
-    }
-    // cout << "CONVERTED !!!" << endl;
-    // createciphertext(mixerKeys, encdata);
+    //sleep(10);
+    std::vector<std::string> mixerKeys;
+    mixerKeys = msgtmp;
+    cout << "CONVERTED !!!" << endl;
+    createciphertext(mixerKeys, encdata);
 
     return 0;
 }
 
-int createciphertext(std::map<std::string,std::string> mixerKeys, std::string encmsg){
+int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg){
 
-    std::vector<std::string> mixers;
+
+    std::vector<std::pair<std::string,bytes>> mixers;
     for(auto x : mixerKeys){
-        // Push all the IPs to a vector
-        mixers.push_back(x.first);
+        std::cout << "GOT THIS " <<  x << std::endl;
+        mixers.push_back(getkeyfromtxt(x));
         // cout << x.first << endl;
         // cout << x.second << endl;
     }
+
     cout << "Works 1" << endl;
 
     std::mt19937 rng;
@@ -138,20 +141,18 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
     std::uniform_int_distribution<std::mt19937::result_type> dist6(1,10);
     auto seed = dist6(rng);
 
-    Shuffle<std::string> shu(mixers, (int) seed);
+    Shuffle<std::pair<std::string,bytes>> shu(mixers, (int) seed);
     mixers.clear();
     mixers = std::move(shu.vec);
     cout << "Works 2" << endl;
 
-    int N = mixers.size();
+    //int N = mixers.size();
 
     box_seal<> sb{};
     std::vector<sodium::keypair<>> boxes;
-    for(int i = 0; i < N; i++){
-        auto str = mixerKeys[mixers[i]];
-        bytes mixkey = deserial_box_key(str);
+    for(auto x : mixers){
         sodium::keypair<> mix{};
-        mix.public_key_ = mixkey;
+        mix.public_key_ = x.second;
 
         boxes.push_back(mix);
     }
@@ -168,15 +169,14 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
     bytes tmpenc{enctmp.cbegin(), enctmp.cend()};
     int i = 0;
     for(auto x : boxes){
+        std::string tmpip = mixers[i].first;
         tmpenc =  sb.encrypt(tmpenc, x.public_key());
-
-        std::string cutgo;
-        cutgo += mixers[i];   // Address
-        cutgo += "CUTHERE";
-        cutgo += to_string(mixers[i].size()); // Size of ip address
+      
 
         std::string tt{tmpenc.cbegin(), tmpenc.cend()};
-        tt +=cutgo;
+        tt += tmpip;   // Address
+        tt += "CUTHERE";
+        tt += std::to_string(tmpip.size()); // Size of ip address
 
         bytes tempenctmp{tt.cbegin(), tt.cend()};
         tmpenc = tempenctmp;
@@ -191,7 +191,11 @@ int createciphertext(std::map<std::string,std::string> mixerKeys, std::string en
 
 std::string attachtomixer(std::string msg){
 
+    bytes power{msg.cbegin(), msg.cend()};
+    
+
     string cut("CUTHERE");
+    
     size_t found = msg.find("CUTHERE");
     if(found == std::string::npos){
         cout << "Failed to parse argument" << endl;
@@ -207,6 +211,7 @@ std::string attachtomixer(std::string msg){
     cout << toread << endl;
     cout << msg << endl;
     cout << "Works 5" << endl;
+    
 
     int toread_start;
     std::istringstream iss (toread);
@@ -217,15 +222,22 @@ std::string attachtomixer(std::string msg){
     msg.erase(msg.end() - toread_start - toread.size(), msg.end());
     cout << msg << endl;
     cout << "Works 6" << endl; 
-    
 
+    int toerase = cut.size() + toread.size() + ip.size();
+    for(int i = 0; i < toerase; i++){
+        power.pop_back();
+    }
+
+    std::string res{power.cbegin(), power.cend()};
+    
+    std::cout << "SENDING TO " << ip << std::endl;
     NodeClient mixreq(
     grpc::CreateChannel(ip + ":50051",
                           grpc::InsecureChannelCredentials()));
 
     std::cout << "-------------- GetMessages --------------" << std::endl;
     node::Msg tosend;
-    tosend.set_data(msg);
+    tosend.set_data(res);
     mixreq.data.push_back(tosend);
     mixreq.PutMessages();
 
@@ -244,13 +256,13 @@ void getkeysfrominfo(){
 
     std::cout << "-------------- GetMessages --------------" << std::endl;
     node::Msg tosend;
-    tosend.set_data("NEED127.0.0.1");
+    tosend.set_data("NEED172.18.0.1");
     mixreq.data.push_back(tosend);
     mixreq.PutMessages();
 }
 
 void RunServerInBackground(){
-    std::string server_address(INFONODEIP + ":50051");
+    std::string server_address("172.18.0.1:50051");
     NodeImpl service;
 
     ServerBuilder builder;
