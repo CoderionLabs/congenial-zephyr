@@ -70,7 +70,6 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     auto ready = std::make_shared<bool>(false);
 
     std::cout << "Creating Keys..." << std::endl;
-    sodium::keypair<> mix{};
 
 
     auto tmpid = this->node.getNodeId().to_c_str();
@@ -108,9 +107,8 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     };
 
     string plugin; string r = "ready";
-    auto tmpstrkey = this->mix.public_key();
-    string keystring = reinterpret_cast<char*>(tmpstrkey.data());
-    plugin = string(keystring + "_____________________________________________" + mixerip);
+    auto tmpstrkey = serial_box_key(this->mix.public_key());
+    plugin = string(tmpstrkey + "_____________________________________________" + mixerip);
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
