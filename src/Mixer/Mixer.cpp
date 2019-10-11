@@ -168,6 +168,7 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
                 for (const auto& v : values){
                     std::string mydata {v->data.begin(), v->data.end()};
                     std::cout << "FOUND: " << mydata << std::endl;
+                    GiveMeDataForPublic(mydata);
                     
                     size_t pos = 0;
                     string token = "_____________________________________________";
@@ -177,8 +178,6 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
                     std::cout << "PUBLIC KEY: " <<  pub << std::endl;
                     string ip = mydata.erase(0, pos + token.length());
                     std::cout << "IP: " << ip << std::endl;
-
-                    GiveMeDataForPublic(mydata);
                 }
                 return true; // keep looking for values
             },

@@ -12,6 +12,8 @@
 
 
 std::vector<std::string> msgtmp;
+std::vector<std::string> msgtmp2;
+
 std::vector<std::string> needrequests;
 std::vector<std::string> keys;
 std::string INFONODEIP;
@@ -92,18 +94,23 @@ void dhtstart()
     while(true){
         // get data from the dht
         if(!msgtmp.empty()){
-            for(auto x : msgtmp){
+            msgtmp2 = msgtmp;
+            msgtmp.clear();
+            for(auto x : msgtmp2){
                 if(x.find("NEED") != std::string::npos){
                     // REMOVE NEED AND SEND TO IP
+                    std::cout << "I GOT A REQUEST" << std::endl;
                     std::string tmp = x;
                     auto pos = tmp.find("NEED");
                     tmp = tmp.substr(pos + 4);
                     needrequests.push_back(tmp);
                 }else{
+                    std::cout << "I GOT A KEY" << std::endl;
                     keys.push_back(x);
                     havedata = true;
                 }
             }
+            msgtmp2.clear();
         }
 
         if(!needrequests.empty()){
@@ -136,13 +143,15 @@ void dhtstart()
                      if(datakey.size() > 0){
                          keys.push_back(datakey);
                          havedata = true;
+                         pushed = true;
+                         std::cout << "ALL SET UP" << std::endl;
                      }
                      
                  }
                  return true; // return false to stop the search
              },
              [=](bool success) {
-                 std::cout << "Get: ";
+                std::cout << "Getting keys ready: " << (success ? "success" : "failure") << std::endl;
                  done_cb(success);
              });
             wait();
