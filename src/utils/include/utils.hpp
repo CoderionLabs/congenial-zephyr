@@ -23,6 +23,9 @@
 #include <cereal/types/string.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/memory.hpp>
+
 #include <fstream>
 #include <vector>
 #include <iostream>
@@ -38,11 +41,17 @@
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 
+#include <sodiumwrap/sodiumtester.h>
+#include <sodiumwrap/box_seal.h>
+#include <sodiumwrap/keypair.h>
+#include <sodiumwrap/allocator.h>
+
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+using bytes = sodium::bytes;
 enum { max_length = 4096 };
 
 
@@ -55,8 +64,18 @@ struct publickeymap{
         archive(pmap);
     }
 };
-
 typedef struct publickeymap publickeymap;
+
+struct keyvec{
+    std::vector<unsigned char> data;
+
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(data); 
+    }
+};
+typedef struct keyvec keyvec;
 
 
 template <class T>
@@ -110,7 +129,25 @@ std::map<std::string,std::string> ConvertStringToMap(std::string mapstring);
 std::vector<std::vector<std::string>> get_config_info(std::string filename);
 std::string talktonode(std::string ip, std::string port, std::string msg, bool recv);
 std::pair<std::string, std::string> parseciphertext(std::string msg);
+std::string serial_box_key(bytes k);
+bytes deserial_box_key(std::string k);
+std::pair<std::string,bytes> getkeyfromtxt(std::string k);
+std::string setupkey(bytes k, std::string ip);
 
+inline std::string setupkey(bytes k, std::string ip){
+    return serial_box_key(k) + "_____________________________________________" + ip;
+}
+
+inline std::pair<std::string,bytes> getkeyfromtxt(std::string k){
+    size_t pos = 0;
+    std::string token = "_____________________________________________";
+    pos = k.find(token);
+    //std::cout << pos << std::endl;
+    std::string pub = k.substr(0,pos);
+    std::string ip = k.erase(0, pos + token.length());
+    auto p = std::make_pair(ip, deserial_box_key(pub));
+    return p;
+}
 
 inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
     publickeymap present{mymap};
@@ -118,7 +155,7 @@ inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
     std::stringstream ss;
     {
         // Create an output archive
-        cereal::JSONOutputArchive oarchive(ss);
+        cereal::PortableBinaryOutputArchive oarchive(ss);
 
         oarchive(present); // Write the data to the archive
     }
@@ -126,6 +163,8 @@ inline std::string ConvertMapToString(std::map<std::string,std::string> mymap){
 }
 
 inline std::pair<std::string, std::string> parseciphertext(std::string msg){
+    bytes power{msg.cbegin(), msg.cend()};
+
     std::string cut("CUTHERE");
     size_t found = msg.find("CUTHERE");
     if(found == std::string::npos){
@@ -150,7 +189,14 @@ inline std::pair<std::string, std::string> parseciphertext(std::string msg){
     // cout << toread_start << endl;
     // cout << ip << endl;
     msg.erase(msg.end() - toread_start - toread.size(), msg.end());
-    return std::make_pair(ip, msg);
+
+    int toerase = cut.size() + toread.size() + ip.size();
+    for(int i = 0; i < toerase; i++){
+        power.pop_back();
+    }
+
+    std::string res{power.cbegin(), power.cend()};
+    return std::make_pair(ip, res);
 }
 
 inline std::map<std::string,std::string> ConvertStringToMap(std::string mapstring){
@@ -158,7 +204,7 @@ inline std::map<std::string,std::string> ConvertStringToMap(std::string mapstrin
     ss.write(mapstring.c_str(), mapstring.size());
     publickeymap c;
     {
-        cereal::JSONInputArchive iarchive(ss);
+        cereal::PortableBinaryInputArchive iarchive(ss);
         iarchive(c); // Read the data from the archive
     }
     return c.pmap;
@@ -190,6 +236,31 @@ inline std::string talktonode(std::string ip, std::string port, std::string msg,
         std::cerr << "Exception: " << e.what() << "\n";
     }
 }
+
+inline std::string serial_box_key(bytes k){
+    keyvec present{k};
+    //Serialize
+    std::stringstream ss;
+    {
+        // Create an output archive
+        cereal::PortableBinaryOutputArchive oarchive(ss);
+
+        oarchive(present); // Write the data to the archive
+    }
+    return ss.str();
+}
+
+inline bytes deserial_box_key(std::string k){
+    std::stringstream ss;
+    ss.write(k.c_str(), k.size());
+    keyvec c;
+    {
+        cereal::PortableBinaryInputArchive iarchive(ss);
+        iarchive(c); // Read the data from the archive
+    }
+    return c.data;
+}
+
 
 inline std::vector<std::vector<std::string>> get_config_info(std::string filename){
     std::ifstream in;

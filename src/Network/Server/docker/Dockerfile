@@ -32,7 +32,6 @@ RUN apt-get update && apt-get install -y \
   libboost-all-dev \
   libevent-dev \
   libdouble-conversion-dev \
-  libsodium-dev \
   libgoogle-glog-dev \
   libjsonrpccpp-dev \
   iputils-ping \

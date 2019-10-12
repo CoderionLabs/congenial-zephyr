@@ -21,7 +21,7 @@ using namespace node;
 using namespace sodium;
 //GLOBALS...
 std::string MIXERIP;
-std::map<std::string, std::string> ipspub;
+std::vector<std::string> ipspub;
 std::vector<std::string> reqtmp;
 bool chooseinfo = false;
 
@@ -49,11 +49,10 @@ void Mixer::CleanUp(){
     cv.wait(lk);
 }
 
+
 void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
  std::vector<std::string> mailboxes, std::string configpath){
 
-
-     sodium_init();
      // Initilize variables
     this->mixerip = mixerip;
     this->mailboxes = mailboxes;
@@ -71,7 +70,6 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     auto ready = std::make_shared<bool>(false);
 
     std::cout << "Creating Keys..." << std::endl;
-    sodium::keypair<> mix{};
 
 
     auto tmpid = this->node.getNodeId().to_c_str();
@@ -109,9 +107,8 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
     };
 
     string plugin; string r = "ready";
-    auto tmpstrkey = this->mix.public_key();
-    string keystring{tmpstrkey.cbegin(), tmpstrkey.cend()};
-    plugin = string(keystring + "_____________________________________________" + mixerip);
+    auto tmpstrkey = serial_box_key(this->mix.public_key());
+    plugin = string(tmpstrkey + "_____________________________________________" + mixerip);
 
     this->node.put("publickeys", dht::Value((const uint8_t*)plugin.data(), plugin.size()), [=] (bool success) {
         std::cout << "Put public key: ";
@@ -171,6 +168,7 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
                 for (const auto& v : values){
                     std::string mydata {v->data.begin(), v->data.end()};
                     std::cout << "FOUND: " << mydata << std::endl;
+                    GiveMeDataForPublic(mydata);
                     
                     size_t pos = 0;
                     string token = "_____________________________________________";
@@ -180,8 +178,6 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
                     std::cout << "PUBLIC KEY: " <<  pub << std::endl;
                     string ip = mydata.erase(0, pos + token.length());
                     std::cout << "IP: " << ip << std::endl;
-
-                    GiveMeDataForPublic(pub, ip);
                 }
                 return true; // keep looking for values
             },
@@ -195,30 +191,11 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
 
     std::cout << "THESE ARE THE KEYS I HAVE START" <<  std::endl;
     for(auto x : ipspub){
-         std::cout << x.first << " and " << x.second <<  std::endl;
+         std::cout << x <<  std::endl;
     }
     std::cout << "THESE ARE THE KEYS I HAVE END" <<  std::endl;
 
     //this->node.join();
-
-    auto mapstring = ConvertMapToString(ipspub);
-    std::cout << "MAPSTRING START" << std::endl;
-    std::cout << mapstring << std::endl;
-    std::cout << "MAPSTRING END" << std::endl;
-
-
-    auto mymap = ConvertStringToMap(mapstring);
-    if(mymap == ipspub){
-        std::cout << "WORKS MAPS ARE EQUAL" <<  std::endl;
-    }else{
-        std::cerr << "FAILED" << std::endl;
-    }
-
-    std::cout << "TEST MAP START" << std::endl;
-    for(auto x : mymap){
-            std::cout << x.first << " " << x.second << std::endl;
-    }
-    std::cout << "TEST MAP END" << std::endl;
 
     vector<vector<std::string>> vec;
     vec = get_config_info(configpath);
@@ -231,14 +208,26 @@ void Mixer::Start(std::string mixerip, std::vector<std::string> mixers,
         int num = rand() % config[3].size() -1;
         auto x = config[3][num];
         std::cout << "Talking to " << x << std::endl;
-        auto recv = talktonode(config[3][num],"8080", mapstring, false);
-        std::cout << recv << std::endl;
+        NodeClient toinfo(
+        grpc::CreateChannel(x + ":50051",
+                          grpc::InsecureChannelCredentials()));
+
+        std::cout << "-------------- SENDING MESSAGES TO INFO NODE --------------" << std::endl;
+        for(auto x : ipspub){
+            Msg msg;
+            msg.set_data(x);
+            toinfo.data.push_back(msg);
+        }
+       
+
+        toinfo.PutMessages();
+        
     }
     this->StartRoundAsMixer();
 }
 
-void GiveMeDataForPublic(std::string pub, std::string ip){
-    ipspub[ip] = pub;
+void GiveMeDataForPublic(std::string data){
+    ipspub.push_back(data);
 }
 
 Mixer::~Mixer(){

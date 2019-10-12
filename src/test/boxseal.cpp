@@ -1,37 +1,52 @@
-#include <sodiumwrap/sodiumtester.h>
-#include <sodiumwrap/box_seal.h>
-#include <sodiumwrap/keypair.h>
-#include <sodiumwrap/allocator.h>
-
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+#include <zephyr/utils.hpp>
 #include <string>
+#include <vector>
 
 using namespace sodium;
 
 bytes test(std::string& x, int N){
-
-
     bytes plainblob{ x.cbegin(), x.cend() };
+    std::vector<std::string> keys;
 
     box_seal<> sb{};
 
     std::vector<sodium::keypair<>> mixers;
     for(int i = 0; i < N; i++){
         sodium::keypair<> mix{};
-            std::cout << "WORKS" << std::endl;
-
+        std::cout << "WORKS" << std::endl;
+        
+        auto tmpstrkey = setupkey(mix.public_key(),"apple");
+        keys.push_back(tmpstrkey);
         mixers.push_back(mix);
     }
 
     std::cout << "WORKS" << std::endl;
     bytes tmpenc = std::move(plainblob);
-    for(auto x : mixers){
+    int i = 0;
+    for(auto &x : mixers){
+        auto t = keys[i];
+        auto pair = getkeyfromtxt(t);
+        x.public_key_ = pair.second;
         tmpenc =  sb.encrypt(tmpenc, x.public_key());
+
+
+        std::string tt{tmpenc.cbegin(), tmpenc.cend()};
+        tt +="poop";
+
+        bytes tempenctmp{tt.cbegin(), tt.cend()};
+        tmpenc = tempenctmp;
+
+        i++;
     }
 
     for(int i = (N-1); i > -1; i--){
+        tmpenc.pop_back();
+        tmpenc.pop_back();
+        tmpenc.pop_back();
+        tmpenc.pop_back();
         tmpenc = sb.decrypt(tmpenc, mixers[i].private_key(), mixers[i].public_key());
     }
     return tmpenc;

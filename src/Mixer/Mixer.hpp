@@ -103,7 +103,7 @@ public:
     ~Mixer();
 };
 
-void GiveMeDataForPublic(std::string pub, std::string ip);
+void GiveMeDataForPublic(std::string data);
 void senddata(std::string ip, std::string msg);
 void StartServerInBackground();
 void GetPrimaryIp(char* buffer, size_t buflen);

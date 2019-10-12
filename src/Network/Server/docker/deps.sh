@@ -75,6 +75,14 @@ make
 make install
 cd ../../
 
+git clone https://github.com/mutexunlocked/libsodium
+cd libsodium
+./autogen.sh
+./configure
+make
+make install
+cd ../
+
 git clone https://github.com/mutexunlocked/protobuf
 cd protobuf
 git submodule update --init --recursive
