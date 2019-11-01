@@ -80,6 +80,8 @@
 #define MAXSZ 4096
 
 std::vector<std::string> msgtmp;
+std::vector<std::string> outbox;
+
 class Mixer
 {
 private:
