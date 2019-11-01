@@ -43,8 +43,11 @@ extern "C"{
 
 CONF_CTX *cnfctx;
 params_t params;
+byte_string_t keyb;
+params_t paramsb;
 std::vector<std::vector<std::string>> config;
 std::vector<std::string> msgtmp;
+std::string mailboxaddress;
 
 using namespace std;
 using namespace node;
@@ -69,8 +72,8 @@ int main(){
 
     sodium_init();
 
-    std::thread t1(RunServerInBackground);
-    t1.detach();
+    // std::thread t1(RunServerInBackground);
+    // t1.detach();
     
     string msg,email,key, params, filepath;
     cout << "Enter message" << endl;
@@ -90,8 +93,7 @@ int main(){
     auto x = getkeysfrompkg(vec[2][0], to_string(8080), email);
     cout << "GOT IT" << endl;
     // Get your private key
-    byte_string_t keyb;
-    params_t paramsb;
+    
     IBE_init();
     cout << x[0] << endl;
     cout << x[1] << endl;
@@ -113,7 +115,9 @@ int main(){
     cout << "MADE IT HERE FINISHED" << endl;
     
     // Get mixer data from information node
-    getkeysfrominfo();
+    while(msgtmp.empty()){
+        getkeysfrominfo();
+    }
     //sleep(10);
     std::vector<std::string> mixerKeys;
     mixerKeys = msgtmp;
@@ -158,10 +162,14 @@ int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg){
     }
     
     //TODO: Create mailbox code and fix addresses
-    std::string mailboxaddress = "NULL";
+    int num = rand() % config[1].size() -1;
+    auto x = config[1][num];
+    std::cout << "Talking to " << x << std::endl;
+    mailboxaddress = x;
 
     std::string enctmp = encmsg;
     enctmp += mailboxaddress;
+    enctmp += "CUTHERE";
     enctmp += std::to_string(mailboxaddress.size());
 
     cout << "Done Setting getting mixer keys and adding mailbox." << endl;
@@ -244,31 +252,42 @@ std::string attachtomixer(std::string msg){
     return "";
 }
 
+//FIXME: Utilize other infonodes
+//FIXME: There will be trouble sending data over the NAT with
+// this implementation. Instead make the info node have sever
+// and it will send a response back. 
 void getkeysfrominfo(){
 
     int num = rand() % config[3].size() -1;
     auto x = config[3][num];
     std::cout << "Getting keys from " << x << std::endl;
 
-    NodeClient mixreq(
+    NodeClient inforeq(
     grpc::CreateChannel(config[3][num] + ":50051",
                           grpc::InsecureChannelCredentials()));
 
     std::cout << "-------------- GetMessages --------------" << std::endl;
-    node::Msg tosend;
-    tosend.set_data("NEED172.18.0.1");
-    mixreq.data.push_back(tosend);
-    mixreq.PutMessages();
+    //node::Msg tosend;
+    //tosend.set_data("NEED172.18.0.1");
+    //inforeq.data.push_back(tosend);
+    inforeq.DumpMessages();
+    for(auto x : inforeq.data){
+        msgtmp.push_back(x.data());
+    }
 }
 
-void RunServerInBackground(){
-    std::string server_address("172.18.0.1:50051");
-    NodeImpl service;
+void CheckMailBox(){
+    NodeClient mailreq(
+    grpc::CreateChannel(mailboxaddress + ":50051",
+                          grpc::InsecureChannelCredentials()));
 
-    ServerBuilder builder;
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&service);
-    std::unique_ptr<Server> server(builder.BuildAndStart());
-    std::cout << "Server listening on " << server_address << std::endl;
-    server->Wait();
+    std::cout << "-------------- GetMessages --------------" << std::endl;
+
+    mailreq.DumpMessages();
+    for(auto x : mailreq.data){
+        msgtmp.push_back(x.data());
+        auto j = pkg_decrypt(str, keyb, paramsb);
+        std::cout << "THIS IS WHAT I GOT " << std::endl;
+        std::cout << j << std::endl;
+    }
 }

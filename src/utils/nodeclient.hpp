@@ -80,6 +80,7 @@ void NodeClient::NewRound(){
 
 void NodeClient::DumpMessages() {
     node::MsgReq req;
+    req.set_yes(true);
     Msg recv;
     ClientContext context;
 

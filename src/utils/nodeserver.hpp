@@ -40,6 +40,7 @@ using std::chrono::system_clock;
 using namespace node;
 
 extern std::vector<std::string> msgtmp;
+extern std::vector<std::string> outbox;
 
 class NodeImpl final : public Node::Service {
  public:
@@ -64,15 +65,14 @@ Status NodeImpl::NewRound(ServerContext* context, const node::MsgReq* req,
 }
 
 Status NodeImpl::DumpMessages(ServerContext* context, const node::MsgReq* req, ServerWriter<node::Msg>* writer) {
-    node::Msg g;
-    g.set_data("apple");
-    msgtmp.push_back(g.data());
-    msgtmp.push_back(g.data());
-    msgtmp.push_back(g.data());
-    while(!msgtmp.empty()){
-        g.set_data(msgtmp.back());
-        writer->Write(g);
-        msgtmp.pop_back();
+    if(!outbox.empty()){
+        for(auto x : outbox){
+            node::Msg g;
+            g.set_data(x);
+            writer->Write(g);
+        }
+    }else{
+        return Status::error_code();
     }
     return Status::OK;
 }
