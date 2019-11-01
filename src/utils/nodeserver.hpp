@@ -72,7 +72,8 @@ Status NodeImpl::DumpMessages(ServerContext* context, const node::MsgReq* req, S
             writer->Write(g);
         }
     }else{
-        return Status::error_code();
+        //FIXME: Should show error log instead
+        return Status::CANCELLED;
     }
     return Status::OK;
 }
