@@ -47,7 +47,9 @@ byte_string_t keyb;
 params_t paramsb;
 std::vector<std::vector<std::string>> config;
 std::vector<std::string> msgtmp;
-std::string mailboxaddress;
+std::vector<std::string> outbox;
+
+std::string mailboxaddress = "";
 
 using namespace std;
 using namespace node;
@@ -63,7 +65,7 @@ void error(const char *msg)
     exit(0);
 }
 
-void RunServerInBackground();
+void CheckMailBox();
 void getkeysfrominfo();
 std::string attachtomixer(std::string msg);
 int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg);
@@ -71,9 +73,6 @@ int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg);
 int main(){
 
     sodium_init();
-
-    // std::thread t1(RunServerInBackground);
-    // t1.detach();
     
     string msg,email,key, params, filepath;
     cout << "Enter message" << endl;
@@ -124,6 +123,9 @@ int main(){
     cout << "CONVERTED !!!" << endl;
     createciphertext(mixerKeys, encdata);
 
+    std::thread t1(CheckMailBox);
+    t1.detach();
+
     return 0;
 }
 
@@ -165,7 +167,8 @@ int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg){
     int num = rand() % config[1].size() -1;
     auto x = config[1][num];
     std::cout << "Talking to " << x << std::endl;
-    mailboxaddress = x;
+    mailboxaddress = "172.18.0.7";
+    std::cout << "YOUR MAILBOX IS " << mailboxaddress << std::endl;
 
     std::string enctmp = encmsg;
     enctmp += mailboxaddress;
@@ -277,17 +280,27 @@ void getkeysfrominfo(){
 }
 
 void CheckMailBox(){
+    
     NodeClient mailreq(
-    grpc::CreateChannel(mailboxaddress + ":50051",
-                          grpc::InsecureChannelCredentials()));
+    grpc::CreateChannel(/*mailboxaddress + */ "172.18.0.7:50051",
+                            grpc::InsecureChannelCredentials()));
 
     std::cout << "-------------- GetMessages --------------" << std::endl;
 
-    mailreq.DumpMessages();
-    for(auto x : mailreq.data){
-        msgtmp.push_back(x.data());
-        auto j = pkg_decrypt(str, keyb, paramsb);
-        std::cout << "THIS IS WHAT I GOT " << std::endl;
-        std::cout << j << std::endl;
+    while(true){
+        //FIXME: handle failed encryption attemps
+        //FIXME: Output add rounds
+        mailreq.DumpMessages();
+        if(!mailreq.data[0].data().size() > 1){
+            for(auto x : mailreq.data){
+                msgtmp.push_back(x.data());
+                auto d = x.data();
+                std::cout << "THIS IS WHAT I GOT " << std::endl;
+                std::cout << d << std::endl;
+                auto j = pkg_decrypt(d, keyb, paramsb);
+                
+            }
+            break;
+        }
     }
 }

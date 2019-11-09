@@ -47,6 +47,7 @@ using namespace node;
 //   return f;
 // }
 
+
 class NodeClient {
  public:
   std::vector<Msg> data;
@@ -54,10 +55,19 @@ class NodeClient {
   void NewRound();
   void DumpMessages();
   void PutMessages();
+  bool quiet = false;
  private:
   std::unique_ptr<Node::Stub> stub_;
+  void print();
   bool GetMsqReq(const MsgReq& msg, MsgReq* recv);
 };
+
+
+void NodeClient::print(std::string str){
+    if(quiet){
+        std::cout << str << std::endl;
+    }
+}
 
 //NodeClient::NodeClient(std::shared_ptr<Channel> channel) : 
 bool NodeClient::GetMsqReq(const MsgReq& msg, MsgReq* recv) {
@@ -65,7 +75,7 @@ bool NodeClient::GetMsqReq(const MsgReq& msg, MsgReq* recv) {
     
     Status status = stub_->NewRound(&context, msg, recv);
     if (!status.ok()) {
-      std::cout << "GetFeature rpc failed." << std::endl;
+      print("GetFeature rpc failed.");
       return false;
     }
     return recv->yes();
@@ -84,7 +94,7 @@ void NodeClient::DumpMessages() {
     Msg recv;
     ClientContext context;
 
-    std::cout << "Dump Messages Activated" << std::endl;
+    print("Dump Messages Activated");
 
     std::unique_ptr<ClientReader<Msg> > reader(
         stub_->DumpMessages(&context, req));
@@ -94,9 +104,9 @@ void NodeClient::DumpMessages() {
     }
     Status status = reader->Finish();
     if (status.ok()) {
-      std::cout << "DumpMessages rpc succeeded." << std::endl;
+      print("DumpMessages rpc succeeded.");
     } else {
-      std::cout << "DumpMessages rpc failed." << std::endl;
+       print("DumpMessages rpc failed.");
     }
 }
 
@@ -112,7 +122,7 @@ void NodeClient::PutMessages() {
 
     std::unique_ptr<ClientWriter<Msg> > writer(stub_->PutMessages(&context, &recv));
     for(auto x : data){
-        std::cout << "WRITING " << x.data() << std::endl;
+        print("WRITING " << x.data());
         writer->Write(x);
         std::this_thread::sleep_for(std::chrono::milliseconds(
           delay_distribution(generator)));
@@ -122,10 +132,12 @@ void NodeClient::PutMessages() {
     Status status = writer->Finish();
     if (status.ok()) {
         if(recv.yes() == true){
-            std::cout << "THIS WORKS" << std::endl;
+            print("THIS WORKS");
+            //std::cout << "THIS WORKS" << std::endl;
         }
     } else {
-      std::cout << "PutMessages rpc failed." << std::endl;
+        print("PutMessages rpc failed");
+        //std::cout << "PutMessages rpc failed." << std::endl;
     }
 }
 
