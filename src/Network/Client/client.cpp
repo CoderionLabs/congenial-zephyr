@@ -41,6 +41,7 @@ extern "C"{
     #include <sibe/ibe_progs.h>
 }
 
+MyCout ccout;
 CONF_CTX *cnfctx;
 params_t params;
 byte_string_t keyb;
@@ -72,8 +73,9 @@ int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg);
 
 int main(){
 
-    sodium_init();
-    
+    if (sodium_init() == -1) {
+        return 1;
+    }
     string msg,email,key, params, filepath;
     cout << "Enter message" << endl;
     cin >> msg;
@@ -123,8 +125,34 @@ int main(){
     cout << "CONVERTED !!!" << endl;
     createciphertext(mixerKeys, encdata);
 
-    std::thread t1(CheckMailBox);
-    t1.detach();
+    NodeClient mailreq(
+    grpc::CreateChannel(/*mailboxaddress + */ "172.18.0.7:50051",
+                            grpc::InsecureChannelCredentials()));
+
+    std::cout << "-------------- GetMessages --------------" << std::endl;
+
+    std::vector<std::string> mymsgs;
+    while(true){
+        //FIXME: handle failed encryption attemps
+        //FIXME: Output add rounds
+        mailreq.DumpMessages();
+        mymsgs.clear();
+        for(auto x : mailreq.data){
+            mymsgs.push_back(x.data());
+        }
+        if(!mymsgs.empty()){
+            for(auto x : mymsgs){
+                msgtmp.push_back(x);
+                auto d = x;
+                std::cout << "THIS IS WHAT I GOT " << std::endl;
+                std::cout << d << std::endl;
+                //TODO: Fix encrytion run a test on the local system first
+                auto j = pkg_decrypt(d, keyb, paramsb);
+                
+            }
+            break;
+        }
+    }
 
     return 0;
 }
@@ -276,31 +304,5 @@ void getkeysfrominfo(){
     inforeq.DumpMessages();
     for(auto x : inforeq.data){
         msgtmp.push_back(x.data());
-    }
-}
-
-void CheckMailBox(){
-    
-    NodeClient mailreq(
-    grpc::CreateChannel(/*mailboxaddress + */ "172.18.0.7:50051",
-                            grpc::InsecureChannelCredentials()));
-
-    std::cout << "-------------- GetMessages --------------" << std::endl;
-
-    while(true){
-        //FIXME: handle failed encryption attemps
-        //FIXME: Output add rounds
-        mailreq.DumpMessages();
-        if(!mailreq.data[0].data().size() > 1){
-            for(auto x : mailreq.data){
-                msgtmp.push_back(x.data());
-                auto d = x.data();
-                std::cout << "THIS IS WHAT I GOT " << std::endl;
-                std::cout << d << std::endl;
-                auto j = pkg_decrypt(d, keyb, paramsb);
-                
-            }
-            break;
-        }
     }
 }

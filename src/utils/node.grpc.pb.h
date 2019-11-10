@@ -49,7 +49,7 @@ class Node final {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::node::MsgReq>>(PrepareAsyncNewRoundRaw(context, request, cq));
     }
     // A server-to-client streaming RPC.
-    //
+    // server sends messages and the client request them
     // Obtains the Messages available.  Results are
     // streamed rather than returned at once
     std::unique_ptr< ::grpc::ClientReaderInterface< ::node::Msg>> DumpMessages(::grpc::ClientContext* context, const ::node::MsgReq& request) {
@@ -63,7 +63,7 @@ class Node final {
     }
     // A client-to-server streaming RPC.
     //
-    // Send messages to the client
+    // Send messages to the server
     std::unique_ptr< ::grpc::ClientWriterInterface< ::node::Msg>> PutMessages(::grpc::ClientContext* context, ::node::MsgReq* response) {
       return std::unique_ptr< ::grpc::ClientWriterInterface< ::node::Msg>>(PutMessagesRaw(context, response));
     }
@@ -82,13 +82,13 @@ class Node final {
       virtual void NewRound(::grpc::ClientContext* context, const ::node::MsgReq* request, ::node::MsgReq* response, std::function<void(::grpc::Status)>) = 0;
       virtual void NewRound(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::node::MsgReq* response, std::function<void(::grpc::Status)>) = 0;
       // A server-to-client streaming RPC.
-      //
+      // server sends messages and the client request them
       // Obtains the Messages available.  Results are
       // streamed rather than returned at once
       virtual void DumpMessages(::grpc::ClientContext* context, ::node::MsgReq* request, ::grpc::experimental::ClientReadReactor< ::node::Msg>* reactor) = 0;
       // A client-to-server streaming RPC.
       //
-      // Send messages to the client
+      // Send messages to the server
       virtual void PutMessages(::grpc::ClientContext* context, ::node::MsgReq* response, ::grpc::experimental::ClientWriteReactor< ::node::Msg>* reactor) = 0;
     };
     virtual class experimental_async_interface* experimental_async() { return nullptr; }
@@ -171,13 +171,13 @@ class Node final {
     // Restarts all services and generates new keys for a new round
     virtual ::grpc::Status NewRound(::grpc::ServerContext* context, const ::node::MsgReq* request, ::node::MsgReq* response);
     // A server-to-client streaming RPC.
-    //
+    // server sends messages and the client request them
     // Obtains the Messages available.  Results are
     // streamed rather than returned at once
     virtual ::grpc::Status DumpMessages(::grpc::ServerContext* context, const ::node::MsgReq* request, ::grpc::ServerWriter< ::node::Msg>* writer);
     // A client-to-server streaming RPC.
     //
-    // Send messages to the client
+    // Send messages to the server
     virtual ::grpc::Status PutMessages(::grpc::ServerContext* context, ::grpc::ServerReader< ::node::Msg>* reader, ::node::MsgReq* response);
   };
   template <class BaseClass>

@@ -46,7 +46,19 @@ using namespace node;
 //   f.set_yes(req);
 //   return f;
 // }
+struct MyCout {};
 
+extern bool quiet = true;
+extern MyCout ccout;
+
+template <typename T>
+MyCout& operator<< (MyCout &s, const T &x) {
+  //format x as you please
+  if(!quiet){
+      std::cout << x << std::endl;
+  }
+  return s;
+}
 
 class NodeClient {
  public:
@@ -55,19 +67,11 @@ class NodeClient {
   void NewRound();
   void DumpMessages();
   void PutMessages();
-  bool quiet = false;
  private:
   std::unique_ptr<Node::Stub> stub_;
-  void print();
   bool GetMsqReq(const MsgReq& msg, MsgReq* recv);
 };
 
-
-void NodeClient::print(std::string str){
-    if(quiet){
-        std::cout << str << std::endl;
-    }
-}
 
 //NodeClient::NodeClient(std::shared_ptr<Channel> channel) : 
 bool NodeClient::GetMsqReq(const MsgReq& msg, MsgReq* recv) {
@@ -75,7 +79,7 @@ bool NodeClient::GetMsqReq(const MsgReq& msg, MsgReq* recv) {
     
     Status status = stub_->NewRound(&context, msg, recv);
     if (!status.ok()) {
-      print("GetFeature rpc failed.");
+      ccout << "GetFeature rpc failed.";
       return false;
     }
     return recv->yes();
@@ -94,7 +98,7 @@ void NodeClient::DumpMessages() {
     Msg recv;
     ClientContext context;
 
-    print("Dump Messages Activated");
+    ccout << "Dump Messages Activated";
 
     std::unique_ptr<ClientReader<Msg> > reader(
         stub_->DumpMessages(&context, req));
@@ -104,9 +108,9 @@ void NodeClient::DumpMessages() {
     }
     Status status = reader->Finish();
     if (status.ok()) {
-      print("DumpMessages rpc succeeded.");
+      ccout << "DumpMessages rpc succeeded.";
     } else {
-       print("DumpMessages rpc failed.");
+       ccout << "DumpMessages rpc failed.";
     }
 }
 
@@ -122,7 +126,7 @@ void NodeClient::PutMessages() {
 
     std::unique_ptr<ClientWriter<Msg> > writer(stub_->PutMessages(&context, &recv));
     for(auto x : data){
-        print("WRITING " << x.data());
+        ccout << "WRITING " << x.data();
         writer->Write(x);
         std::this_thread::sleep_for(std::chrono::milliseconds(
           delay_distribution(generator)));
@@ -132,11 +136,11 @@ void NodeClient::PutMessages() {
     Status status = writer->Finish();
     if (status.ok()) {
         if(recv.yes() == true){
-            print("THIS WORKS");
+            ccout << "THIS WORKS";
             //std::cout << "THIS WORKS" << std::endl;
         }
     } else {
-        print("PutMessages rpc failed");
+        ccout << "PutMessages rpc failed";
         //std::cout << "PutMessages rpc failed." << std::endl;
     }
 }
