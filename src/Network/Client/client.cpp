@@ -112,7 +112,13 @@ int main(){
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
 
-    std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
+    std::string encdata = pkg_encrypt(email, paramsb, "LIfe is what we make of it.");
+    cout << "ENCDATA START" << endl;
+    cout << encdata << endl;;
+    cout << "ENCDATA END" << endl;
+
+
+
     cout << "MADE IT HERE FINISHED" << endl;
     
     // Get mixer data from information node

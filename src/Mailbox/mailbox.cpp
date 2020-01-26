@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Doku Enterprise
+ * Copyright (c) 2020 Doku Enterprise
  * Author: Friedrich Doku
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
