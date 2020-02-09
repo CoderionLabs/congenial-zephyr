@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2019 Doku Enterprise
+ * Copyright (c) 2020 Mutex Unlocked
  * Author: Friedrich Doku
  * -----
- * Last Modified: Sunday April 21st 2019 1:25:50 pm
+ * Last Modified: Sunday April 21st 2020 1:25:50 pm
  * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -210,8 +210,8 @@ std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars){
         std::cout << decrypted << std::endl;
     }
 
-    byte_string_clear(U);
-    byte_string_clear(secret);
+    // byte_string_clear(U);
+    // byte_string_clear(secret);
 
     std::string result;
     result = reinterpret_cast<char*>(decrypted);

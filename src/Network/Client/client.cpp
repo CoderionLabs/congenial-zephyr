@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Doku Enterprise
+ * Copyright (c) 2020 Mutex Unlocked
  * Author: Friedrich Doku
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -152,7 +152,6 @@ int main(){
                 auto d = x;
                 std::cout << "THIS IS WHAT I GOT " << std::endl;
                 std::cout << d << std::endl;
-                //TODO: Fix encrytion run a test on the local system first
                 auto j = pkg_decrypt(d, keyb, paramsb);
                 
             }
