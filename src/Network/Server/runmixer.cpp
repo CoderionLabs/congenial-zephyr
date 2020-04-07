@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2019 Doku Enterprise
+ * Copyright (c) 2020 Mutex Unlocked
  * Author: Friedrich Doku
  * -----
- * Last Modified: Friday April 5th 2019 10:24:17 am
+ * Last Modified: Friday April 5th 2020 10:24:17 am
  * -----
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by

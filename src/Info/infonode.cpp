@@ -12,6 +12,7 @@
 
 
 std::vector<std::string> msgtmp;
+std::vector<std::string> outbox;
 std::vector<std::string> msgtmp2;
 
 std::vector<std::string> needrequests;
@@ -97,26 +98,29 @@ void dhtstart()
             msgtmp2 = msgtmp;
             msgtmp.clear();
             for(auto x : msgtmp2){
-                if(x.find("NEED") != std::string::npos){
-                    // REMOVE NEED AND SEND TO IP
-                    std::cout << "I GOT A REQUEST" << std::endl;
-                    std::string tmp = x;
-                    auto pos = tmp.find("NEED");
-                    tmp = tmp.substr(pos + 4);
-                    needrequests.push_back(tmp);
-                }else{
-                    std::cout << "I GOT A KEY" << std::endl;
-                    keys.push_back(x);
-                    havedata = true;
-                }
+                // if(x.find("NEED") != std::string::npos){
+                //     // REMOVE NEED AND SEND TO IP
+                //     std::cout << "I GOT A REQUEST" << std::endl;
+                //     std::string tmp = x;
+                //     auto pos = tmp.find("NEED");
+                //     tmp = tmp.substr(pos + 4);
+                //     needrequests.push_back(tmp);
+                // }else{
+                //     std::cout << "I GOT A KEY" << std::endl;
+                //     keys.push_back(x);
+                //     havedata = true;
+                // }
+                outbox.push_back(x);
+                keys.push_back(x);
+                havedata = true;
             }
             msgtmp2.clear();
         }
 
-        if(!needrequests.empty()){
-            sendkeys(needrequests);
-            needrequests.clear();
-        }
+        // if(!needrequests.empty()){
+        //     sendkeys(needrequests);
+        //     needrequests.clear();
+        // }
 
         if(havedata && (pushed == false)){
             // Put the map data into the DHT
@@ -142,6 +146,7 @@ void dhtstart()
                      std::cout << "Found keys: not printing" << std::endl;
                      if(datakey.size() > 0){
                          keys.push_back(datakey);
+                         outbox.push_back(datakey);
                          havedata = true;
                          pushed = true;
                          std::cout << "ALL SET UP" << std::endl;

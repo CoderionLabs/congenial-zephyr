@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Doku Enterprise
+ * Copyright (c) 2020 Mutex Unlocked
  * Author: Friedrich Doku
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ using std::chrono::system_clock;
 using namespace node;
 
 extern std::vector<std::string> msgtmp;
+extern std::vector<std::string> outbox;
 
 class NodeImpl final : public Node::Service {
  public:
@@ -64,15 +65,15 @@ Status NodeImpl::NewRound(ServerContext* context, const node::MsgReq* req,
 }
 
 Status NodeImpl::DumpMessages(ServerContext* context, const node::MsgReq* req, ServerWriter<node::Msg>* writer) {
-    node::Msg g;
-    g.set_data("apple");
-    msgtmp.push_back(g.data());
-    msgtmp.push_back(g.data());
-    msgtmp.push_back(g.data());
-    while(!msgtmp.empty()){
-        g.set_data(msgtmp.back());
-        writer->Write(g);
-        msgtmp.pop_back();
+    if(!outbox.empty()){
+        for(auto x : outbox){
+            node::Msg g;
+            g.set_data(x);
+            writer->Write(g);
+        }
+    }else{
+        //FIXME: Should show error log instead
+        return Status::CANCELLED;
     }
     return Status::OK;
 }

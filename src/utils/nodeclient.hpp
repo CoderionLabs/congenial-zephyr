@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Doku Enterprise
+ * Copyright (c) 2020 Mutex Unlocked
  * Author: Friedrich Doku
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -46,6 +46,19 @@ using namespace node;
 //   f.set_yes(req);
 //   return f;
 // }
+struct MyCout {};
+
+extern bool quiet = true;
+extern MyCout ccout;
+
+template <typename T>
+MyCout& operator<< (MyCout &s, const T &x) {
+  //format x as you please
+  if(!quiet){
+      std::cout << x << std::endl;
+  }
+  return s;
+}
 
 class NodeClient {
  public:
@@ -59,13 +72,14 @@ class NodeClient {
   bool GetMsqReq(const MsgReq& msg, MsgReq* recv);
 };
 
+
 //NodeClient::NodeClient(std::shared_ptr<Channel> channel) : 
 bool NodeClient::GetMsqReq(const MsgReq& msg, MsgReq* recv) {
     ClientContext context;
     
     Status status = stub_->NewRound(&context, msg, recv);
     if (!status.ok()) {
-      std::cout << "GetFeature rpc failed." << std::endl;
+      ccout << "GetFeature rpc failed.";
       return false;
     }
     return recv->yes();
@@ -80,10 +94,11 @@ void NodeClient::NewRound(){
 
 void NodeClient::DumpMessages() {
     node::MsgReq req;
+    req.set_yes(true);
     Msg recv;
     ClientContext context;
 
-    std::cout << "Dump Messages Activated" << std::endl;
+    ccout << "Dump Messages Activated";
 
     std::unique_ptr<ClientReader<Msg> > reader(
         stub_->DumpMessages(&context, req));
@@ -93,9 +108,9 @@ void NodeClient::DumpMessages() {
     }
     Status status = reader->Finish();
     if (status.ok()) {
-      std::cout << "DumpMessages rpc succeeded." << std::endl;
+      ccout << "DumpMessages rpc succeeded.";
     } else {
-      std::cout << "DumpMessages rpc failed." << std::endl;
+       ccout << "DumpMessages rpc failed.";
     }
 }
 
@@ -111,7 +126,7 @@ void NodeClient::PutMessages() {
 
     std::unique_ptr<ClientWriter<Msg> > writer(stub_->PutMessages(&context, &recv));
     for(auto x : data){
-        std::cout << "WRITING " << x.data() << std::endl;
+        ccout << "WRITING " << x.data();
         writer->Write(x);
         std::this_thread::sleep_for(std::chrono::milliseconds(
           delay_distribution(generator)));
@@ -121,10 +136,12 @@ void NodeClient::PutMessages() {
     Status status = writer->Finish();
     if (status.ok()) {
         if(recv.yes() == true){
-            std::cout << "THIS WORKS" << std::endl;
+            ccout << "THIS WORKS";
+            //std::cout << "THIS WORKS" << std::endl;
         }
     } else {
-      std::cout << "PutMessages rpc failed." << std::endl;
+        ccout << "PutMessages rpc failed";
+        //std::cout << "PutMessages rpc failed." << std::endl;
     }
 }
 

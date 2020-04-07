@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Doku Enterprise
+ * Copyright (c) 2020 Mutex Unlocked
  * Author: Friedrich Doku
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -41,10 +41,16 @@ extern "C"{
     #include <sibe/ibe_progs.h>
 }
 
+MyCout ccout;
 CONF_CTX *cnfctx;
 params_t params;
+byte_string_t keyb;
+params_t paramsb;
 std::vector<std::vector<std::string>> config;
 std::vector<std::string> msgtmp;
+std::vector<std::string> outbox;
+
+std::string mailboxaddress = "";
 
 using namespace std;
 using namespace node;
@@ -60,18 +66,16 @@ void error(const char *msg)
     exit(0);
 }
 
-void RunServerInBackground();
+void CheckMailBox();
 void getkeysfrominfo();
 std::string attachtomixer(std::string msg);
 int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg);
 
 int main(){
 
-    sodium_init();
-
-    std::thread t1(RunServerInBackground);
-    t1.detach();
-    
+    if (sodium_init() == -1) {
+        return 1;
+    }
     string msg,email,key, params, filepath;
     cout << "Enter message" << endl;
     cin >> msg;
@@ -90,8 +94,7 @@ int main(){
     auto x = getkeysfrompkg(vec[2][0], to_string(8080), email);
     cout << "GOT IT" << endl;
     // Get your private key
-    byte_string_t keyb;
-    params_t paramsb;
+    
     IBE_init();
     cout << x[0] << endl;
     cout << x[1] << endl;
@@ -109,16 +112,53 @@ int main(){
     // Encrypt message for user
     cout << "MADE IT HERE 2" << endl;
 
-    std::string encdata = pkg_encrypt("fried", paramsb, "LIfe is what we make of it.");
+    std::string encdata = pkg_encrypt(email, paramsb, "LIfe is what we make of it.");
+    cout << "ENCDATA START" << endl;
+    cout << encdata << endl;;
+    cout << "ENCDATA END" << endl;
+
+
+
     cout << "MADE IT HERE FINISHED" << endl;
     
     // Get mixer data from information node
-    getkeysfrominfo();
+    while(msgtmp.empty()){
+        getkeysfrominfo();
+    }
     //sleep(10);
     std::vector<std::string> mixerKeys;
     mixerKeys = msgtmp;
     cout << "CONVERTED !!!" << endl;
     createciphertext(mixerKeys, encdata);
+
+    NodeClient mailreq(
+    grpc::CreateChannel(/*mailboxaddress + */ "172.18.0.7:50051",
+                            grpc::InsecureChannelCredentials()));
+
+    std::cout << "-------------- GetMessages --------------" << std::endl;
+
+    std::vector<std::string> mymsgs;
+    while(true){
+        //FIXME: handle failed encryption attemps
+        //FIXME: Output add rounds
+        mailreq.DumpMessages();
+        mymsgs.clear();
+        for(auto x : mailreq.data){
+            mymsgs.push_back(x.data());
+        }
+        if(!mymsgs.empty()){
+            for(auto x : mymsgs){
+                msgtmp.push_back(x);
+                auto d = x;
+                std::cout << "THIS IS WHAT I GOT " << std::endl;
+                std::cout << d << std::endl;
+                //TODO: Fix encrytion run a test on the local system first
+                auto j = pkg_decrypt(d, keyb, paramsb);
+                
+            }
+            break;
+        }
+    }
 
     return 0;
 }
@@ -158,10 +198,15 @@ int createciphertext(std::vector<std::string> mixerKeys, std::string encmsg){
     }
     
     //TODO: Create mailbox code and fix addresses
-    std::string mailboxaddress = "NULL";
+    int num = rand() % config[1].size() -1;
+    auto x = config[1][num];
+    std::cout << "Talking to " << x << std::endl;
+    mailboxaddress = "172.18.0.7";
+    std::cout << "YOUR MAILBOX IS " << mailboxaddress << std::endl;
 
     std::string enctmp = encmsg;
     enctmp += mailboxaddress;
+    enctmp += "CUTHERE";
     enctmp += std::to_string(mailboxaddress.size());
 
     cout << "Done Setting getting mixer keys and adding mailbox." << endl;
@@ -244,31 +289,26 @@ std::string attachtomixer(std::string msg){
     return "";
 }
 
+//FIXME: Utilize other infonodes
+//FIXME: There will be trouble sending data over the NAT with
+// this implementation. Instead make the info node have sever
+// and it will send a response back. 
 void getkeysfrominfo(){
 
     int num = rand() % config[3].size() -1;
     auto x = config[3][num];
     std::cout << "Getting keys from " << x << std::endl;
 
-    NodeClient mixreq(
+    NodeClient inforeq(
     grpc::CreateChannel(config[3][num] + ":50051",
                           grpc::InsecureChannelCredentials()));
 
     std::cout << "-------------- GetMessages --------------" << std::endl;
-    node::Msg tosend;
-    tosend.set_data("NEED172.18.0.1");
-    mixreq.data.push_back(tosend);
-    mixreq.PutMessages();
-}
-
-void RunServerInBackground(){
-    std::string server_address("172.18.0.1:50051");
-    NodeImpl service;
-
-    ServerBuilder builder;
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&service);
-    std::unique_ptr<Server> server(builder.BuildAndStart());
-    std::cout << "Server listening on " << server_address << std::endl;
-    server->Wait();
+    //node::Msg tosend;
+    //tosend.set_data("NEED172.18.0.1");
+    //inforeq.data.push_back(tosend);
+    inforeq.DumpMessages();
+    for(auto x : inforeq.data){
+        msgtmp.push_back(x.data());
+    }
 }

@@ -10,14 +10,14 @@ service Node {
   rpc NewRound(MsgReq) returns (MsgReq) {}
 
   // A server-to-client streaming RPC.
-  //
+  // server sends messages and the client request them
   // Obtains the Messages available.  Results are
   // streamed rather than returned at once
   rpc DumpMessages(MsgReq) returns (stream Msg) {}
 
   // A client-to-server streaming RPC.
   //
-  // Send messages to the client
+  // Send messages to the server
   rpc PutMessages(stream Msg) returns (MsgReq) {}
 }
 
