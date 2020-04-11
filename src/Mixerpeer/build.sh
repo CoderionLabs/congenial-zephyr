@@ -1,2 +1,2 @@
-g++ client.cpp -o client
-g++ helperserver.cpp -o helper
+g++ client.cpp -lpthread -o client
+g++ helperserver.cpp -lpthread -o helper

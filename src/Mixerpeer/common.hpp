@@ -26,6 +26,7 @@
 #include <map>
 #include <netinet/in.h>
 #include <fstream>
+#include <thread> 
 
 auto write_string_to_file(std::string endpoints){
     std::ofstream out;
@@ -54,5 +55,19 @@ auto file_to_map(){
 
         endpoints[line] = std::make_pair(line, std::move(publicip));
     }
+    return endpoints;
+}
+
+auto string_to_map(std::string str){
+    std::map<std::string, std::pair<std::string,std::string>> endpoints;
+   
+    std::string cut("CUTHERE");
+    size_t found = str.find(cut);
+
+    auto publicip = str.substr(found + cut.size());
+    str.erase(str.begin() + found, str.end());
+
+    endpoints[str] = std::make_pair(str, std::move(publicip));
+    
     return endpoints;
 }
