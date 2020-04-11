@@ -19,15 +19,8 @@
 // to initiate outgoing connections to the other peer's public and private TCP endpoints.
 
 // Client side C/C++ program to demonstrate Socket programming 
-#include <stdio.h> 
-#include <sys/socket.h> 
-#include <arpa/inet.h> 
-#include <unistd.h> 
-#include <iostream>
-#include <string.h>
-#include <cassert>
-#include <string> 
-#include <array>
+#include "common.hpp"
+
 
 #define PORT 8080 
 
@@ -42,7 +35,9 @@ auto main(int argc, char const *argv[]) -> int
     std::cout << privateip << std::endl;
 
 	int sock = 0, valread; 
-	struct sockaddr_in serv_addr; 
+	struct sockaddr_in serv_addr;
+    struct sockaddr_in client_addr;
+
 	char buffer[1024] = {0}; 
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
 	{ 
@@ -51,10 +46,14 @@ auto main(int argc, char const *argv[]) -> int
 	} 
 
 	serv_addr.sin_family = AF_INET; 
-	serv_addr.sin_port = htons(PORT); 
-	
+	serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_addr.s_addr = inet_addr("142.93.196.152");
+
+    client_addr.sin_family = AF_INET; 
+	client_addr.sin_port = htons(PORT);
+
 	// Convert IPv4 and IPv6 addresses from text to binary form 
-	if(inet_pton(AF_INET, privateip, &serv_addr.sin_addr)<=0) 
+	if(inet_pton(AF_INET, privateip, &client_addr.sin_addr)<=0) 
 	{ 
 		std::cout << "\nInvalid address/ Address not supported \n"; 
 		return -1; 
@@ -72,7 +71,15 @@ auto main(int argc, char const *argv[]) -> int
 
    
 	return 0; 
-} 
+}
+
+void connection_attempt(std::string ip){
+
+}
+
+void server_create(){
+    
+}
 
 // Gets the private ip address of the client
 void GetPrimaryIp(char* buffer, size_t buflen) noexcept

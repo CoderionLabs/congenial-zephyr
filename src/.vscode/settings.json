@@ -70,7 +70,8 @@
         "memory_resource": "cpp",
         "random": "cpp",
         "cfenv": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "csetjmp": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
