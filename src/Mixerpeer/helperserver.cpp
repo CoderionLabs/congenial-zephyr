@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2020 Mutex Unlocked
+ * Author: Friedrich Doku
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 3 of the License, or
+ *   (at your option) any later version.
+ *   This program is distributed in the hope that it will be useful
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include <unistd.h> 
 #include <iostream>
 #include <string>
@@ -5,18 +20,20 @@
 #include <stdio.h> 
 #include <sys/socket.h> 
 #include <stdlib.h> 
-#include <netinet/in.h> 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
+#include <string>
 
 #define PORT 8080 
 
-int main() 
+auto main() -> int
 { 
     // This is what I will use to store peer data
     // TODO: The client will send me her private endpoint
     // I should already have her public endpoint
     // I will save this in my map
-    std::map<string, string> mymap;
+    std::map<std::string, std::string> mymap;
     
 	int server_fd, new_socket, valread; 
 	struct sockaddr_in address; 
@@ -43,8 +60,7 @@ int main()
 	address.sin_port = htons( PORT ); 
 	
 	// Forcefully attaching socket to the port 8080 
-	if (bind(server_fd, (struct sockaddr *)&address, 
-								sizeof(address))<0) 
+	if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0) 
 	{ 
 		std::cerr << "bind failed" << std::endl;; 
 		exit(EXIT_FAILURE); 
@@ -59,7 +75,11 @@ int main()
 	{ 
 		std::cerr << "accept" << std::endl; 
 		exit(EXIT_FAILURE); 
-	} 
+	}
+
+    // Let's get the client's public address
+    std::cout << "PUBLIC IP OF CLIENT: " << inet_ntoa(address.sin_addr) << std::endl;
+
 	valread = read( new_socket , buffer, 1024); 
     std::cout << buffer << std::endl;
 	send(new_socket , hello , strlen(hello) , 0 ); 
