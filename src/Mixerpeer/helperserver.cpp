@@ -81,7 +81,7 @@ auto main() -> int
             for (;;)
             {
 
-                valread = read(new_socket, buffer, 100000);
+                valread = ReadXBytes(new_socket, buffer, 100000);
                 std::cout << buffer << std::endl;
                 std::string tmp_buf(buffer);
                 if(tmp_buf.find("get") != std::string::npos){

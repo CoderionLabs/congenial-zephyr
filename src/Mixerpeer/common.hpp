@@ -102,6 +102,22 @@ auto GetPrimaryIp(char* buffer, size_t buflen)
     close(sock);
 }
 
+void ReadXBytes(int socket,  void* buffer, unsigned int x)
+{
+    int bytesRead = 0;
+    int result;
+    while (bytesRead < x)
+    {
+        result = read(socket, buffer + bytesRead, x - bytesRead);
+        if (result < 1 )
+        {
+            std::cerr << "FAILED TO READ " << std::endl;
+        }
+
+        bytesRead += result;
+    }
+}
+
 auto send_connection_string(std::string conn_str){
     char privateip[16];
 
@@ -142,7 +158,7 @@ auto send_connection_string(std::string conn_str){
 	} 
 	send(sock , conn_str.c_str() , conn_str.size(), 0 ); 
 	std::cout << "Connection string message sent\n"; 
-	valread = read( sock , buffer, 10000); 
+	valread = ReadXBytes( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;
 
     bzero(buffer, sizeof(buffer));
@@ -150,7 +166,7 @@ auto send_connection_string(std::string conn_str){
     std::string tosend = "get" + conn_str;
     send(sock , tosend.c_str() , tosend.length(), 0); 
 	std::cout << "get message sent\n"; 
-	valread = read( sock , buffer, 10000); 
+	valread = ReadXBytes( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;
     close(sock);
 
