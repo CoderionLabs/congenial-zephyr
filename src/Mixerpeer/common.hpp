@@ -180,6 +180,8 @@ auto send_connection_string(std::string conn_str){
             }));
         ws.handshake(host, "/");
        // ws.text(false);
+        ws.binary(true);
+
 
         std::cout << "HERE 2" << std::endl;
         ws.write(net::buffer(std::string(conn_str)));

@@ -38,6 +38,7 @@ do_session(tcp::socket& socket)
             }));
 
         // Accept the websocket handshake
+        ws.binary(true);
         ws.accept();
     
         std::string client_public_address = "DICK";
@@ -50,6 +51,7 @@ do_session(tcp::socket& socket)
             beast::flat_buffer buffer;
 
             // Read a message
+
             ws.read(buffer);
             os << boost::beast::make_printable(buffer.data());
             std::string data = os.str();
@@ -72,7 +74,6 @@ do_session(tcp::socket& socket)
                                 //send the other peers public and private endpointsf
                                 rez += x.second.first += std::string("CUTHERE") += x.second.second;
                                  
-                                ws.text(false);
                                 ws.write(net::buffer(rez));
                                 std::cout << "REZ " << rez << std::endl;
                                 break;
@@ -80,7 +81,6 @@ do_session(tcp::socket& socket)
                         }
                     }
             }else{
-                //ws.text(false);
                 std::string hi = "hello";
                 ws.write(net::buffer(hi));
                 std::cout << "Hello message sent\n"
