@@ -71,7 +71,8 @@
         "random": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "csetjmp": "cpp"
+        "csetjmp": "cpp",
+        "span": "cpp"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
