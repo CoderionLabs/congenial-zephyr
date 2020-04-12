@@ -136,67 +136,6 @@ void ReadXBytes(int socket,  char* buffer, unsigned int x)
 }
 
 auto send_connection_string(std::string conn_str){
-    char privateip[16];
-
-    GetPrimaryIp(privateip, 16); 
-
-    std::cout << privateip << std::endl;
-    // std::cout << "SENDING_______________________________" << std::endl;
-    // std::cout << conn_str << std::endl;
-    // std::cout << conn_str.size() << std::endl;
-    // std::cout << "ENDING_______________________________" << std::endl;
-
-	int sock = 0, valread; 
-	struct sockaddr_in serv_addr;
-    struct sockaddr_in client_addr;
-
-	char buffer[10000] = {0}; 
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
-	{ 
-		std::cout << "\n Socket creation error \n"; 
-	} 
-
-	serv_addr.sin_family = AF_INET; 
-	serv_addr.sin_port = htons(PORT);
-    serv_addr.sin_addr.s_addr = inet_addr("142.93.196.152");
-
-    client_addr.sin_family = AF_INET; 
-	client_addr.sin_port = htons(PORT);
-
-	// Convert IPv4 and IPv6 addresses from text to binary form 
-	if(inet_pton(AF_INET, privateip, &client_addr.sin_addr)<=0) 
-	{ 
-		std::cout << "\nInvalid address/ Address not supported \n"; 
-	} 
-
-	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) 
-	{ 
-		std::cout << "\nConnection Failed \n"; 
-	}
-    for(int i = 0; i < conn_str.size(); i++){
-        send(sock , reinterpret_cast<char*>(conn_str[i]), 1, 0); 
-    }
-	//send(sock , conn_str.c_str() , conn_str.size(), 0 ); 
-	std::cout << "Connection string message sent\n"; 
-	ReadXBytes( sock , buffer, 10000); 
-	std::cout << buffer << std::endl;
-
-    bzero(buffer, sizeof(buffer));
-
-    std::string tosend = "get" + conn_str;
-     for(int i = 0; i < tosend.size(); i++){
-        send(sock , reinterpret_cast<char*>(tosend[i]) ,1, 0); 
-    }
-    //send(sock , tosend.c_str() , tosend.length(), 0); 
-	std::cout << "get message sent\n"; 
-	ReadXBytes( sock , buffer, 10000); 
-	std::cout << buffer << std::endl;
-    close(sock);
-
-    return string_to_map(std::string(buffer));
-}
-
-auto send_connection_string2(std::string conn_str){
 
     char privateip[16];
     GetPrimaryIp(privateip, 16); 
