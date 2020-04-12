@@ -42,6 +42,7 @@ static const gchar *candidate_type_name[] = {"host", "srflx", "prflx", "relay"};
 static const gchar *state_name[] = {"disconnected", "gathering", "connecting",
                                     "connected", "ready", "failed"};
 
+std::map<std::string, std::pair<std::string,std::string>> mymap;
 std::map<std::string, std::pair<std::string,std::string>> print_local_data(NiceAgent *agent, guint stream_id,
     guint component_id);
 static int parse_remote_data(NiceAgent *agent, guint stream_id,
@@ -155,33 +156,30 @@ cb_candidate_gathering_done(NiceAgent *agent, guint _stream_id,
 
   // Candidate gathering is done. Send our local candidates on stdout
   std::cout << "Copy this line to remote client:\n";
-  std::cout << std::endl;
-  auto mymap = print_local_data(agent, _stream_id, 1);
-  std::cout << std::endl;
- 
+  mymap = print_local_data(agent, _stream_id, 1);
   // Listen on stdin for the remote candidate list
   std::cout << "Enter remote data (single line, no wrapping):\n";
-  g_io_add_watch(io_stdin, G_IO_IN, stdin_remote_info_cb, agent);
   std::cout << "> ";
-  sleep(10);
-   write(STDIN_FILENO, mymap.begin()->first.c_str(), mymap.begin()->first.size());
-  fflush (stdout);
-}
 
-static gboolean
-stdin_remote_info_cb (GIOChannel *source, GIOCondition cond,
-    gpointer data)
-{
-  NiceAgent *agent = reinterpret_cast<NiceAgent*>(data);
   gchar *line = NULL;
   int rval;
   gboolean ret = TRUE;
 
-  if (g_io_channel_read_line (source, &line, NULL, NULL, NULL) ==
-      G_IO_STATUS_NORMAL) {
+  std::cout << std::endl;
+  auto remotedata = mymap.begin()->first;
+  std::cout << "REMOTE DATA START" << std::endl;
+  std::cout << remotedata << std::endl;
+  std::cout << "REMOTE DATA END" << std::endl;
+  std::cout << std::endl;
+
+  std::string newline = "\n";
+
+  write(STDIN_FILENO, newline.c_str(),newline.size() );
+
+  if (true) {
 
     // Parse remote candidate list and set it on the agent
-    rval = parse_remote_data(agent, stream_id, 1, line);
+    rval = parse_remote_data(agent, stream_id, 1, &remotedata[0]);
     if (rval == EXIT_SUCCESS) {
       // Return FALSE so we stop listening to stdin since we parsed the
       // candidates correctly
@@ -196,8 +194,11 @@ stdin_remote_info_cb (GIOChannel *source, GIOCondition cond,
     g_free (line);
   }
 
-  return ret;
+
+  fflush (stdout);
+
 }
+
 
 static void
 cb_component_state_changed(NiceAgent *agent, guint _stream_id,
@@ -324,6 +325,7 @@ print_local_data (NiceAgent *agent, guint _stream_id, guint component_id)
 {
   std::map<std::string, std::pair<std::string,std::string>> mapdata;
   std::string data = "";
+  char buffer [8192];
   int result = EXIT_FAILURE;
   gchar *local_ufrag = NULL;
   gchar *local_password = NULL;
@@ -338,8 +340,8 @@ print_local_data (NiceAgent *agent, guint _stream_id, guint component_id)
   if (cands == NULL)
     goto end;
 
-  data += std::string(local_ufrag) + std::string(local_password);
-  //printf("%s %s", local_ufrag, local_password);
+  sprintf(buffer,"%s %s", local_ufrag, local_password);
+  data += std::string(buffer);
 
   for (item = cands; item; item = item->next) {
     NiceCandidate *c = (NiceCandidate *)item->data;
@@ -347,17 +349,19 @@ print_local_data (NiceAgent *agent, guint _stream_id, guint component_id)
     nice_address_to_string(&c->addr, ipaddr);
 
     // (foundation),(prio),(addr),(port),(type)
-    // printf(" %s,%u,%s,%u,%s",
-    data += c->foundation;
-    data += c->priority;
-    data += ipaddr;
-    data += nice_address_get_port(&c->addr);
-    data += candidate_type_name[c->type];
+    
+    sprintf(buffer," %s,%u,%s,%u,%s",c->foundation
+    ,c->priority
+    , ipaddr
+    , nice_address_get_port(&c->addr)
+    ,candidate_type_name[c->type]);
+    data += std::string(buffer);
+
   }
   std::cout << "MYDATA" << std::endl;
   std::cout << data << std::endl;
   std::cout << "END" << std::endl;
-  
+
    mapdata = send_connection_string(data);
   std::cout << std::endl;
   result = EXIT_SUCCESS;
