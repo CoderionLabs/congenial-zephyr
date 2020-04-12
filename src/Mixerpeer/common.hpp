@@ -156,8 +156,11 @@ auto send_connection_string(std::string conn_str){
 	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) 
 	{ 
 		std::cout << "\nConnection Failed \n"; 
-	} 
-	send(sock , conn_str.c_str() , conn_str.size(), 0 ); 
+	}
+    for(int i = 0; i < conn_str.size(); i++){
+        send(sock , reinterpret_cast<char*>(conn_str[i]), 1, 0); 
+    }
+	//send(sock , conn_str.c_str() , conn_str.size(), 0 ); 
 	std::cout << "Connection string message sent\n"; 
 	ReadXBytes( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;
@@ -165,7 +168,10 @@ auto send_connection_string(std::string conn_str){
     bzero(buffer, sizeof(buffer));
 
     std::string tosend = "get" + conn_str;
-    send(sock , tosend.c_str() , tosend.length(), 0); 
+     for(int i = 0; i < tosend.size(); i++){
+        send(sock , reinterpret_cast<char*>(tosend[i]) ,1, 0); 
+    }
+    //send(sock , tosend.c_str() , tosend.length(), 0); 
 	std::cout << "get message sent\n"; 
 	ReadXBytes( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;

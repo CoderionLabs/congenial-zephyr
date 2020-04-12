@@ -98,7 +98,10 @@ auto main() -> int
                             {
                                 //send the other peers public and private endpointsf
                                 rez += x.second.first += std::string("CUTHERE") += x.second.second;
-                                send(new_socket, rez.c_str(), rez.length(), 0);
+                                 for(int i = 0; i < rez.size(); i++){
+                                    send(new_socket , reinterpret_cast<char*>(rez[i]), 1, 0); 
+                                }
+                                //send(new_socket, rez.c_str(), rez.length(), 0);
                                 std::cout << "REZ " << rez << std::endl;
                                 break;
                             }
