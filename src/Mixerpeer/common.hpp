@@ -83,7 +83,7 @@ std::string condata_to_string(std::string con_str){
     std::stringstream ss;
     {
         // Create an output archive
-        cereal::PortableBinaryOutputArchive oarchive(ss);
+        cereal::JSONOutputArchive oarchive(ss);
 
         oarchive(present); // Write the data to the archive
     }
@@ -97,7 +97,7 @@ std::string condata_from_string(std::string con_str_serial){
     condata c;
     {
         // Create an output archive
-        cereal::PortableBinaryInputArchive iarchive(ss);
+        cereal::JSONInputArchive iarchive(ss);
 
         iarchive(c); // Write the data to the archive
     }
