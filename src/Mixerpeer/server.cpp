@@ -80,14 +80,15 @@ do_session(tcp::socket& socket)
                         }
                     }
                 }else{
-                    ws.text(false);
-                    ws.write(net::buffer("Hello"));
+                    //ws.text(false);
+                    std::string hi = "hello";
+                    ws.write(net::buffer(hi));
                     std::cout << "Hello message sent\n"
                           << std::endl;
-                    mtx.lock();
+                    //mtx.lock();
                     write_string_to_file(data + "CUTHERE" + client_public_address);
                     buffer.consume(buffer.size());
-                    mtx.unlock();
+                    //mtx.unlock();
                 }
 
 

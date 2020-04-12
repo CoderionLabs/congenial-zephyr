@@ -137,6 +137,7 @@ void ReadXBytes(int socket,  char* buffer, unsigned int x)
 
 auto send_connection_string(std::string conn_str){
 
+    std::cout << "I'M IN HERE" << std::endl;
     char privateip[16];
     GetPrimaryIp(privateip, 16); 
     try
@@ -165,14 +166,21 @@ auto send_connection_string(std::string conn_str){
                         " websocket-client-coro");
             }));
         ws.handshake(host, "/");
+       // ws.text(false);
 
-        ws.write(net::buffer(conn_str));
+        std::cout << "HERE 2" << std::endl;
+        ws.write(net::buffer(std::string(conn_str)));
 
-       
+        std::cout << "HERE X" << std::endl;
+
         ws.read(buffer);
+        std::cout << "HERE Y" << std::endl;
+
         os << boost::beast::make_printable(buffer.data());
         std::string data = os.str();
         std::cout << data << std::endl;
+
+        std::cout << "HERE 3" << std::endl;
 
         os.str("");
         os.clear();
@@ -191,11 +199,14 @@ auto send_connection_string(std::string conn_str){
 
         // Close the WebSocket connection
         ws.close(websocket::close_code::normal);
+            std::cout << "I'M OUT" << std::endl;
         return string_to_map(std::string(data));
     }
     catch(std::exception const& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+        std::cout << "I'M OUT" << std::endl;
+
     return  string_to_map("");;
 }
