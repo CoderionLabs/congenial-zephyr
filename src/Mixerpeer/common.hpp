@@ -158,7 +158,7 @@ auto send_connection_string(std::string conn_str){
 	} 
 	send(sock , conn_str.c_str() , conn_str.size(), 0 ); 
 	std::cout << "Connection string message sent\n"; 
-	valread = ReadXBytes( sock , buffer, 10000); 
+	ReadXBytes( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;
 
     bzero(buffer, sizeof(buffer));
@@ -166,7 +166,7 @@ auto send_connection_string(std::string conn_str){
     std::string tosend = "get" + conn_str;
     send(sock , tosend.c_str() , tosend.length(), 0); 
 	std::cout << "get message sent\n"; 
-	valread = ReadXBytes( sock , buffer, 10000); 
+	ReadXBytes( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;
     close(sock);
 
