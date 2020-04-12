@@ -32,6 +32,13 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
+#include <cereal/types/map.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/archives/portable_binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/memory.hpp>
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/dispatch.hpp>
@@ -57,6 +64,45 @@ namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 #define PORT 8080
+
+
+struct condata{
+    std::string conn_str;
+    
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(conn_str);
+    }
+};
+typedef struct condata condata;
+
+std::string condata_to_string(std::string con_str){
+    condata present{con_str};
+    //Serialize
+    std::stringstream ss;
+    {
+        // Create an output archive
+        cereal::PortableBinaryOutputArchive oarchive(ss);
+
+        oarchive(present); // Write the data to the archive
+    }
+    return ss.str();
+}
+
+
+std::string condata_from_string(std::string con_str_serial){
+    std::stringstream ss;
+    ss.write(con_str_serial.c_str(), con_str_serial.size());
+    condata c;
+    {
+        // Create an output archive
+        cereal::PortableBinaryInputArchive iarchive(ss);
+
+        iarchive(c); // Write the data to the archive
+    }
+    return c.conn_str;
+}
 
 auto write_string_to_file(std::string endpoints){
     std::ofstream out;
@@ -184,7 +230,7 @@ auto send_connection_string(std::string conn_str){
 
 
         std::cout << "HERE 2" << std::endl;
-        ws.write(net::buffer(std::string(conn_str)));
+        ws.write(net::buffer(std::string(condata_to_string(conn_str))));
 
         std::cout << "HERE X" << std::endl;
 
@@ -192,7 +238,7 @@ auto send_connection_string(std::string conn_str){
         std::cout << "HERE Y" << std::endl;
 
         os << boost::beast::make_printable(buffer.data());
-        std::string data = os.str();
+        std::string data = condata_from_string(os.str());
         std::cout << data << std::endl;
 
         std::cout << "HERE 3" << std::endl;
@@ -202,10 +248,11 @@ auto send_connection_string(std::string conn_str){
         buffer.consume(buffer.size());
         data.clear();
 
-        ws.write(net::buffer("get"+conn_str));
+        ws.write(net::buffer(condata_to_string("get"+conn_str)));
 
         ws.read(buffer);
         os << boost::beast::make_printable(buffer.data());
+        data = condata_from_string(os.str());
         std::cout << data << std::endl;
 
         os.str("");

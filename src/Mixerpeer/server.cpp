@@ -54,7 +54,7 @@ do_session(tcp::socket& socket)
 
             ws.read(buffer);
             os << boost::beast::make_printable(buffer.data());
-            std::string data = os.str();
+            std::string data = condata_from_string(os.str());
             os.str("");
             os.clear();
             buffer.consume(buffer.size());
@@ -74,7 +74,7 @@ do_session(tcp::socket& socket)
                                 //send the other peers public and private endpointsf
                                 rez += x.second.first += std::string("CUTHERE") += x.second.second;
                                  
-                                ws.write(net::buffer(rez));
+                                ws.write(net::buffer(condata_to_string(rez)));
                                 std::cout << "REZ " << rez << std::endl;
                                 break;
                             }
@@ -82,7 +82,7 @@ do_session(tcp::socket& socket)
                     }
             }else{
                 std::string hi = "hello";
-                ws.write(net::buffer(hi));
+                ws.write(net::buffer(condata_to_string(hi)));
                 std::cout << "Hello message sent\n"
                           << std::endl;
                 //mtx.lock();
