@@ -102,14 +102,14 @@ auto GetPrimaryIp(char* buffer, size_t buflen)
     close(sock);
 }
 
-void ReadXBytes(int socket,  void* buffer, unsigned int x)
+void ReadXBytes(int socket,  char* buffer, unsigned int x)
 {
     int bytesRead = 0;
     int result;
     while (bytesRead < x)
     {
         result = read(socket, buffer + bytesRead, x - bytesRead);
-        std::cout << buffer << std::endl;
+        std::cout << std::string(buffer) << std::endl;
         if (result < 1 )
         {
             std::cerr << "FAILED TO READ " << std::endl;
