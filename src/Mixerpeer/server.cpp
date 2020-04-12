@@ -40,7 +40,7 @@ do_session(tcp::socket& socket)
         // Accept the websocket handshake
         ws.accept();
     
-        std::string client_public_address = socket.remote_endpoint().address().to_string();
+        std::string client_public_address = "DICK";
 
 
         std::ostringstream os;
@@ -79,17 +79,17 @@ do_session(tcp::socket& socket)
                             }
                         }
                     }
-                }else{
-                    //ws.text(false);
-                    std::string hi = "hello";
-                    ws.write(net::buffer(hi));
-                    std::cout << "Hello message sent\n"
+            }else{
+                //ws.text(false);
+                std::string hi = "hello";
+                ws.write(net::buffer(hi));
+                std::cout << "Hello message sent\n"
                           << std::endl;
-                    //mtx.lock();
-                    write_string_to_file(data + "CUTHERE" + client_public_address);
-                    buffer.consume(buffer.size());
-                    //mtx.unlock();
-                }
+                //mtx.lock();
+                write_string_to_file(data + "CUTHERE" + client_public_address);
+                buffer.consume(buffer.size());
+                //mtx.unlock();
+            }
 
 
             // Echo the message back
@@ -151,4 +151,5 @@ auto main(int argc, char* argv[]) -> int
         return EXIT_FAILURE;
     }
 }
+
 
