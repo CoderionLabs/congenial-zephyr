@@ -354,6 +354,10 @@ print_local_data (NiceAgent *agent, guint _stream_id, guint component_id)
     data += nice_address_get_port(&c->addr);
     data += candidate_type_name[c->type];
   }
+  std::cout << "MYDATA" << std::endl;
+  std::cout << data << std::endl;
+  std::cout << "END" << std::endl;
+  
    mapdata = send_connection_string(data);
   std::cout << std::endl;
   result = EXIT_SUCCESS;

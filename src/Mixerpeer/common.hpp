@@ -83,7 +83,7 @@ std::string condata_to_string(std::string con_str){
     std::stringstream ss;
     {
         // Create an output archive
-        cereal::JSONOutputArchive oarchive(ss);
+        cereal::PortableBinaryOutputArchive oarchive(ss);
 
         oarchive(present); // Write the data to the archive
     }
@@ -97,7 +97,7 @@ std::string condata_from_string(std::string con_str_serial){
     condata c;
     {
         // Create an output archive
-        cereal::JSONInputArchive iarchive(ss);
+        cereal::PortableBinaryInputArchive iarchive(ss);
 
         iarchive(c); // Write the data to the archive
     }
@@ -253,7 +253,9 @@ auto send_connection_string(std::string conn_str){
         ws.read(buffer);
         os << boost::beast::make_printable(buffer.data());
         data = condata_from_string(os.str());
+        std::cout << "REMOTE DATA" << std::endl;
         std::cout << data << std::endl;
+        std::cout << "REMOTE DATA END" << std::endl;
 
         os.str("");
         os.clear();
