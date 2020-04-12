@@ -32,7 +32,7 @@ auto main() -> int
     pid_t childpid;
     int opt = 1;
     int addrlen = sizeof(address);
-    char buffer[8912] = {0};
+    char buffer[100000] = {0};
     char *hello = "Hello from server";
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
@@ -81,7 +81,7 @@ auto main() -> int
             for (;;)
             {
 
-                valread = read(new_socket, buffer, 8912);
+                valread = read(new_socket, buffer, 100000);
                 std::cout << buffer << std::endl;
                 std::string tmp_buf(buffer);
                 if(tmp_buf.find("get") != std::string::npos){

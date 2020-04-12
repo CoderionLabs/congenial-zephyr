@@ -42,7 +42,7 @@ static const gchar *candidate_type_name[] = {"host", "srflx", "prflx", "relay"};
 static const gchar *state_name[] = {"disconnected", "gathering", "connecting",
                                     "connected", "ready", "failed"};
 
-static int print_local_data(NiceAgent *agent, guint stream_id,
+std::map<std::string, std::pair<std::string,std::string>> print_local_data(NiceAgent *agent, guint stream_id,
     guint component_id);
 static int parse_remote_data(NiceAgent *agent, guint stream_id,
     guint component_id, char *line);
@@ -156,13 +156,15 @@ cb_candidate_gathering_done(NiceAgent *agent, guint _stream_id,
   // Candidate gathering is done. Send our local candidates on stdout
   std::cout << "Copy this line to remote client:\n";
   std::cout << std::endl;
-  print_local_data(agent, _stream_id, 1);
+  auto mymap = print_local_data(agent, _stream_id, 1);
   std::cout << std::endl;
  
   // Listen on stdin for the remote candidate list
   std::cout << "Enter remote data (single line, no wrapping):\n";
   g_io_add_watch(io_stdin, G_IO_IN, stdin_remote_info_cb, agent);
   std::cout << "> ";
+  sleep(10);
+   write(STDIN_FILENO, mymap.begin()->first.c_str(), mymap.begin()->first.size());
   fflush (stdout);
 }
 
@@ -317,9 +319,10 @@ parse_candidate(char *scand, guint _stream_id)
 }
 
 
-static int
+std::map<std::string, std::pair<std::string,std::string>>
 print_local_data (NiceAgent *agent, guint _stream_id, guint component_id)
 {
+  std::map<std::string, std::pair<std::string,std::string>> mapdata;
   std::string data = "";
   int result = EXIT_FAILURE;
   gchar *local_ufrag = NULL;
@@ -351,11 +354,11 @@ print_local_data (NiceAgent *agent, guint _stream_id, guint component_id)
     data += nice_address_get_port(&c->addr);
     data += candidate_type_name[c->type];
   }
-  send_connection_string(data);
+   mapdata = send_connection_string(data);
   std::cout << std::endl;
   result = EXIT_SUCCESS;
 
- end:
+end:
   if (local_ufrag)
     g_free(local_ufrag);
   if (local_password)
@@ -363,7 +366,7 @@ print_local_data (NiceAgent *agent, guint _stream_id, guint component_id)
   if (cands)
     g_slist_free_full(cands, (GDestroyNotify)&nice_candidate_free);
 
-  return result;
+  return mapdata;
 }
 
 

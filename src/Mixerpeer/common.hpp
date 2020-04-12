@@ -108,12 +108,16 @@ auto send_connection_string(std::string conn_str){
     GetPrimaryIp(privateip, 16); 
 
     std::cout << privateip << std::endl;
+    // std::cout << "SENDING_______________________________" << std::endl;
+    // std::cout << conn_str << std::endl;
+    // std::cout << conn_str.size() << std::endl;
+    // std::cout << "ENDING_______________________________" << std::endl;
 
 	int sock = 0, valread; 
 	struct sockaddr_in serv_addr;
     struct sockaddr_in client_addr;
 
-	char buffer[1024] = {0}; 
+	char buffer[10000] = {0}; 
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
 	{ 
 		std::cout << "\n Socket creation error \n"; 
@@ -138,7 +142,7 @@ auto send_connection_string(std::string conn_str){
 	} 
 	send(sock , conn_str.c_str() , conn_str.size(), 0 ); 
 	std::cout << "Connection string message sent\n"; 
-	valread = read( sock , buffer, 1024); 
+	valread = read( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;
 
     bzero(buffer, sizeof(buffer));
@@ -146,7 +150,7 @@ auto send_connection_string(std::string conn_str){
     std::string tosend = "get" + conn_str;
     send(sock , tosend.c_str() , tosend.length(), 0); 
 	std::cout << "get message sent\n"; 
-	valread = read( sock , buffer, 1024); 
+	valread = read( sock , buffer, 10000); 
 	std::cout << buffer << std::endl;
     close(sock);
 
