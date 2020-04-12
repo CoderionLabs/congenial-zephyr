@@ -26,23 +26,7 @@
 #include <map>
 #include <netinet/in.h>
 #include <fstream>
-#include <thread>
-
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <cstdlib>
-#include <functional>
-#include <iostream>
-#include <string>
-#include <thread>
-
-namespace beast = boost::beast;         // from <boost/beast.hpp>
-namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
-namespace net = boost::asio;            // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-
+#include <thread> 
 #define PORT 8080
 
 auto write_string_to_file(std::string endpoints){
@@ -194,69 +178,4 @@ auto send_connection_string(std::string conn_str){
     close(sock);
 
     return string_to_map(std::string(buffer));
-}
-
-auto send_connection_string2(std::string conn_str){
-
-    char privateip[16];
-    GetPrimaryIp(privateip, 16); 
-    try
-    {
-        std::string host = "142.93.196.152";
-        auto const  port = PORT;
-        auto const  text = conn_str;
-        beast::flat_buffer buffer;
-        std::ostringstream os;
-
-        net::io_context ioc;
-        tcp::resolver resolver{ioc};
-        websocket::stream<tcp::socket> ws{ioc};
-
-        auto const results = resolver.resolve(host, std::to_string(port));
-
-        // Make the connection on the IP address we get from a lookup
-        auto ep = net::connect(ws.next_layer(), results);
-        host += ':' + std::to_string(ep.port());
-
-        ws.set_option(websocket::stream_base::decorator(
-            [](websocket::request_type& req)
-            {
-                req.set(http::field::user_agent,
-                    std::string(BOOST_BEAST_VERSION_STRING) +
-                        " websocket-client-coro");
-            }));
-        ws.handshake(host, "/");
-
-        ws.write(net::buffer(conn_str));
-
-       
-        ws.read(buffer);
-        os << boost::beast::make_printable(buffer.data());
-        std::string data = os.str();
-        std::cout << data << std::endl;
-
-        os.str("");
-        os.clear();
-        buffer.consume(buffer.size());
-        data.clear();
-
-        ws.write(net::buffer("get"+conn_str));
-
-        ws.read(buffer);
-        os << boost::beast::make_printable(buffer.data());
-        std::cout << data << std::endl;
-
-        os.str("");
-        os.clear();
-        buffer.consume(buffer.size());
-
-        // Close the WebSocket connection
-        ws.close(websocket::close_code::normal);
-        return string_to_map(std::string(data));
-    }
-    catch(std::exception const& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-    return  string_to_map("");;
 }
