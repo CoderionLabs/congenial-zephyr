@@ -7,6 +7,7 @@ Zephyr is an anonymous messaging system that protects the privacy of message con
 * Implement peer to peer mix nodes.
 * Create easy to use UI for clients.
 * Setup mailbox database to avoid storing all message in memory.
+* Write documentation.
 
 ## Installing
 
