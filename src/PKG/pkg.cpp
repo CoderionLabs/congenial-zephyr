@@ -210,8 +210,8 @@ std::string pkg_decrypt(std::string cipher, byte_string_t key, params_t pars){
         std::cout << decrypted << std::endl;
     }
 
-    byte_string_clear(U);
-    byte_string_clear(secret);
+    // byte_string_clear(U);
+    // byte_string_clear(secret);
 
     std::string result;
     result = reinterpret_cast<char*>(decrypted);

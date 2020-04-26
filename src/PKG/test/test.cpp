@@ -25,6 +25,8 @@
 #include <iostream>
 #include <cassert>
 #include <zephyr/pkg.hpp>
+#include <ctime>
+#include <chrono>
 extern "C"{
     #include <sibe/ibe.h>
     #include <sibe/ibe_progs.h>
@@ -59,7 +61,16 @@ int main(){
 
     auto str2 = pkg_encrypt("fried", paramtmp,"msg");
 
+    auto start = std::chrono::system_clock::now();
+
     auto j = pkg_decrypt(str, keytmp, paramtmp);
-    auto j2 = pkg_decrypt(str, ad_key, p.params);
-    auto j3 = pkg_decrypt(str2, keytmp, paramtmp);
+    // auto j2 = pkg_decrypt(str, ad_key, p.params);
+    // auto j3 = pkg_decrypt(str2, keytmp, paramtmp);
+
+    auto end = std::chrono::system_clock::now();
+ std::chrono::duration<double> elapsed_seconds = end-start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    std::cout << "finished computation at " << std::ctime(&end_time)
+              << "elapsed time: " << elapsed_seconds.count() << "s\n";
 }
