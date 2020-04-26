@@ -25,6 +25,8 @@
 #include <zephyr/utils.hpp>
 #include <string>
 #include <vector>
+#include <ctime>
+#include <chrono>
 
 using namespace sodium;
 
@@ -39,7 +41,7 @@ bytes test(std::string& x, int N){
         sodium::keypair<> mix{};
         std::cout << "WORKS" << std::endl;
         
-        auto tmpstrkey = setupkey(mix.public_key(),"apple");
+        auto tmpstrkey = setupkey(mix.public_key(),"127.0.0.1");
         keys.push_back(tmpstrkey);
         mixers.push_back(mix);
     }
@@ -55,7 +57,7 @@ bytes test(std::string& x, int N){
 
 
         std::string tt{tmpenc.cbegin(), tmpenc.cend()};
-        tt +="poop";
+        //tt +="poop";
 
         bytes tempenctmp{tt.cbegin(), tt.cend()};
         tmpenc = tempenctmp;
@@ -64,10 +66,10 @@ bytes test(std::string& x, int N){
     }
 
     for(int i = (N-1); i > -1; i--){
-        tmpenc.pop_back();
-        tmpenc.pop_back();
-        tmpenc.pop_back();
-        tmpenc.pop_back();
+        // tmpenc.pop_back();
+        // tmpenc.pop_back();
+        // tmpenc.pop_back();
+        // tmpenc.pop_back();
         tmpenc = sb.decrypt(tmpenc, mixers[i].private_key(), mixers[i].public_key());
     }
     return tmpenc;
@@ -80,7 +82,14 @@ int main()
     std::string message;
     std::cout << "ENTER MESSAGE" << std::endl;
     std::cin >> message;
-    bytes tmp = test(message,10);
+    auto start = std::chrono::system_clock::now();
+    bytes tmp = test(message,1000);
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    std::cout << "finished computation at " << std::ctime(&end_time)
+              << "elapsed time: " << elapsed_seconds.count() << "s\n";
     std::string x{tmp.begin(), tmp.end()};
     std::cout << x << std::endl;
 }

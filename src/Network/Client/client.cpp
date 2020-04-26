@@ -27,6 +27,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ctime>
+#include <chrono>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <thread>
@@ -77,12 +79,13 @@ int main(){
         return 1;
     }
     string msg,email,key, params, filepath;
-    cout << "Enter message" << endl;
-    cin >> msg;
-    cout << "Enter recievers email" << endl;
-    cin >> email;
-    cout << "Enter config file path" << endl;
-    cin >> filepath;
+    // cout << "Enter message" << endl;
+    // cin >> msg;
+    // cout << "Enter recievers email" << endl;
+    // cin >> email;
+    // cout << "Enter config file path" << endl;
+    // cin >> filepath;
+    filepath= "/home/professor/dems";
 
     // Load the configuration file
     //string filepath = "";
@@ -94,7 +97,7 @@ int main(){
     auto x = getkeysfrompkg(vec[2][0], to_string(8080), email);
     cout << "GOT IT" << endl;
     // Get your private key
-    
+     auto start = std::chrono::system_clock::now();
     IBE_init();
     cout << x[0] << endl;
     cout << x[1] << endl;
@@ -150,6 +153,12 @@ int main(){
             for(auto x : mymsgs){
                 msgtmp.push_back(x);
                 auto d = x;
+                    auto end = std::chrono::system_clock::now();
+ std::chrono::duration<double> elapsed_seconds = end-start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    std::cout << "finished computation at " << std::ctime(&end_time)
+              << "elapsed time: " << elapsed_seconds.count() << "s\n";
                 std::cout << "THIS IS WHAT I GOT " << std::endl;
                 std::cout << d << std::endl;
                 //TODO: Fix encrytion run a test on the local system first

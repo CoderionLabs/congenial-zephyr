@@ -82,7 +82,7 @@ std::vector<std::string> getkeysfrompkg(std::string hostname, std::string portnu
 
         std::string code;
         std::cout << prompt << std::endl;
-        std::cin >> code;
+        code = "appleapple";
         ws.write(net::buffer(std::string(code)));
 
         ws.read(buffer);
