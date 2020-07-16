@@ -1,6 +1,6 @@
 # Congenial Zephyr
 
-Zephyr is an anonymous messaging system that protects the privacy of message contents and message metadata. Users that use Zephyr do not reveal who they are talking to or the contents of their messages. The goal of Zephyr is to decrease the amount of information being sent by the user and hide as much metadata as possible. [https://arxiv.org/pdf/1910.13337.pdf](https://arxiv.org/pdf/1910.13337.pdf)
+Zephyr is an anonymous messaging system that protects the privacy of message contents and message metadata. Users that use Zephyr do not reveal who they are talking to or the contents of their messages. The goal of Zephyr is to decrease the amount of information being sent by the user and hide as much metadata as possible.
 
 ### TODO
 
